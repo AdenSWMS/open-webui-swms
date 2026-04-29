@@ -54,6 +54,7 @@ class Chat(Base):
 
     meta = Column(JSON, server_default='{}')
     folder_id = Column(Text, nullable=True)
+    project_id = Column(Text, nullable=True)
 
     tasks = Column(JSON, nullable=True)
     summary = Column(Text, nullable=True)
@@ -87,6 +88,7 @@ class ChatModel(BaseModel):
 
     meta: dict = {}
     folder_id: Optional[str] = None
+    project_id: Optional[str] = None
 
     tasks: Optional[list] = None
     summary: Optional[str] = None
@@ -132,6 +134,7 @@ class ChatFileModel(BaseModel):
 class ChatForm(BaseModel):
     chat: dict
     folder_id: Optional[str] = None
+    project_id: Optional[str] = None
 
 
 class ChatImportForm(ChatForm):
@@ -166,6 +169,7 @@ class ChatResponse(BaseModel):
     pinned: Optional[bool] = False
     meta: dict = {}
     folder_id: Optional[str] = None
+    project_id: Optional[str] = None
 
     tasks: Optional[list] = None
     summary: Optional[str] = None
@@ -305,6 +309,7 @@ class ChatTable:
                     ),
                     'chat': self._clean_null_bytes(form_data.chat),
                     'folder_id': form_data.folder_id,
+                    'project_id': form_data.project_id,
                     'created_at': int(time.time()),
                     'updated_at': int(time.time()),
                 }
@@ -731,12 +736,16 @@ class ChatTable:
         filter: Optional[dict] = None,
         skip: int = 0,
         limit: int = 50,
+        project_id: Optional[str] = None,
         db: Optional[AsyncSession] = None,
     ) -> list[ChatTitleIdResponse]:
         async with get_async_db_context(db) as db:
             stmt = select(Chat.id, Chat.title, Chat.updated_at, Chat.created_at, Chat.last_read_at).filter_by(
                 user_id=user_id
             )
+
+            if project_id:
+                stmt = stmt.filter_by(project_id=project_id)
             if not include_archived:
                 stmt = stmt.filter_by(archived=False)
 
@@ -786,12 +795,16 @@ class ChatTable:
         include_pinned: bool = False,
         skip: Optional[int] = None,
         limit: Optional[int] = None,
+        project_id: Optional[str] = None,
         db: Optional[AsyncSession] = None,
     ) -> list[ChatTitleIdResponse]:
         async with get_async_db_context(db) as db:
             stmt = select(Chat.id, Chat.title, Chat.updated_at, Chat.created_at, Chat.last_read_at).filter_by(
                 user_id=user_id
             )
+
+            if project_id:
+                stmt = stmt.filter_by(project_id=project_id)
 
             if not include_folders:
                 stmt = stmt.filter_by(folder_id=None)
@@ -923,10 +936,14 @@ class ChatTable:
         filter: Optional[dict] = None,
         skip: Optional[int] = None,
         limit: Optional[int] = None,
+        project_id: Optional[str] = None,
         db: Optional[AsyncSession] = None,
     ) -> ChatListResponse:
         async with get_async_db_context(db) as db:
             stmt = select(Chat).filter_by(user_id=user_id)
+
+            if project_id:
+                stmt = stmt.filter_by(project_id=project_id)
 
             if filter:
                 if filter.get('updated_at'):
@@ -1002,6 +1019,7 @@ class ChatTable:
         include_archived: bool = False,
         skip: int = 0,
         limit: int = 60,
+        project_id: Optional[str] = None,
         db: Optional[AsyncSession] = None,
     ) -> list[ChatModel]:
         """
@@ -1062,6 +1080,9 @@ class ChatTable:
 
         async with get_async_db_context(db) as db:
             stmt = select(Chat).filter(Chat.user_id == user_id)
+
+            if project_id:
+                stmt = stmt.filter_by(project_id=project_id)
 
             if is_archived is not None:
                 stmt = stmt.filter(Chat.archived == is_archived)
