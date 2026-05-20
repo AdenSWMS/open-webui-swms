@@ -544,6 +544,7 @@ WEBUI_ADMIN_NAME = os.environ.get('WEBUI_ADMIN_NAME', 'Admin')
 WEBUI_AUTH_TRUSTED_EMAIL_HEADER = os.environ.get('WEBUI_AUTH_TRUSTED_EMAIL_HEADER', None)
 WEBUI_AUTH_TRUSTED_NAME_HEADER = os.environ.get('WEBUI_AUTH_TRUSTED_NAME_HEADER', None)
 WEBUI_AUTH_TRUSTED_GROUPS_HEADER = os.environ.get('WEBUI_AUTH_TRUSTED_GROUPS_HEADER', None)
+WEBUI_AUTH_TRUSTED_PROJECTS_HEADER = os.environ.get('WEBUI_AUTH_TRUSTED_PROJECTS_HEADER', None)
 WEBUI_AUTH_TRUSTED_ROLE_HEADER = os.environ.get('WEBUI_AUTH_TRUSTED_ROLE_HEADER', None)
 
 # Custom header name for API key authentication.  Defaults to 'x-api-key'.
@@ -1084,3 +1085,12 @@ EXTERNAL_PWA_MANIFEST_URL = os.environ.get('EXTERNAL_PWA_MANIFEST_URL')
 # Env var values: "true" (anyone), "false" (no one), "members" (only group members).
 _default_group_share = os.environ.get('DEFAULT_GROUP_SHARE_PERMISSION', 'members').strip().lower()
 DEFAULT_GROUP_SHARE_PERMISSION = 'members' if _default_group_share == 'members' else _default_group_share == 'true'
+
+####################################
+# PROJECT DEFAULTS
+####################################
+
+# Controls the default "Who can share to this project" setting for new projects.
+# Env var values: "true" (anyone), "false" (no one), "members" (only project members).
+_default_project_share = os.environ.get('DEFAULT_PROJECT_SHARE_PERMISSION', 'members').strip().lower()
+DEFAULT_PROJECT_SHARE_PERMISSION = 'members' if _default_project_share == 'members' else _default_project_share == 'true'

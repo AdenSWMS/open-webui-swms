@@ -8,6 +8,7 @@
 
 	import UserList from './Users/UserList.svelte';
 	import Groups from './Users/Groups.svelte';
+	import Projects from './Users/Projects.svelte';
 
 	const i18n = getContext('i18n');
 
@@ -15,7 +16,7 @@
 	$: {
 		const pathParts = $page.url.pathname.split('/');
 		const tabFromPath = pathParts[pathParts.length - 1];
-		selectedTab = ['overview', 'groups'].includes(tabFromPath) ? tabFromPath : 'overview';
+		selectedTab = ['overview', 'groups', 'projects'].includes(tabFromPath) ? tabFromPath : 'overview';
 	}
 
 	$: if (selectedTab) {
@@ -107,6 +108,30 @@
 			</div>
 			<div class=" self-center">{$i18n.t('Groups')}</div>
 		</a>
+		
+		<a
+			id="projects"
+			href="/admin/users/projects"
+			draggable="false"
+			class="px-0.5 py-1 min-w-fit rounded-lg lg:flex-none flex text-right transition select-none {selectedTab ===
+			'projects'
+				? ''
+				: ' text-gray-300 dark:text-gray-600 hover:text-gray-700 dark:hover:text-white'}"
+		>
+			<div class=" self-center mr-2">
+				<svg
+					xmlns="http://www.w3.org/2000/svg"
+					viewBox="0 0 16 16"
+					fill="currentColor"
+					class="size-4"
+				>
+					<path
+						d="M2 2a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V2zm2 1a1 1 0 1 0 0 2 1 1 0 0 0 0-2zm3 0a1 1 0 1 0 0 2 1 1 0 0 0 0-2zm3 0a1 1 0 1 0 0 2 1 1 0 0 0 0-2zM3 7a1 1 0 0 0 0 2h10a1 1 0 0 0 0-2H3z"
+					/>
+				</svg>
+			</div>
+			<div class=" self-center">{$i18n.t('Projects')}</div>
+		</a>
 	</div>
 
 	<div class="flex-1 mt-1 lg:mt-0 px-[16px] lg:pr-[16px] lg:pl-0 overflow-y-scroll">
@@ -114,6 +139,8 @@
 			<UserList />
 		{:else if selectedTab === 'groups'}
 			<Groups />
+		{:else if selectedTab === 'projects'}
+			<Projects />
 		{/if}
 	</div>
 </div>

@@ -622,6 +622,12 @@ OAUTH_GROUPS_CLAIM = PersistentConfig(
     os.environ.get('OAUTH_GROUPS_CLAIM', os.environ.get('OAUTH_GROUP_CLAIM', 'groups')),
 )
 
+OAUTH_PROJECTS_CLAIM = PersistentConfig(
+    'OAUTH_PROJECTS_CLAIM',
+    'oauth.oidc.project_claim',
+    os.environ.get('OAUTH_PROJECTS_CLAIM', 'projects'),
+)
+
 FEISHU_CLIENT_ID = PersistentConfig(
     'FEISHU_CLIENT_ID',
     'oauth.feishu.client_id',
@@ -672,7 +678,6 @@ OAUTH_GROUP_DEFAULT_SHARE = PersistentConfig(
     ('members' if oauth_group_default_share == 'members' else oauth_group_default_share == 'true'),
 )
 
-
 OAUTH_BLOCKED_GROUPS = PersistentConfig(
     'OAUTH_BLOCKED_GROUPS',
     'oauth.blocked_groups',
@@ -680,6 +685,35 @@ OAUTH_BLOCKED_GROUPS = PersistentConfig(
 )
 
 OAUTH_GROUPS_SEPARATOR = os.environ.get('OAUTH_GROUPS_SEPARATOR', ';')
+
+ENABLE_OAUTH_PROJECT_MANAGEMENT = PersistentConfig(
+    'ENABLE_OAUTH_PROJECT_MANAGEMENT',
+    'oauth.enable_project_mapping',
+    os.environ.get('ENABLE_OAUTH_PROJECT_MANAGEMENT', 'False').lower() == 'true',
+)
+
+ENABLE_OAUTH_PROJECT_CREATION = PersistentConfig(
+    'ENABLE_OAUTH_PROJECT_CREATION',
+    'oauth.enable_project_creation',
+    os.environ.get('ENABLE_OAUTH_PROJECT_CREATION', 'False').lower() == 'true',
+)
+
+
+oauth_project_default_share = os.environ.get('OAUTH_PROJECT_DEFAULT_SHARE', 'true').strip().lower()
+OAUTH_PROJECT_DEFAULT_SHARE = PersistentConfig(
+    'OAUTH_PROJECT_DEFAULT_SHARE',
+    'oauth.project_default_share',
+    ('members' if oauth_project_default_share == 'members' else oauth_project_default_share == 'true'),
+)
+
+
+OAUTH_BLOCKED_PROJECTS = PersistentConfig(
+    'OAUTH_BLOCKED_PROJECTS',
+    'oauth.blocked_projects',
+    os.environ.get('OAUTH_BLOCKED_PROJECTS', '[]'),
+)
+
+OAUTH_PROJECTS_SEPARATOR = os.environ.get('OAUTH_PROJECTS_SEPARATOR', ';')
 
 OAUTH_ROLES_CLAIM = PersistentConfig(
     'OAUTH_ROLES_CLAIM',
@@ -1355,6 +1389,12 @@ DEFAULT_GROUP_ID = PersistentConfig(
     'DEFAULT_GROUP_ID',
     'ui.default_group_id',
     os.environ.get('DEFAULT_GROUP_ID', ''),
+)
+
+DEFAULT_PROJECT_ID = PersistentConfig(
+    'DEFAULT_PROJECT_ID',
+    'ui.default_project_id',
+    os.environ.get('DEFAULT_PROJECT_ID', ''),
 )
 
 PENDING_USER_OVERLAY_TITLE = PersistentConfig(
@@ -4242,4 +4282,23 @@ LDAP_ATTRIBUTE_FOR_GROUPS = PersistentConfig(
     'LDAP_ATTRIBUTE_FOR_GROUPS',
     'ldap.server.attribute_for_groups',
     os.environ.get('LDAP_ATTRIBUTE_FOR_GROUPS', 'memberOf'),
+)
+
+# For LDAP Project Management
+ENABLE_LDAP_PROJECT_MANAGEMENT = PersistentConfig(
+    'ENABLE_LDAP_PROJECT_MANAGEMENT',
+    'ldap.project.enable_management',
+    os.environ.get('ENABLE_LDAP_PROJECT_MANAGEMENT', 'False').lower() == 'true',
+)
+
+ENABLE_LDAP_PROJECT_CREATION = PersistentConfig(
+    'ENABLE_LDAP_PROJECT_CREATION',
+    'ldap.project.enable_creation',
+    os.environ.get('ENABLE_LDAP_PROJECT_CREATION', 'False').lower() == 'true',
+)
+
+LDAP_ATTRIBUTE_FOR_PROJECTS = PersistentConfig(
+    'LDAP_ATTRIBUTE_FOR_PROJECTS',
+    'ldap.server.attribute_for_projects',
+    os.environ.get('LDAP_ATTRIBUTE_FOR_PROJECTS', 'memberOf'),
 )
