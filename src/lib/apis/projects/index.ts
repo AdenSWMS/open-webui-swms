@@ -41,6 +41,7 @@ export const getProjects = async (token: string = '', share?: boolean) => {
 
 	const res = await fetch(`${WEBUI_API_BASE_URL}/projects/?${searchParams.toString()}`, {
 		method: 'GET',
+		cache: 'no-store',
 		headers: {
 			Accept: 'application/json',
 			'Content-Type': 'application/json',
