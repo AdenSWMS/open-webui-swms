@@ -59,7 +59,7 @@
 			className="w-full text-sm bg-transparent placeholder:text-gray-300 dark:placeholder:text-gray-700 outline-hidden resize-none"
 			rows={4}
 			bind:value={description}
-			placeholder={$i18n.t('Group Description')}
+			placeholder={$i18n.t('Project Description')}
 		/>
 	</div>
 </div>
@@ -72,7 +72,7 @@
 	<div>
 		<div class=" flex w-full justify-between">
 			<div class=" self-center text-xs">
-				{$i18n.t('Who can share to this group')}
+				{$i18n.t('Who can share to this project')}
 			</div>
 
 			<div class="flex items-center gap-2 p-1">

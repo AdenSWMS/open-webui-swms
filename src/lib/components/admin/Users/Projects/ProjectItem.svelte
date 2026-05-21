@@ -5,57 +5,57 @@
 
 	const i18n = getContext('i18n');
 
-	import { deleteGroupById, updateGroupById } from '$lib/apis/groups';
+	import { deleteProjectById, updateProjectById } from '$lib/apis/projects';
 
 	import Pencil from '$lib/components/icons/Pencil.svelte';
-	import EditGroupModal from './EditProjectModal.svelte';
+	import EditProjectModal from './EditProjectModal.svelte';
 
-	export let group = {
+	export let project = {
 		name: 'Admins',
 		user_ids: [1, 2, 3]
 	};
 	export let defaultPermissions = {};
 
-	export let setGroups = () => {};
+	export let setProjects = () => {};
 
 	let showEdit = false;
 
-	const updateHandler = async (_group) => {
-		const res = await updateGroupById(localStorage.token, group.id, _group).catch((error) => {
+	const updateHandler = async (_project) => {
+		const res = await updateProjectById(localStorage.token, project.id, _project).catch((error) => {
 			toast.error(`${error}`);
 			return null;
 		});
 
 		if (res) {
-			toast.success($i18n.t('Group updated successfully'));
-			setGroups();
+			toast.success($i18n.t('Project updated successfully'));
+			setProjects();
 		}
 	};
 
 	const deleteHandler = async () => {
-		const res = await deleteGroupById(localStorage.token, group.id).catch((error) => {
+		const res = await deleteProjectById(localStorage.token, project.id).catch((error) => {
 			toast.error(`${error}`);
 			return null;
 		});
 
 		if (res) {
-			toast.success($i18n.t('Group deleted successfully'));
-			setGroups();
+			toast.success($i18n.t('Project deleted successfully'));
+			setProjects();
 		}
 	};
 
 	onMount(() => {
-		const groupId = $page.url.searchParams.get('id');
-		if (groupId && groupId === group.id) {
+		const projectId = $page.url.searchParams.get('id');
+		if (projectId && projectId === project.id) {
 			showEdit = true;
 		}
 	});
 </script>
 
-<EditGroupModal
+<EditProjectModal
 	bind:show={showEdit}
 	edit
-	{group}
+	{project}
 	{defaultPermissions}
 	onSubmit={updateHandler}
 	onDelete={deleteHandler}
@@ -71,17 +71,17 @@
 		<div class="flex items-center justify-between">
 			<div class="flex-1">
 				<div class="flex items-center gap-2">
-					<div class="text-sm font-medium line-clamp-1">{group.name}</div>
+					<div class="text-sm font-medium line-clamp-1">{project.name}</div>
 				</div>
 
 				<div class="flex items-center gap-2 mt-0.5 line-clamp-1">
 					<div class="text-xs text-gray-500 shrink-0">
-						{$i18n.t('{{COUNT}} members', { COUNT: group?.member_count ?? 0 })}
+						{$i18n.t('{{COUNT}} members', { COUNT: project?.member_count ?? 0 })}
 					</div>
 
-					{#if group?.description}
+					{#if project?.description}
 						<div class="text-xs text-gray-500 line-clamp-1">
-							{group.description}
+							{project.description}
 						</div>
 					{/if}
 				</div>

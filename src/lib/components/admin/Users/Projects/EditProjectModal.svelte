@@ -20,7 +20,7 @@
 	export let show = false;
 	export let edit = false;
 
-	export let group = null;
+	export let project = null;
 	export let defaultPermissions = {};
 
 	export let custom = true;
@@ -42,24 +42,24 @@
 	const submitHandler = async () => {
 		loading = true;
 
-		const group = {
+		const project = {
 			name,
 			description,
 			data,
 			permissions
 		};
 
-		await onSubmit(group);
+		await onSubmit(project);
 
 		loading = false;
 		show = false;
 	};
 
 	const init = () => {
-		if (group) {
-			name = group.name;
-			description = group.description;
-			const loadedPermissions = group?.permissions ?? {};
+		if (project) {
+			name = project.name;
+			description = project.description;
+			const loadedPermissions = project?.permissions ?? {};
 			// Create fresh object from defaults, then overlay loaded values
 			permissions = {
 				workspace: { ...DEFAULT_PERMISSIONS.workspace, ...loadedPermissions.workspace },
@@ -69,9 +69,9 @@
 				features: { ...DEFAULT_PERMISSIONS.features, ...loadedPermissions.features },
 				settings: { ...DEFAULT_PERMISSIONS.settings, ...loadedPermissions.settings }
 			};
-			data = group?.data ?? {};
+			data = project?.data ?? {};
 
-			userCount = group?.member_count ?? 0;
+			userCount = project?.member_count ?? 0;
 		}
 	};
 
@@ -99,9 +99,9 @@
 			<div class=" text-lg font-medium self-center font-primary">
 				{#if custom}
 					{#if edit}
-						{$i18n.t('Edit User Group')}
+						{$i18n.t('Edit User Project')}
 					{:else}
-						{$i18n.t('Add User Group')}
+						{$i18n.t('Add User Project')}
 					{/if}
 				{:else}
 					{$i18n.t('Edit Default Permissions')}
@@ -212,7 +212,7 @@
 								{:else if selectedTab == 'permissions'}
 									<Permissions bind:permissions {defaultPermissions} />
 								{:else if selectedTab == 'users'}
-									<Users bind:userCount groupId={group?.id} />
+									<Users bind:userCount projectId={project?.id} />
 								{/if}
 							</div>
 
