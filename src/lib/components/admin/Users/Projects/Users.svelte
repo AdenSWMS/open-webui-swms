@@ -11,7 +11,7 @@
 	import { getUsers } from '$lib/apis/users';
 	import { toast } from 'svelte-sonner';
 
-	import { addUserToGroup, removeUserFromGroup } from '$lib/apis/groups';
+	import { addUserToProject, removeUserFromProject } from '$lib/apis/projects';
 	import { WEBUI_API_BASE_URL } from '$lib/constants';
 
 	import Tooltip from '$lib/components/common/Tooltip.svelte';
@@ -23,7 +23,7 @@
 	import ChevronUp from '$lib/components/icons/ChevronUp.svelte';
 	import Spinner from '$lib/components/common/Spinner.svelte';
 
-	export let groupId: string;
+	export let projectId: string;
 	export let userCount = 0;
 
 	let users = null;
@@ -31,7 +31,7 @@
 
 	let query = '';
 	let searchDebounceTimer: ReturnType<typeof setTimeout>;
-	let orderBy = groupId ? `group_id:${groupId}` : 'last_active_at'; // default sort key
+	let orderBy = projectId ? `project_id:${projectId}` : 'last_active_at'; // default sort key
 	let direction = 'desc'; // default sort order
 
 	let page = 1;
@@ -66,12 +66,12 @@
 
 	const toggleMember = async (userId, state) => {
 		if (state === 'checked') {
-			await addUserToGroup(localStorage.token, groupId, [userId]).catch((error) => {
+			await addUserToProject(localStorage.token, projectId, [userId]).catch((error) => {
 				toast.error(`${error}`);
 				return null;
 			});
 		} else {
-			await removeUserFromGroup(localStorage.token, groupId, [userId]).catch((error) => {
+			await removeUserFromProject(localStorage.token, projectId, [userId]).catch((error) => {
 				toast.error(`${error}`);
 				return null;
 			});
@@ -126,12 +126,12 @@
 							<th
 								scope="col"
 								class="px-2.5 py-2 cursor-pointer text-left w-8"
-								on:click={() => setSortKey(`group_id:${groupId}`)}
+								on:click={() => setSortKey(`project_id:${projectId}`)}
 							>
 								<div class="flex gap-1.5 items-center">
 									{$i18n.t('MBR')}
 
-									{#if orderBy === `group_id:${groupId}`}
+									{#if orderBy === `project_id:${projectId}`}
 										<span class="font-normal"
 											>{#if direction === 'asc'}
 												<ChevronUp className="size-2" />
@@ -225,7 +225,7 @@
 								<td class=" px-3 py-1 w-8">
 									<div class="flex w-full justify-center">
 										<Checkbox
-											state={(user?.group_ids ?? []).includes(groupId) ? 'checked' : 'unchecked'}
+											state={(user?.project_ids ?? []).includes(projectId) ? 'checked' : 'unchecked'}
 											on:change={(e) => {
 												toggleMember(user.id, e.detail);
 											}}

@@ -1,5 +1,6 @@
 import logging
 from typing import Optional
+from open_webui.models.projects import Projects
 from sqlalchemy.ext.asyncio import AsyncSession
 import base64
 import io
@@ -17,8 +18,8 @@ from open_webui.models.groups import Groups
 
 from open_webui.models.users import (
     UserModel,
-    UserGroupIdsModel,
-    UserGroupIdsListResponse,
+    UserGroupAndProjectIdsModel,
+    UserGroupAndProjectIdsListResponse,
     UserInfoResponse,
     UserInfoListResponse,
     UserRoleUpdateForm,
@@ -57,7 +58,7 @@ router = APIRouter()
 PAGE_ITEM_COUNT = 30
 
 
-@router.get('/', response_model=UserGroupIdsListResponse)
+@router.get('/', response_model=UserGroupAndProjectIdsListResponse)
 async def get_users(
     query: Optional[str] = None,
     order_by: Optional[str] = None,
@@ -89,13 +90,15 @@ async def get_users(
     # Fetch groups for all users in a single query to avoid N+1
     user_ids = [user.id for user in users]
     user_groups = await Groups.get_groups_by_member_ids(user_ids, db=db)
-
+    user_projects = await Projects.get_projects_by_member_ids(user_ids, db=db)
+    
     return {
         'users': [
-            UserGroupIdsModel(
+            UserGroupAndProjectIdsModel(
                 **{
                     **user.model_dump(),
                     'group_ids': [group.id for group in user_groups.get(user.id, [])],
+                    'project_ids': [project.id for project in user_projects.get(user.id, [])],
                 }
             )
             for user in users

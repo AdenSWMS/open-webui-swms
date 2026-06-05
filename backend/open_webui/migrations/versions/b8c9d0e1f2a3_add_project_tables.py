@@ -25,6 +25,7 @@ def upgrade():
         sa.Column('data', sa.JSON(), nullable=True),
         sa.Column('meta', sa.JSON(), nullable=True),
         sa.Column('permissions', sa.JSON(), nullable=True),
+        sa.Column('allowed_model_ids', sa.JSON(), nullable=True),
         sa.Column('user_ids', sa.JSON(), nullable=True),
         sa.Column('created_at', sa.BigInteger(), nullable=True),
         sa.Column('updated_at', sa.BigInteger(), nullable=True),

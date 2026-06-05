@@ -1,6 +1,7 @@
 import time
 from typing import Optional
 
+from open_webui.models.projects import ProjectMember
 from sqlalchemy import select, delete, update, func, or_, case, exists
 from sqlalchemy.ext.asyncio import AsyncSession
 from open_webui.internal.db import Base, JSONField, get_async_db_context
@@ -163,9 +164,9 @@ class UpdateProfileForm(BaseModel):
         return validate_profile_image_url(v)
 
 
-class UserGroupIdsModel(UserModel):
+class UserGroupAndProjectIdsModel(UserModel):
     group_ids: list[str] = []
-
+    project_ids: list[str] = []
 
 class UserModelResponse(UserModel):
     model_config = ConfigDict(extra='allow')
@@ -176,8 +177,8 @@ class UserListResponse(BaseModel):
     total: int
 
 
-class UserGroupIdsListResponse(BaseModel):
-    users: list[UserGroupIdsModel]
+class UserGroupAndProjectIdsListResponse(BaseModel):
+    users: list[UserGroupAndProjectIdsModel]
     total: int
 
 
@@ -194,6 +195,7 @@ class UserInfoResponse(UserStatus):
     role: str
     bio: Optional[str] = None
     groups: Optional[list] = []
+    projects: Optional[list] = []
     is_active: bool = False
 
 
@@ -367,6 +369,7 @@ class UsersTable:
         async with get_async_db_context(db) as db:
             # Import here to avoid circular imports
             from open_webui.models.groups import GroupMember
+            from open_webui.models.projects import ProjectMember
             from open_webui.models.channels import ChannelMember
 
             # Join GroupMember so we can order by group_id when requested
@@ -395,10 +398,15 @@ class UsersTable:
 
                 user_ids = filter.get('user_ids')
                 group_ids = filter.get('group_ids')
+                project_ids = filter.get('project_ids')
 
                 if isinstance(user_ids, list) and isinstance(group_ids, list):
                     # If both are empty lists, return no users
                     if not user_ids and not group_ids:
+                        return {'users': [], 'total': 0}
+
+                elif isinstance(user_ids, list) and isinstance(project_ids, list):
+                    # if both are empty lists, return no users
                         return {'users': [], 'total': 0}
 
                 if user_ids:
@@ -410,6 +418,16 @@ class UsersTable:
                             select(GroupMember.id).where(
                                 GroupMember.user_id == User.id,
                                 GroupMember.group_id.in_(group_ids),
+                            )
+                        )
+                    )
+
+                if project_ids:
+                    stmt = stmt.filter(
+                        exists(
+                            select(ProjectMember.id).where(
+                                ProjectMember.user_id == User.id,
+                                ProjectMember.project_id.in_(project_ids),
                             )
                         )
                     )
@@ -445,6 +463,25 @@ class UsersTable:
                         stmt = stmt.order_by(group_sort.asc(), User.name.asc())
                     else:
                         stmt = stmt.order_by(group_sort.desc(), User.name.asc())
+                
+                if order_by and order_by.startswith('project_id:'):
+                    project_id = order_by.split(':', 1)[1]
+
+                    # Subquery that checks if the user belongs to the project
+                    membership_exists = exists(
+                        select(ProjectMember.id).where(
+                            ProjectMember.user_id == User.id,
+                            ProjectMember.project_id == project_id,
+                        )
+                    )
+
+                    # CASE: user in project → 1, user not in project → 0
+                    project_sort = case((membership_exists, 1), else_=0)
+
+                    if direction == 'asc':
+                        stmt = stmt.order_by(project_sort.asc(), User.name.asc())
+                    else:
+                        stmt = stmt.order_by(project_sort.desc(), User.name.asc())
 
                 elif order_by == 'name':
                     if direction == 'asc':
@@ -507,6 +544,16 @@ class UsersTable:
 
             result = await db.execute(
                 select(User).join(GroupMember, User.id == GroupMember.user_id).filter(GroupMember.group_id == group_id)
+            )
+            users = result.scalars().all()
+            return [UserModel.model_validate(user) for user in users]
+    
+    async def get_users_by_project_id(self, project_id: str, db: Optional[AsyncSession] = None) -> list[UserModel]:
+        async with get_async_db_context(db) as db:
+            from open_webui.models.groups import GroupMember
+
+            result = await db.execute(
+                select(User).join(ProjectMember, User.id == ProjectMember.user_id).filter(ProjectMember.project_id == project_id)
             )
             users = result.scalars().all()
             return [UserModel.model_validate(user) for user in users]

@@ -13,7 +13,6 @@
 	import Tooltip from '$lib/components/common/Tooltip.svelte';
 	import Plus from '$lib/components/icons/Plus.svelte';
 	import UsersSolid from '$lib/components/icons/UsersSolid.svelte';
-	import ChevronRight from '$lib/components/icons/ChevronRight.svelte';
 	import Search from '$lib/components/icons/Search.svelte';
 	import EditProjectModal from './Projects/EditProjectModal.svelte';
 	import ProjectItem from './Projects/ProjectItem.svelte';
@@ -21,7 +20,7 @@
 	import ChevronDown from '$lib/components/icons/ChevronDown.svelte';
 	import Check from '$lib/components/icons/Check.svelte';
 	import Select from '$lib/components/common/Select.svelte';
-	import { createNewProject, getProjects } from '$lib/apis/projects';
+	import { createNewProject, getProjects, removeAllowedModelsFromProject, addAllowedModelsToProject, getAllowedModelsOfProject } from '$lib/apis/projects';
 	import {
 		getUserDefaultPermissions,
 		getAllUsers,
@@ -33,6 +32,7 @@
 	let loaded = false;
 
 	let projects = [];
+	let modelId = null;
 
 	let query = '';
 	let sortBy = 'members';
@@ -82,6 +82,41 @@
 		}
 	};
 
+	const setAllowedModelsHandler = async (projectId) => {
+		const res = await getAllowedModelsOfProject(localStorage.token, projectId).catch((error) => {
+			toast.error(`${error}`);
+			return null;
+		});
+
+		if (res) {
+			modelId = res.allowed_model_ids;
+		}
+	};
+
+	const addAllowedModelHandler = async (projectId, modelId) => {
+		const res = await addAllowedModelsToProject(localStorage.token, projectId, [modelId]).catch((error) => {
+			toast.error(`${error}`);
+			return null;
+		});
+
+		if (res) {
+			toast.success($i18n.t('Allowed models updated successfully'));
+			await setProjects();
+		}
+	};
+
+	const removeAllowedModelHandler = async (projectId, modelId) => {
+		const res = await removeAllowedModelsFromProject(localStorage.token, projectId, [modelId]).catch((error) => {
+			toast.error(`${error}`);
+			return null;
+		});
+
+		if (res) {
+			toast.success($i18n.t('Allowed models updated successfully'));
+			await setProjects();
+		}
+	};
+
 	const updateDefaultPermissionsHandler = async (project) => {
 		console.debug(project.permissions);
 
@@ -114,9 +149,11 @@
 	<EditProjectModal
 		bind:show={showAddProjectModal}
 		edit={false}
-		tabs={['general', 'permissions']}
+		tabs={['general', 'permissions', 'allowedModels', 'users']}
 		permissions={defaultPermissions}
 		onSubmit={addProjectHandler}
+		onAddAllowedModel={addAllowedModelHandler}
+		onRemoveAllowedModel={removeAllowedModelHandler}
 	/>
 
 	<div class="flex flex-col gap-1 px-1 mt-1.5 mb-3">
@@ -214,44 +251,10 @@
 					<div class="text-3xl mb-3">👥</div>
 					<div class="text-lg font-medium mb-1">{$i18n.t('No projects found')}</div>
 					<div class="text-gray-500 text-center text-xs">
-						{$i18n.t('Use projects to organize your work and assign permissions.')}
+						{$i18n.t('Use projects to organize your work and assign model permissions.')}
 					</div>
 				</div>
 			</div>
 		{/if}
 	</div>
-
-	<EditProjectModal
-		bind:show={showDefaultPermissionsModal}
-		tabs={['permissions']}
-		bind:permissions={defaultPermissions}
-		custom={false}
-		onSubmit={updateDefaultPermissionsHandler}
-	/>
-
-	<button
-		class="flex items-center justify-between rounded-lg w-full transition mt-4"
-		aria-haspopup="dialog"
-		on:click={() => {
-			showDefaultPermissionsModal = true;
-		}}
-	>
-		<div class="flex items-center gap-2.5">
-			<div class="p-1.5 bg-black/5 dark:bg-white/10 rounded-full">
-				<UsersSolid className="size-4" />
-			</div>
-
-			<div class="text-left">
-				<div class=" text-sm font-medium">{$i18n.t('Default permissions')}</div>
-
-				<div class="flex text-xs mt-0.5">
-					{$i18n.t('applies to all users with the "user" role')}
-				</div>
-			</div>
-		</div>
-
-		<div>
-			<ChevronRight strokeWidth="2.5" />
-		</div>
-	</button>
 {/if}

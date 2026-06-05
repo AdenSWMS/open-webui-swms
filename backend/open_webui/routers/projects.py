@@ -11,6 +11,7 @@ from open_webui.models.projects import (
     ProjectUpdateForm,
     ProjectResponse,
     UserIdsForm,
+    ModelIdsForm,
 )
 
 from open_webui.config import CACHE_DIR
@@ -47,6 +48,20 @@ async def get_projects(
 
     projects = await Projects.get_projects(filter=filter, db=db)
 
+    return projects
+
+
+############################
+# GetProjectsByMemberId
+############################
+
+
+@router.get('/member', response_model=list[ProjectResponse])
+async def get_projects_by_member_id(
+    user=Depends(get_verified_user),
+    db: AsyncSession = Depends(get_async_session),
+):
+    projects = await Projects.get_projects_by_member_id(user.id, db=db)
     return projects
 
 
@@ -276,3 +291,72 @@ async def delete_project_by_id(id: str, user=Depends(get_admin_user), db: AsyncS
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=ERROR_MESSAGES.DEFAULT(e),
         )
+
+############################
+# AddAllowedModelToProjectById
+############################
+
+@router.get('/id/{id}/allowed_models', response_model=list[str])
+async def get_allowed_models_in_project(id: str, user=Depends(get_admin_user), db: AsyncSession = Depends(get_async_session)):
+    try:
+        allowed_model_ids = await Projects.get_project_allowed_models_ids_by_id(id, db=db)
+        return allowed_model_ids
+    except Exception as e:
+        log.exception(f'Error getting allowed models in project {id}: {e}')
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=ERROR_MESSAGES.DEFAULT(e),
+        )
+
+@router.post('/id/{id}/allowed_models/add', response_model=Optional[ProjectResponse])
+async def add_allowed_models_to_project(
+    id: str,
+    form_data: ModelIdsForm,
+    user=Depends(get_admin_user),
+    db: AsyncSession = Depends(get_async_session),
+):
+    try:
+        project = await Projects.add_allowed_model_ids_to_project(id, form_data.model_ids, db=db)
+        if project:
+            return ProjectResponse(
+                **project.model_dump(),
+                member_count=await Projects.get_project_member_count_by_id(project.id, db=db),
+            )
+        else:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=ERROR_MESSAGES.DEFAULT('Error adding allowed models to project'),
+            )
+    except Exception as e:
+        log.exception(f'Error adding allowed models to project {id}: {e}')
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=ERROR_MESSAGES.DEFAULT(e),
+        )
+
+
+@router.post('/id/{id}/allowed_models/remove', response_model=Optional[ProjectResponse])
+async def remove_allowed_models_from_project(
+    id: str,
+    form_data: ModelIdsForm,
+    user=Depends(get_admin_user),
+    db: AsyncSession = Depends(get_async_session),
+):
+    try:
+        project = await Projects.remove_allowed_model_ids_from_project(id, form_data.model_ids, db=db)
+        if project:
+            return ProjectResponse(
+                **project.model_dump(),
+                member_count=await Projects.get_project_member_count_by_id(project.id, db=db),
+            )
+        else:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=ERROR_MESSAGES.DEFAULT('Error removing allowed models from project'),
+            )
+    except Exception as e:
+        log.exception(f'Error removing allowed models from project {id}: {e}')
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=ERROR_MESSAGES.DEFAULT(e),
+)

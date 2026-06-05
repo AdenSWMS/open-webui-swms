@@ -43,7 +43,7 @@ class Project(Base):
     data = Column(JSON, nullable=True)
     meta = Column(JSON, nullable=True)
 
-    permissions = Column(JSON, nullable=True)
+    allowed_model_ids = Column(JSON, nullable=True)
 
     created_at = Column(BigInteger)
     updated_at = Column(BigInteger)
@@ -59,7 +59,7 @@ class ProjectModel(BaseModel):
     data: Optional[dict] = None
     meta: Optional[dict] = None
 
-    permissions: Optional[dict] = None
+    allowed_model_ids: Optional[list[str]] = None
 
     created_at: int  # timestamp in epoch
     updated_at: int  # timestamp in epoch
@@ -111,12 +111,16 @@ class ProjectInfoResponse(BaseModel):
 class ProjectForm(BaseModel):
     name: str
     description: str
-    permissions: Optional[dict] = None
+    allowed_model_ids: Optional[list[str]] = None
     data: Optional[dict] = None
 
 
 class UserIdsForm(BaseModel):
     user_ids: Optional[list[str]] = None
+
+
+class ModelIdsForm(BaseModel):
+    model_ids: Optional[list[str]] = None
 
 
 class ProjectUpdateForm(ProjectForm):
@@ -632,6 +636,75 @@ class ProjectTable:
                 project.updated_at = int(time.time())
 
                 await db.commit()
+                await db.refresh(project)
+                return ProjectModel.model_validate(project)
+
+        except Exception as e:
+            log.exception(e)
+            return None
+        
+        
+    async def get_project_allowed_models_ids_by_id(self, id: str, db: Optional[AsyncSession] = None) -> list[str]:
+        async with get_async_db_context(db) as db:
+            result = await db.execute(select(Project.allowed_model_ids).filter_by(id=id))
+            allowed_model_ids = result.scalar()
+            return allowed_model_ids if allowed_model_ids else []
+    
+    async def add_allowed_model_ids_to_project(
+        self,
+        id: str,
+        model_ids: Optional[list[str]] = None,
+        db: Optional[AsyncSession] = None,
+    ) -> Optional[ProjectModel]:
+        try:
+            async with get_async_db_context(db) as db:
+                result = await db.execute(select(Project).filter_by(id=id))
+                project = result.scalars().first()
+                if not project:
+                    return None
+
+                existing_model_ids = set(project.allowed_model_ids or [])
+                new_model_ids = set(model_ids or [])
+                updated_model_ids = list(existing_model_ids.union(new_model_ids))
+
+                await db.execute(
+                    update(Project)
+                    .filter_by(id=id)
+                    .values(allowed_model_ids=updated_model_ids, updated_at=int(time.time()))
+                )
+                await db.commit()
+
+                await db.refresh(project)
+                return ProjectModel.model_validate(project)
+
+        except Exception as e:
+            log.exception(e)
+            return None
+        
+    async def remove_allowed_model_ids_from_project(
+        self,
+        id: str,
+        model_ids: Optional[list[str]] = None,
+        db: Optional[AsyncSession] = None,
+    ) -> Optional[ProjectModel]:
+        try:
+            async with get_async_db_context(db) as db:
+                result = await db.execute(select(Project).filter_by(id=id))
+                project = result.scalars().first()
+                if not project:
+                    return None
+
+                existing_model_ids = set(project.allowed_model_ids or [])
+                model_ids_to_remove = set(model_ids or [])
+                updated_model_ids = list(existing_model_ids.difference(model_ids_to_remove))
+
+                await db.execute(
+                    update(Project)
+                    .filter_by(id=id)
+                    .values(allowed_model_ids=updated_model_ids, updated_at=int(time.time()))
+                )
+                await db.commit()
+
                 await db.refresh(project)
                 return ProjectModel.model_validate(project)
 
