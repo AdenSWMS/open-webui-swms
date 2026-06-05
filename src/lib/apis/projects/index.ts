@@ -68,6 +68,38 @@ export const getProjects = async (token: string = '', share?: boolean) => {
 	return res;
 };
 
+export async function getProjectByUser(token: string) {
+	let error = null;
+
+	const res = await fetch(`${WEBUI_API_BASE_URL}/projects/`, {
+		method: 'GET',
+		cache: 'no-store',
+		headers: {
+			Accept: 'application/json',
+			'Content-Type': 'application/json',
+			authorization: `Bearer ${token}`
+		}
+	})
+		.then(async (res) => {
+			if (!res.ok) throw await res.json();
+			return res.json();
+		})
+		.then((json) => {
+			return json;
+		})
+		.catch((err) => {
+			error = err.detail;
+			console.error(err);
+			return null;
+		});
+
+	if (error) {
+		throw error;
+	}
+
+	return res;
+};
+
 export const getProjectById = async (token: string, id: string) => {
 	let error = null;
 
@@ -246,6 +278,108 @@ export const removeUserFromProject = async (token: string, id: string, userIds: 
 		},
 		body: JSON.stringify({
 			user_ids: userIds
+		})
+	})
+		.then(async (res) => {
+			if (!res.ok) throw await res.json();
+			return res.json();
+		})
+		.then((json) => {
+			return json;
+		})
+		.catch((err) => {
+			error = err.detail;
+
+			console.error(err);
+			return null;
+		});
+
+	if (error) {
+		throw error;
+	}
+
+	return res;
+};
+
+export const getAllowedModelsOfProject = async (token: string, id: string) => {
+	let error = null;
+	
+	const res = await fetch(`${WEBUI_API_BASE_URL}/projects/id/${id}/allowed_models`, {
+		method: 'GET',
+		headers: {
+			Accept: 'application/json',
+			'Content-Type': 'application/json',
+			authorization: `Bearer ${token}`
+		}
+	})
+		.then(async (res) => {
+			if (!res.ok) throw await res.json();
+			return res.json();
+		})
+		.then((json) => {
+			return json;
+		})
+		.catch((err) => {
+			error = err.detail;
+
+			console.error(err);
+			return null;
+		});
+
+	if (error) {
+		throw error;
+	}
+
+	return res;
+};
+
+export const addAllowedModelsToProject = async (token: string, id: string, modelIds: string[]) => {
+	let error = null;
+	
+	const res = await fetch(`${WEBUI_API_BASE_URL}/projects/id/${id}/allowed_models/add`, {
+		method: 'POST',
+		headers: {
+			Accept: 'application/json',
+			'Content-Type': 'application/json',
+			authorization: `Bearer ${token}`
+		},
+		body: JSON.stringify({
+			model_ids: modelIds
+		})
+	})
+		.then(async (res) => {
+			if (!res.ok) throw await res.json();
+			return res.json();
+		})
+		.then((json) => {
+			return json;
+		})
+		.catch((err) => {
+			error = err.detail;
+
+			console.error(err);
+			return null;
+		});
+
+	if (error) {
+		throw error;
+	}
+
+	return res;
+};
+
+export const removeAllowedModelsFromProject = async (token: string, id: string, modelIds: string[]) => {
+	let error = null;
+	
+	const res = await fetch(`${WEBUI_API_BASE_URL}/projects/id/${id}/allowed_models/remove`, {
+		method: 'POST',
+		headers: {
+			Accept: 'application/json',
+			'Content-Type': 'application/json',
+			authorization: `Bearer ${token}`
+		},
+		body: JSON.stringify({
+			model_ids: modelIds
 		})
 	})
 		.then(async (res) => {

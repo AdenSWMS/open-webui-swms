@@ -5,6 +5,8 @@ import io
 import logging
 import time
 from typing import Optional
+from open_webui.models.projects import Projects
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 from fastapi.responses import FileResponse, Response, StreamingResponse
@@ -15,8 +17,10 @@ from open_webui.models.auths import Auths
 from open_webui.models.groups import Groups
 from open_webui.models.oauth_sessions import OAuthSessions
 from open_webui.models.users import (
-    UserGroupIdsListResponse,
-    UserGroupIdsModel,
+    UserModel,
+    UserGroupAndProjectIdsModel,
+    UserGroupAndProjectIdsListResponse,
+    UserInfoResponse,
     UserInfoListResponse,
     UserInfoResponse,
     UserModel,
@@ -56,7 +60,7 @@ router = APIRouter()
 PAGE_ITEM_COUNT = 30
 
 
-@router.get('/', response_model=UserGroupIdsListResponse)
+@router.get('/', response_model=UserGroupAndProjectIdsListResponse)
 async def get_users(
     query: str | None = None,
     order_by: str | None = None,
@@ -88,13 +92,15 @@ async def get_users(
     # Fetch groups for all users in a single query to avoid N+1
     user_ids = [user.id for user in users]
     user_groups = await Groups.get_groups_by_member_ids(user_ids, db=db)
-
+    user_projects = await Projects.get_projects_by_member_ids(user_ids, db=db)
+    
     return {
         'users': [
-            UserGroupIdsModel(
+            UserGroupAndProjectIdsModel(
                 **{
                     **user.model_dump(),
                     'group_ids': [group.id for group in user_groups.get(user.id, [])],
+                    'project_ids': [project.id for project in user_projects.get(user.id, [])],
                 }
             )
             for user in users

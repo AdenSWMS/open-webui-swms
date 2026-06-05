@@ -52,6 +52,8 @@
 	export let selectedModels;
 	export let showModelSelector = true;
 
+	export let selectedProject;
+
 	export let onSaveTempChat: () => {};
 	export let archiveChatHandler: (id: string) => void;
 	export let deleteChatHandler: (id: string) => void;

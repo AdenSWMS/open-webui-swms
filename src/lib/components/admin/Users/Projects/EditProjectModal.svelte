@@ -7,8 +7,10 @@
 	import Modal from '$lib/components/common/Modal.svelte';
 	import General from './General.svelte';
 	import Permissions from './Permissions.svelte';
+	import AllowedModels from './AllowedModels.svelte';
 	import Users from './Users.svelte';
 	import { DEFAULT_PERMISSIONS } from '$lib/constants/permissions';
+	import { DEFAULT_ALLOWED_MODELS } from '$lib/constants/allowed_models';
 	import UserPlusSolid from '$lib/components/icons/UserPlusSolid.svelte';
 	import WrenchSolid from '$lib/components/icons/WrenchSolid.svelte';
 	import ConfirmDialog from '$lib/components/common/ConfirmDialog.svelte';
@@ -16,6 +18,9 @@
 
 	export let onSubmit: Function = () => {};
 	export let onDelete: Function = () => {};
+
+	export let onAddAllowedModel: Function = () => {};
+	export let onRemoveAllowedModel: Function = () => {};
 
 	export let show = false;
 	export let edit = false;
@@ -25,7 +30,7 @@
 
 	export let custom = true;
 
-	export let tabs = ['general', 'permissions', 'users'];
+	export let tabs = ['general', 'permissions', 'allowed_models', 'users'];
 
 	let selectedTab = 'general';
 	let loading = false;
@@ -38,6 +43,7 @@
 	export let data = {};
 
 	export let permissions = DEFAULT_PERMISSIONS;
+	export let allowedModelIds = DEFAULT_ALLOWED_MODELS.model_ids;
 
 	const submitHandler = async () => {
 		loading = true;
@@ -46,7 +52,8 @@
 			name,
 			description,
 			data,
-			permissions
+			permissions,
+			allowed_model_ids: allowedModelIds
 		};
 
 		await onSubmit(project);
@@ -54,7 +61,7 @@
 		loading = false;
 		show = false;
 	};
-
+		
 	const init = () => {
 		if (project) {
 			name = project.name;
@@ -70,6 +77,7 @@
 				settings: { ...DEFAULT_PERMISSIONS.settings, ...loadedPermissions.settings }
 			};
 			data = project?.data ?? {};
+			allowedModelIds = project?.allowed_model_ids ?? DEFAULT_ALLOWED_MODELS.model_ids;
 
 			userCount = project?.member_count ?? 0;
 		}
@@ -99,9 +107,9 @@
 			<div class=" text-lg font-medium self-center font-primary">
 				{#if custom}
 					{#if edit}
-						{$i18n.t('Edit User Project')}
+						{$i18n.t('Edit Project')}
 					{:else}
-						{$i18n.t('Add User Project')}
+						{$i18n.t('Add Project')}
 					{/if}
 				{:else}
 					{$i18n.t('Edit Default Permissions')}
@@ -178,6 +186,24 @@
 								</button>
 							{/if}
 
+							{#if tabs.includes('allowed_models')}
+								<button
+									class="px-0.5 py-1 max-w-fit w-fit rounded-lg flex-1 lg:flex-none flex text-right transition {selectedTab ===
+									'allowed_models'
+										? ''
+										: ' text-gray-300 dark:text-gray-600 hover:text-gray-700 dark:hover:text-white'}"
+									on:click={() => {
+										selectedTab = 'allowed_models';
+									}}
+									type="button"
+								>
+									<div class=" self-center mr-2">
+										<WrenchSolid />
+									</div>
+									<div class=" self-center">{$i18n.t('Allowed Models')}</div>
+								</button>
+							{/if}
+
 							{#if tabs.includes('users')}
 								<button
 									class="px-0.5 py-1 max-w-fit w-fit rounded-lg flex-1 lg:flex-none flex text-right transition {selectedTab ===
@@ -211,12 +237,18 @@
 									/>
 								{:else if selectedTab == 'permissions'}
 									<Permissions bind:permissions {defaultPermissions} />
+								{:else if selectedTab == 'allowed_models'}
+									<AllowedModels bind:allowedModelIds
+														projectId={project?.id}
+														onAdd={(modelId) => onAddAllowedModel(project?.id, modelId)}
+														onRemove={(modelId) => onRemoveAllowedModel(project?.id, modelId)}
+													/>
 								{:else if selectedTab == 'users'}
 									<Users bind:userCount projectId={project?.id} />
 								{/if}
 							</div>
 
-							{#if ['general', 'permissions'].includes(selectedTab)}
+							{#if ['general', 'permissions', 'allowed_models', 'users'].includes(selectedTab)}
 								<div class="flex justify-end pt-3 text-sm font-medium gap-1.5">
 									<button
 										class="px-3.5 py-1.5 text-sm font-medium bg-black hover:bg-gray-900 text-white dark:bg-white dark:text-black dark:hover:bg-gray-100 transition rounded-full flex items-center gap-2 whitespace-nowrap {loading
