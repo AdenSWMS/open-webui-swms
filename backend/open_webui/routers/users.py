@@ -6,6 +6,7 @@ import logging
 import time
 from typing import Optional
 from open_webui.models.projects import Projects
+from open_webui.models.projects import Projects
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from fastapi import APIRouter, Depends, HTTPException, Request, status
@@ -18,6 +19,8 @@ from open_webui.models.groups import Groups
 from open_webui.models.oauth_sessions import OAuthSessions
 from open_webui.models.users import (
     UserModel,
+    UserGroupAndProjectIdsModel,
+    UserGroupAndProjectIdsListResponse,
     UserGroupAndProjectIdsModel,
     UserGroupAndProjectIdsListResponse,
     UserInfoResponse,
