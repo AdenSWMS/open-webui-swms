@@ -149,7 +149,7 @@
 	<EditProjectModal
 		bind:show={showAddProjectModal}
 		edit={false}
-		tabs={['general', 'permissions', 'allowedModels', 'users']}
+		tabs={['general', 'permissions', 'allowed_models']}
 		permissions={defaultPermissions}
 		onSubmit={addProjectHandler}
 		onAddAllowedModel={addAllowedModelHandler}
