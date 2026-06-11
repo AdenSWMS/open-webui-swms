@@ -840,6 +840,12 @@ EXTERNAL_PWA_MANIFEST_URL = os.getenv('EXTERNAL_PWA_MANIFEST_URL', None)
 _default_group_share = os.getenv('DEFAULT_GROUP_SHARE_PERMISSION', 'members').strip().lower()
 DEFAULT_GROUP_SHARE_PERMISSION = 'members' if _default_group_share == 'members' else _default_group_share == 'true'
 
+# Controls the default "Who can share to this group" setting for new groups.
+# Env var values: "true" (anyone), "false" (no one), "members" (only group members).
+_default_project_share = os.getenv('DEFAULT_PROJECT_SHARE_PERMISSION', 'members').strip().lower()
+DEFAULT_PROJECT_SHARE_PERMISSION = 'members' if _default_project_share == 'members' else _default_project_share == 'true'
+
+
 ####################################
 # MODELS
 ####################################

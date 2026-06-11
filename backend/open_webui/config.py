@@ -111,13 +111,13 @@ logging.getLogger('uvicorn.access').addFilter(EndpointFilter())
 # Initialization
 ####################################
 
-ENABLE_API_KEYS = PersistentConfig(
+ENABLE_API_KEYS = ConfigVar(
     'ENABLE_API_KEYS',
     'auth.enable_api_keys',
     os.environ.get('ENABLE_API_KEYS', 'False').lower() == 'true',
 )
 
-ENABLE_API_KEYS_ENDPOINT_RESTRICTIONS = PersistentConfig(
+ENABLE_API_KEYS_ENDPOINT_RESTRICTIONS = ConfigVar(
     'ENABLE_API_KEYS_ENDPOINT_RESTRICTIONS',
     'auth.api_key.endpoint_restrictions',
     os.environ.get(
@@ -127,13 +127,13 @@ ENABLE_API_KEYS_ENDPOINT_RESTRICTIONS = PersistentConfig(
     == 'true',
 )
 
-API_KEYS_ALLOWED_ENDPOINTS = PersistentConfig(
+API_KEYS_ALLOWED_ENDPOINTS = ConfigVar(
     'API_KEYS_ALLOWED_ENDPOINTS',
     'auth.api_key.allowed_endpoints',
     os.environ.get('API_KEYS_ALLOWED_ENDPOINTS', os.environ.get('API_KEY_ALLOWED_ENDPOINTS', '')),
 )
 
-JWT_EXPIRES_IN = PersistentConfig('JWT_EXPIRES_IN', 'auth.jwt_expiry', os.environ.get('JWT_EXPIRES_IN', '4w'))
+JWT_EXPIRES_IN = ConfigVar('JWT_EXPIRES_IN', 'auth.jwt_expiry', os.environ.get('JWT_EXPIRES_IN', '4w'))
 
 if JWT_EXPIRES_IN.value == '-1':
     log.warning(
@@ -147,20 +147,20 @@ if JWT_EXPIRES_IN.value == '-1':
 
 ENABLE_OAUTH_PERSISTENT_CONFIG = os.environ.get('ENABLE_OAUTH_PERSISTENT_CONFIG', 'False').lower() == 'true'
 
-ENABLE_OAUTH_SIGNUP = PersistentConfig(
+ENABLE_OAUTH_SIGNUP = ConfigVar(
     'ENABLE_OAUTH_SIGNUP',
     'oauth.enable_signup',
     os.environ.get('ENABLE_OAUTH_SIGNUP', 'False').lower() == 'true',
 )
 
-OAUTH_REFRESH_TOKEN_INCLUDE_SCOPE = PersistentConfig(
+OAUTH_REFRESH_TOKEN_INCLUDE_SCOPE = ConfigVar(
     'OAUTH_REFRESH_TOKEN_INCLUDE_SCOPE',
     'oauth.refresh_token_include_scope',
     os.environ.get('OAUTH_REFRESH_TOKEN_INCLUDE_SCOPE', 'False').lower() == 'true',
 )
 
 
-OAUTH_MERGE_ACCOUNTS_BY_EMAIL = PersistentConfig(
+OAUTH_MERGE_ACCOUNTS_BY_EMAIL = ConfigVar(
     'OAUTH_MERGE_ACCOUNTS_BY_EMAIL',
     'oauth.merge_accounts_by_email',
     os.environ.get('OAUTH_MERGE_ACCOUNTS_BY_EMAIL', 'False').lower() == 'true',
@@ -168,26 +168,26 @@ OAUTH_MERGE_ACCOUNTS_BY_EMAIL = PersistentConfig(
 
 OAUTH_PROVIDERS = {}
 
-GOOGLE_CLIENT_ID = PersistentConfig(
+GOOGLE_CLIENT_ID = ConfigVar(
     'GOOGLE_CLIENT_ID',
     'oauth.google.client_id',
     os.environ.get('GOOGLE_CLIENT_ID', ''),
 )
 
-GOOGLE_CLIENT_SECRET = PersistentConfig(
+GOOGLE_CLIENT_SECRET = ConfigVar(
     'GOOGLE_CLIENT_SECRET',
     'oauth.google.client_secret',
     os.environ.get('GOOGLE_CLIENT_SECRET', ''),
 )
 
 
-GOOGLE_OAUTH_SCOPE = PersistentConfig(
+GOOGLE_OAUTH_SCOPE = ConfigVar(
     'GOOGLE_OAUTH_SCOPE',
     'oauth.google.scope',
     os.environ.get('GOOGLE_OAUTH_SCOPE', 'openid email profile'),
 )
 
-GOOGLE_REDIRECT_URI = PersistentConfig(
+GOOGLE_REDIRECT_URI = ConfigVar(
     'GOOGLE_REDIRECT_URI',
     'oauth.google.redirect_uri',
     os.environ.get('GOOGLE_REDIRECT_URI', ''),
@@ -205,31 +205,31 @@ if _google_oauth_authorize_params:
     except (json.JSONDecodeError, TypeError):
         log.warning('GOOGLE_OAUTH_AUTHORIZE_PARAMS is not valid JSON, ignoring')
 
-MICROSOFT_CLIENT_ID = PersistentConfig(
+MICROSOFT_CLIENT_ID = ConfigVar(
     'MICROSOFT_CLIENT_ID',
     'oauth.microsoft.client_id',
     os.environ.get('MICROSOFT_CLIENT_ID', ''),
 )
 
-MICROSOFT_CLIENT_SECRET = PersistentConfig(
+MICROSOFT_CLIENT_SECRET = ConfigVar(
     'MICROSOFT_CLIENT_SECRET',
     'oauth.microsoft.client_secret',
     os.environ.get('MICROSOFT_CLIENT_SECRET', ''),
 )
 
-MICROSOFT_CLIENT_TENANT_ID = PersistentConfig(
+MICROSOFT_CLIENT_TENANT_ID = ConfigVar(
     'MICROSOFT_CLIENT_TENANT_ID',
     'oauth.microsoft.tenant_id',
     os.environ.get('MICROSOFT_CLIENT_TENANT_ID', ''),
 )
 
-MICROSOFT_CLIENT_LOGIN_BASE_URL = PersistentConfig(
+MICROSOFT_CLIENT_LOGIN_BASE_URL = ConfigVar(
     'MICROSOFT_CLIENT_LOGIN_BASE_URL',
     'oauth.microsoft.login_base_url',
     os.environ.get('MICROSOFT_CLIENT_LOGIN_BASE_URL', 'https://login.microsoftonline.com'),
 )
 
-MICROSOFT_CLIENT_PICTURE_URL = PersistentConfig(
+MICROSOFT_CLIENT_PICTURE_URL = ConfigVar(
     'MICROSOFT_CLIENT_PICTURE_URL',
     'oauth.microsoft.picture_url',
     os.environ.get(
@@ -239,176 +239,176 @@ MICROSOFT_CLIENT_PICTURE_URL = PersistentConfig(
 )
 
 
-MICROSOFT_OAUTH_SCOPE = PersistentConfig(
+MICROSOFT_OAUTH_SCOPE = ConfigVar(
     'MICROSOFT_OAUTH_SCOPE',
     'oauth.microsoft.scope',
     os.environ.get('MICROSOFT_OAUTH_SCOPE', 'openid email profile'),
 )
 
-MICROSOFT_REDIRECT_URI = PersistentConfig(
+MICROSOFT_REDIRECT_URI = ConfigVar(
     'MICROSOFT_REDIRECT_URI',
     'oauth.microsoft.redirect_uri',
     os.environ.get('MICROSOFT_REDIRECT_URI', ''),
 )
 
-GITHUB_CLIENT_ID = PersistentConfig(
+GITHUB_CLIENT_ID = ConfigVar(
     'GITHUB_CLIENT_ID',
     'oauth.github.client_id',
     os.environ.get('GITHUB_CLIENT_ID', ''),
 )
 
-GITHUB_CLIENT_SECRET = PersistentConfig(
+GITHUB_CLIENT_SECRET = ConfigVar(
     'GITHUB_CLIENT_SECRET',
     'oauth.github.client_secret',
     os.environ.get('GITHUB_CLIENT_SECRET', ''),
 )
 
-GITHUB_CLIENT_SCOPE = PersistentConfig(
+GITHUB_CLIENT_SCOPE = ConfigVar(
     'GITHUB_CLIENT_SCOPE',
     'oauth.github.scope',
     os.environ.get('GITHUB_CLIENT_SCOPE', 'user:email'),
 )
 
-GITHUB_CLIENT_REDIRECT_URI = PersistentConfig(
+GITHUB_CLIENT_REDIRECT_URI = ConfigVar(
     'GITHUB_CLIENT_REDIRECT_URI',
     'oauth.github.redirect_uri',
     os.environ.get('GITHUB_CLIENT_REDIRECT_URI', ''),
 )
 
-OAUTH_CLIENT_ID = PersistentConfig(
+OAUTH_CLIENT_ID = ConfigVar(
     'OAUTH_CLIENT_ID',
     'oauth.oidc.client_id',
     os.environ.get('OAUTH_CLIENT_ID', ''),
 )
 
-OAUTH_CLIENT_SECRET = PersistentConfig(
+OAUTH_CLIENT_SECRET = ConfigVar(
     'OAUTH_CLIENT_SECRET',
     'oauth.oidc.client_secret',
     os.environ.get('OAUTH_CLIENT_SECRET', ''),
 )
 
-OPENID_PROVIDER_URL = PersistentConfig(
+OPENID_PROVIDER_URL = ConfigVar(
     'OPENID_PROVIDER_URL',
     'oauth.oidc.provider_url',
     os.environ.get('OPENID_PROVIDER_URL', ''),
 )
 
-OPENID_END_SESSION_ENDPOINT = PersistentConfig(
+OPENID_END_SESSION_ENDPOINT = ConfigVar(
     'OPENID_END_SESSION_ENDPOINT',
     'oauth.oidc.end_session_endpoint',
     os.environ.get('OPENID_END_SESSION_ENDPOINT', ''),
 )
 
-OPENID_REDIRECT_URI = PersistentConfig(
+OPENID_REDIRECT_URI = ConfigVar(
     'OPENID_REDIRECT_URI',
     'oauth.oidc.redirect_uri',
     os.environ.get('OPENID_REDIRECT_URI', ''),
 )
 
-OAUTH_SCOPES = PersistentConfig(
+OAUTH_SCOPES = ConfigVar(
     'OAUTH_SCOPES',
     'oauth.oidc.scopes',
     os.environ.get('OAUTH_SCOPES', 'openid email profile'),
 )
 
-OAUTH_TIMEOUT = PersistentConfig(
+OAUTH_TIMEOUT = ConfigVar(
     'OAUTH_TIMEOUT',
     'oauth.oidc.oauth_timeout',
     os.environ.get('OAUTH_TIMEOUT', ''),
 )
 
-OAUTH_TOKEN_ENDPOINT_AUTH_METHOD = PersistentConfig(
+OAUTH_TOKEN_ENDPOINT_AUTH_METHOD = ConfigVar(
     'OAUTH_TOKEN_ENDPOINT_AUTH_METHOD',
     'oauth.oidc.token_endpoint_auth_method',
     os.environ.get('OAUTH_TOKEN_ENDPOINT_AUTH_METHOD', None),
 )
 
-OAUTH_CODE_CHALLENGE_METHOD = PersistentConfig(
+OAUTH_CODE_CHALLENGE_METHOD = ConfigVar(
     'OAUTH_CODE_CHALLENGE_METHOD',
     'oauth.oidc.code_challenge_method',
     os.environ.get('OAUTH_CODE_CHALLENGE_METHOD', None),
 )
 
-OAUTH_PROVIDER_NAME = PersistentConfig(
+OAUTH_PROVIDER_NAME = ConfigVar(
     'OAUTH_PROVIDER_NAME',
     'oauth.oidc.provider_name',
     os.environ.get('OAUTH_PROVIDER_NAME', 'SSO'),
 )
 
-OAUTH_SUB_CLAIM = PersistentConfig(
+OAUTH_SUB_CLAIM = ConfigVar(
     'OAUTH_SUB_CLAIM',
     'oauth.oidc.sub_claim',
     os.environ.get('OAUTH_SUB_CLAIM', None),
 )
 
-OAUTH_USERNAME_CLAIM = PersistentConfig(
+OAUTH_USERNAME_CLAIM = ConfigVar(
     'OAUTH_USERNAME_CLAIM',
     'oauth.oidc.username_claim',
     os.environ.get('OAUTH_USERNAME_CLAIM', 'name'),
 )
 
 
-OAUTH_PICTURE_CLAIM = PersistentConfig(
+OAUTH_PICTURE_CLAIM = ConfigVar(
     'OAUTH_PICTURE_CLAIM',
     'oauth.oidc.avatar_claim',
     os.environ.get('OAUTH_PICTURE_CLAIM', 'picture'),
 )
 
-OAUTH_EMAIL_CLAIM = PersistentConfig(
+OAUTH_EMAIL_CLAIM = ConfigVar(
     'OAUTH_EMAIL_CLAIM',
     'oauth.oidc.email_claim',
     os.environ.get('OAUTH_EMAIL_CLAIM', 'email'),
 )
 
-OAUTH_GROUPS_CLAIM = PersistentConfig(
+OAUTH_GROUPS_CLAIM = ConfigVar(
     'OAUTH_GROUPS_CLAIM',
     'oauth.oidc.group_claim',
     os.environ.get('OAUTH_GROUPS_CLAIM', os.environ.get('OAUTH_GROUP_CLAIM', 'groups')),
 )
 
-OAUTH_PROJECTS_CLAIM = PersistentConfig(
+OAUTH_PROJECTS_CLAIM = ConfigVar(
     'OAUTH_PROJECTS_CLAIM',
     'oauth.oidc.project_claim',
     os.environ.get('OAUTH_PROJECTS_CLAIM', 'projects'),
 )
 
-FEISHU_CLIENT_ID = PersistentConfig(
+FEISHU_CLIENT_ID = ConfigVar(
     'FEISHU_CLIENT_ID',
     'oauth.feishu.client_id',
     os.environ.get('FEISHU_CLIENT_ID', ''),
 )
 
-FEISHU_CLIENT_SECRET = PersistentConfig(
+FEISHU_CLIENT_SECRET = ConfigVar(
     'FEISHU_CLIENT_SECRET',
     'oauth.feishu.client_secret',
     os.environ.get('FEISHU_CLIENT_SECRET', ''),
 )
 
-FEISHU_OAUTH_SCOPE = PersistentConfig(
+FEISHU_OAUTH_SCOPE = ConfigVar(
     'FEISHU_OAUTH_SCOPE',
     'oauth.feishu.scope',
     os.environ.get('FEISHU_OAUTH_SCOPE', 'contact:user.base:readonly'),
 )
 
-FEISHU_REDIRECT_URI = PersistentConfig(
+FEISHU_REDIRECT_URI = ConfigVar(
     'FEISHU_REDIRECT_URI',
     'oauth.feishu.redirect_uri',
     os.environ.get('FEISHU_REDIRECT_URI', ''),
 )
 
-ENABLE_OAUTH_ROLE_MANAGEMENT = PersistentConfig(
+ENABLE_OAUTH_ROLE_MANAGEMENT = ConfigVar(
     'ENABLE_OAUTH_ROLE_MANAGEMENT',
     'oauth.enable_role_mapping',
     os.environ.get('ENABLE_OAUTH_ROLE_MANAGEMENT', 'False').lower() == 'true',
 )
 
-ENABLE_OAUTH_GROUP_MANAGEMENT = PersistentConfig(
+ENABLE_OAUTH_GROUP_MANAGEMENT = ConfigVar(
     'ENABLE_OAUTH_GROUP_MANAGEMENT',
     'oauth.enable_group_mapping',
     os.environ.get('ENABLE_OAUTH_GROUP_MANAGEMENT', 'False').lower() == 'true',
 )
 
-ENABLE_OAUTH_GROUP_CREATION = PersistentConfig(
+ENABLE_OAUTH_GROUP_CREATION = ConfigVar(
     'ENABLE_OAUTH_GROUP_CREATION',
     'oauth.enable_group_creation',
     os.environ.get('ENABLE_OAUTH_GROUP_CREATION', 'False').lower() == 'true',
@@ -416,13 +416,13 @@ ENABLE_OAUTH_GROUP_CREATION = PersistentConfig(
 
 
 oauth_group_default_share = os.environ.get('OAUTH_GROUP_DEFAULT_SHARE', 'true').strip().lower()
-OAUTH_GROUP_DEFAULT_SHARE = PersistentConfig(
+OAUTH_GROUP_DEFAULT_SHARE = ConfigVar(
     'OAUTH_GROUP_DEFAULT_SHARE',
     'oauth.group_default_share',
     ('members' if oauth_group_default_share == 'members' else oauth_group_default_share == 'true'),
 )
 
-OAUTH_BLOCKED_GROUPS = PersistentConfig(
+OAUTH_BLOCKED_GROUPS = ConfigVar(
     'OAUTH_BLOCKED_GROUPS',
     'oauth.blocked_groups',
     os.environ.get('OAUTH_BLOCKED_GROUPS', '[]'),
@@ -430,13 +430,13 @@ OAUTH_BLOCKED_GROUPS = PersistentConfig(
 
 OAUTH_GROUPS_SEPARATOR = os.environ.get('OAUTH_GROUPS_SEPARATOR', ';')
 
-ENABLE_OAUTH_PROJECT_MANAGEMENT = PersistentConfig(
+ENABLE_OAUTH_PROJECT_MANAGEMENT = ConfigVar(
     'ENABLE_OAUTH_PROJECT_MANAGEMENT',
     'oauth.enable_project_mapping',
     os.environ.get('ENABLE_OAUTH_PROJECT_MANAGEMENT', 'False').lower() == 'true',
 )
 
-ENABLE_OAUTH_PROJECT_CREATION = PersistentConfig(
+ENABLE_OAUTH_PROJECT_CREATION = ConfigVar(
     'ENABLE_OAUTH_PROJECT_CREATION',
     'oauth.enable_project_creation',
     os.environ.get('ENABLE_OAUTH_PROJECT_CREATION', 'False').lower() == 'true',
@@ -444,14 +444,14 @@ ENABLE_OAUTH_PROJECT_CREATION = PersistentConfig(
 
 
 oauth_project_default_share = os.environ.get('OAUTH_PROJECT_DEFAULT_SHARE', 'true').strip().lower()
-OAUTH_PROJECT_DEFAULT_SHARE = PersistentConfig(
+OAUTH_PROJECT_DEFAULT_SHARE = ConfigVar(
     'OAUTH_PROJECT_DEFAULT_SHARE',
     'oauth.project_default_share',
     ('members' if oauth_project_default_share == 'members' else oauth_project_default_share == 'true'),
 )
 
 
-OAUTH_BLOCKED_PROJECTS = PersistentConfig(
+OAUTH_BLOCKED_PROJECTS = ConfigVar(
     'OAUTH_BLOCKED_PROJECTS',
     'oauth.blocked_projects',
     os.environ.get('OAUTH_BLOCKED_PROJECTS', '[]'),
@@ -459,7 +459,7 @@ OAUTH_BLOCKED_PROJECTS = PersistentConfig(
 
 OAUTH_PROJECTS_SEPARATOR = os.environ.get('OAUTH_PROJECTS_SEPARATOR', ';')
 
-OAUTH_ROLES_CLAIM = PersistentConfig(
+OAUTH_ROLES_CLAIM = ConfigVar(
     'OAUTH_ROLES_CLAIM',
     'oauth.roles_claim',
     os.environ.get('OAUTH_ROLES_CLAIM', 'roles'),
@@ -467,7 +467,7 @@ OAUTH_ROLES_CLAIM = PersistentConfig(
 
 OAUTH_ROLES_SEPARATOR = os.environ.get('OAUTH_ROLES_SEPARATOR', ',')
 
-OAUTH_ALLOWED_ROLES = PersistentConfig(
+OAUTH_ALLOWED_ROLES = ConfigVar(
     'OAUTH_ALLOWED_ROLES',
     'oauth.allowed_roles',
     [
@@ -479,31 +479,31 @@ OAUTH_ALLOWED_ROLES = PersistentConfig(
     ],
 )
 
-OAUTH_ADMIN_ROLES = PersistentConfig(
+OAUTH_ADMIN_ROLES = ConfigVar(
     'OAUTH_ADMIN_ROLES',
     'oauth.admin_roles',
     [role.strip() for role in os.environ.get('OAUTH_ADMIN_ROLES', 'admin').split(OAUTH_ROLES_SEPARATOR) if role],
 )
 
-OAUTH_ALLOWED_DOMAINS = PersistentConfig(
+OAUTH_ALLOWED_DOMAINS = ConfigVar(
     'OAUTH_ALLOWED_DOMAINS',
     'oauth.allowed_domains',
     [domain.strip() for domain in os.environ.get('OAUTH_ALLOWED_DOMAINS', '*').split(',')],
 )
 
-OAUTH_UPDATE_PICTURE_ON_LOGIN = PersistentConfig(
+OAUTH_UPDATE_PICTURE_ON_LOGIN = ConfigVar(
     'OAUTH_UPDATE_PICTURE_ON_LOGIN',
     'oauth.update_picture_on_login',
     os.environ.get('OAUTH_UPDATE_PICTURE_ON_LOGIN', 'False').lower() == 'true',
 )
 
-OAUTH_UPDATE_NAME_ON_LOGIN = PersistentConfig(
+OAUTH_UPDATE_NAME_ON_LOGIN = ConfigVar(
     'OAUTH_UPDATE_NAME_ON_LOGIN',
     'oauth.update_name_on_login',
     os.environ.get('OAUTH_UPDATE_NAME_ON_LOGIN', 'False').lower() == 'true',
 )
 
-OAUTH_UPDATE_EMAIL_ON_LOGIN = PersistentConfig(
+OAUTH_UPDATE_EMAIL_ON_LOGIN = ConfigVar(
     'OAUTH_UPDATE_EMAIL_ON_LOGIN',
     'oauth.update_email_on_login',
     os.environ.get('OAUTH_UPDATE_EMAIL_ON_LOGIN', 'False').lower() == 'true',
@@ -513,7 +513,7 @@ OAUTH_ACCESS_TOKEN_REQUEST_INCLUDE_CLIENT_ID = (
     os.environ.get('OAUTH_ACCESS_TOKEN_REQUEST_INCLUDE_CLIENT_ID', 'False').lower() == 'true'
 )
 
-OAUTH_AUDIENCE = PersistentConfig(
+OAUTH_AUDIENCE = ConfigVar(
     'OAUTH_AUDIENCE',
     'oauth.audience',
     os.environ.get('OAUTH_AUDIENCE', ''),
@@ -1012,22 +1012,22 @@ except Exception:
 ####################################
 
 
-WEBUI_URL = PersistentConfig('WEBUI_URL', 'webui.url', os.environ.get('WEBUI_URL', ''))
+WEBUI_URL = ConfigVar('WEBUI_URL', 'webui.url', os.environ.get('WEBUI_URL', ''))
 
 
-ENABLE_SIGNUP = PersistentConfig(
+ENABLE_SIGNUP = ConfigVar(
     'ENABLE_SIGNUP',
     'ui.enable_signup',
     (False if not WEBUI_AUTH else os.environ.get('ENABLE_SIGNUP', 'True').lower() == 'true'),
 )
 
-ENABLE_LOGIN_FORM = PersistentConfig(
+ENABLE_LOGIN_FORM = ConfigVar(
     'ENABLE_LOGIN_FORM',
     'ui.enable_login_form',
     os.environ.get('ENABLE_LOGIN_FORM', 'True').lower() == 'true',
 )
 
-ENABLE_PASSWORD_CHANGE_FORM = PersistentConfig(
+ENABLE_PASSWORD_CHANGE_FORM = ConfigVar(
     'ENABLE_PASSWORD_CHANGE_FORM',
     'ui.enable_password_change_form',
     os.environ.get('ENABLE_PASSWORD_CHANGE_FORM', 'True').lower() == 'true',
@@ -1035,15 +1035,15 @@ ENABLE_PASSWORD_CHANGE_FORM = PersistentConfig(
 
 ENABLE_PASSWORD_AUTH = os.environ.get('ENABLE_PASSWORD_AUTH', 'True').lower() == 'true'
 
-DEFAULT_LOCALE = PersistentConfig(
+DEFAULT_LOCALE = ConfigVar(
     'DEFAULT_LOCALE',
     'ui.default_locale',
     os.environ.get('DEFAULT_LOCALE', ''),
 )
 
-DEFAULT_MODELS = PersistentConfig('DEFAULT_MODELS', 'ui.default_models', os.environ.get('DEFAULT_MODELS', None))
+DEFAULT_MODELS = ConfigVar('DEFAULT_MODELS', 'ui.default_models', os.environ.get('DEFAULT_MODELS', None))
 
-DEFAULT_PINNED_MODELS = PersistentConfig(
+DEFAULT_PINNED_MODELS = ConfigVar(
     'DEFAULT_PINNED_MODELS',
     'ui.default_pinned_models',
     os.environ.get('DEFAULT_PINNED_MODELS', None),
@@ -1085,13 +1085,13 @@ if default_prompt_suggestions == []:
         },
     ]
 
-DEFAULT_PROMPT_SUGGESTIONS = PersistentConfig(
+DEFAULT_PROMPT_SUGGESTIONS = ConfigVar(
     'DEFAULT_PROMPT_SUGGESTIONS',
     'ui.prompt_suggestions',
     default_prompt_suggestions,
 )
 
-MODEL_ORDER_LIST = PersistentConfig(
+MODEL_ORDER_LIST = ConfigVar(
     'MODEL_ORDER_LIST',
     'ui.model_order_list',
     [],
@@ -1103,7 +1103,7 @@ except Exception as e:
     log.exception(f'Error loading DEFAULT_MODEL_METADATA: {e}')
     default_model_metadata = {}
 
-DEFAULT_MODEL_METADATA = PersistentConfig(
+DEFAULT_MODEL_METADATA = ConfigVar(
     'DEFAULT_MODEL_METADATA',
     'models.default_metadata',
     default_model_metadata,
@@ -1115,44 +1115,44 @@ except Exception as e:
     log.exception(f'Error loading DEFAULT_MODEL_PARAMS: {e}')
     default_model_params = {}
 
-DEFAULT_MODEL_PARAMS = PersistentConfig(
+DEFAULT_MODEL_PARAMS = ConfigVar(
     'DEFAULT_MODEL_PARAMS',
     'models.default_params',
     default_model_params,
 )
 
-DEFAULT_USER_ROLE = PersistentConfig(
+DEFAULT_USER_ROLE = ConfigVar(
     'DEFAULT_USER_ROLE',
     'ui.default_user_role',
     os.getenv('DEFAULT_USER_ROLE', 'pending'),
 )
 
-DEFAULT_GROUP_ID = PersistentConfig(
+DEFAULT_GROUP_ID = ConfigVar(
     'DEFAULT_GROUP_ID',
     'ui.default_group_id',
     os.environ.get('DEFAULT_GROUP_ID', ''),
 )
 
-DEFAULT_PROJECT_ID = PersistentConfig(
+DEFAULT_PROJECT_ID = ConfigVar(
     'DEFAULT_PROJECT_ID',
     'ui.default_project_id',
     os.environ.get('DEFAULT_PROJECT_ID', ''),
 )
 
-PENDING_USER_OVERLAY_TITLE = PersistentConfig(
+PENDING_USER_OVERLAY_TITLE = ConfigVar(
     'PENDING_USER_OVERLAY_TITLE',
     'ui.pending_user_overlay_title',
     os.environ.get('PENDING_USER_OVERLAY_TITLE', ''),
 )
 
-PENDING_USER_OVERLAY_CONTENT = PersistentConfig(
+PENDING_USER_OVERLAY_CONTENT = ConfigVar(
     'PENDING_USER_OVERLAY_CONTENT',
     'ui.pending_user_overlay_content',
     os.environ.get('PENDING_USER_OVERLAY_CONTENT', ''),
 )
 
 
-RESPONSE_WATERMARK = PersistentConfig(
+RESPONSE_WATERMARK = ConfigVar(
     'RESPONSE_WATERMARK',
     'ui.watermark',
     os.environ.get('RESPONSE_WATERMARK', ''),
@@ -1424,72 +1424,72 @@ DEFAULT_USER_PERMISSIONS = {
     },
 }
 
-USER_PERMISSIONS = PersistentConfig(
+USER_PERMISSIONS = ConfigVar(
     'USER_PERMISSIONS',
     'user.permissions',
     DEFAULT_USER_PERMISSIONS,
 )
 
-ENABLE_FOLDERS = PersistentConfig(
+ENABLE_FOLDERS = ConfigVar(
     'ENABLE_FOLDERS',
     'folders.enable',
     os.environ.get('ENABLE_FOLDERS', 'True').lower() == 'true',
 )
 
-FOLDER_MAX_FILE_COUNT = PersistentConfig(
+FOLDER_MAX_FILE_COUNT = ConfigVar(
     'FOLDER_MAX_FILE_COUNT',
     'folders.max_file_count',
     os.environ.get('FOLDER_MAX_FILE_COUNT', ''),
 )
 
-ENABLE_CHANNELS = PersistentConfig(
+ENABLE_CHANNELS = ConfigVar(
     'ENABLE_CHANNELS',
     'channels.enable',
     os.environ.get('ENABLE_CHANNELS', 'False').lower() == 'true',
 )
 
-ENABLE_CALENDAR = PersistentConfig(
+ENABLE_CALENDAR = ConfigVar(
     'ENABLE_CALENDAR',
     'calendar.enable',
     os.environ.get('ENABLE_CALENDAR', 'True').lower() == 'true',
 )
 
-ENABLE_AUTOMATIONS = PersistentConfig(
+ENABLE_AUTOMATIONS = ConfigVar(
     'ENABLE_AUTOMATIONS',
     'automations.enable',
     os.environ.get('ENABLE_AUTOMATIONS', 'True').lower() == 'true',
 )
 
-AUTOMATION_MAX_COUNT = PersistentConfig(
+AUTOMATION_MAX_COUNT = ConfigVar(
     'AUTOMATION_MAX_COUNT',
     'automations.max_count',
     os.environ.get('AUTOMATION_MAX_COUNT', ''),
 )
 
-AUTOMATION_MIN_INTERVAL = PersistentConfig(
+AUTOMATION_MIN_INTERVAL = ConfigVar(
     'AUTOMATION_MIN_INTERVAL',
     'automations.min_interval',
     os.environ.get('AUTOMATION_MIN_INTERVAL', ''),
 )
 
-ENABLE_NOTES = PersistentConfig(
+ENABLE_NOTES = ConfigVar(
     'ENABLE_NOTES',
     'notes.enable',
     os.environ.get('ENABLE_NOTES', 'True').lower() == 'true',
 )
 
-ENABLE_USER_STATUS = PersistentConfig(
+ENABLE_USER_STATUS = ConfigVar(
     'ENABLE_USER_STATUS',
     'users.enable_status',
     os.environ.get('ENABLE_USER_STATUS', 'True').lower() == 'true',
 )
 
-ENABLE_EVALUATION_ARENA_MODELS = PersistentConfig(
+ENABLE_EVALUATION_ARENA_MODELS = ConfigVar(
     'ENABLE_EVALUATION_ARENA_MODELS',
     'evaluation.arena.enable',
     os.environ.get('ENABLE_EVALUATION_ARENA_MODELS', 'True').lower() == 'true',
 )
-EVALUATION_ARENA_MODELS = PersistentConfig(
+EVALUATION_ARENA_MODELS = ConfigVar(
     'EVALUATION_ARENA_MODELS',
     'evaluation.arena.models',
     [],
@@ -1505,7 +1505,7 @@ DEFAULT_ARENA_MODEL = {
     },
 }
 
-WEBHOOK_URL = PersistentConfig('WEBHOOK_URL', 'webhook_url', os.environ.get('WEBHOOK_URL', ''))
+WEBHOOK_URL = ConfigVar('WEBHOOK_URL', 'webhook_url', os.environ.get('WEBHOOK_URL', ''))
 
 ENABLE_ADMIN_EXPORT = os.environ.get('ENABLE_ADMIN_EXPORT', 'True').lower() == 'true'
 
@@ -1525,19 +1525,19 @@ ENABLE_ADMIN_CHAT_ACCESS = os.environ.get('ENABLE_ADMIN_CHAT_ACCESS', 'True').lo
 
 ENABLE_ADMIN_ANALYTICS = os.environ.get('ENABLE_ADMIN_ANALYTICS', 'True').lower() == 'true'
 
-ENABLE_COMMUNITY_SHARING = PersistentConfig(
+ENABLE_COMMUNITY_SHARING = ConfigVar(
     'ENABLE_COMMUNITY_SHARING',
     'ui.enable_community_sharing',
     os.environ.get('ENABLE_COMMUNITY_SHARING', 'True').lower() == 'true',
 )
 
-ENABLE_MESSAGE_RATING = PersistentConfig(
+ENABLE_MESSAGE_RATING = ConfigVar(
     'ENABLE_MESSAGE_RATING',
     'ui.enable_message_rating',
     os.environ.get('ENABLE_MESSAGE_RATING', 'True').lower() == 'true',
 )
 
-ENABLE_USER_WEBHOOKS = PersistentConfig(
+ENABLE_USER_WEBHOOKS = ConfigVar(
     'ENABLE_USER_WEBHOOKS',
     'ui.enable_user_webhooks',
     os.environ.get('ENABLE_USER_WEBHOOKS', 'False').lower() == 'true',
@@ -1606,16 +1606,16 @@ except Exception as e:
     log.exception(f'Error loading WEBUI_BANNERS: {e}')
     banners = []
 
-WEBUI_BANNERS = PersistentConfig('WEBUI_BANNERS', 'ui.banners', banners)
+WEBUI_BANNERS = ConfigVar('WEBUI_BANNERS', 'ui.banners', banners)
 
 
-SHOW_ADMIN_DETAILS = PersistentConfig(
+SHOW_ADMIN_DETAILS = ConfigVar(
     'SHOW_ADMIN_DETAILS',
     'auth.admin.show',
     os.environ.get('SHOW_ADMIN_DETAILS', 'true').lower() == 'true',
 )
 
-ADMIN_EMAIL = PersistentConfig(
+ADMIN_EMAIL = ConfigVar(
     'ADMIN_EMAIL',
     'auth.admin.email',
     os.environ.get('ADMIN_EMAIL', None),
@@ -1627,19 +1627,19 @@ ADMIN_EMAIL = PersistentConfig(
 ####################################
 
 
-TASK_MODEL = PersistentConfig(
+TASK_MODEL = ConfigVar(
     'TASK_MODEL',
     'task.model.default',
     os.environ.get('TASK_MODEL', ''),
 )
 
-TASK_MODEL_EXTERNAL = PersistentConfig(
+TASK_MODEL_EXTERNAL = ConfigVar(
     'TASK_MODEL_EXTERNAL',
     'task.model.external',
     os.environ.get('TASK_MODEL_EXTERNAL', ''),
 )
 
-TITLE_GENERATION_PROMPT_TEMPLATE = PersistentConfig(
+TITLE_GENERATION_PROMPT_TEMPLATE = ConfigVar(
     'TITLE_GENERATION_PROMPT_TEMPLATE',
     'task.title.prompt_template',
     os.environ.get('TITLE_GENERATION_PROMPT_TEMPLATE', ''),
@@ -1669,7 +1669,7 @@ JSON format: { "title": "your concise title here" }
 {{MESSAGES:END:2}}
 </chat_history>"""
 
-TAGS_GENERATION_PROMPT_TEMPLATE = PersistentConfig(
+TAGS_GENERATION_PROMPT_TEMPLATE = ConfigVar(
     'TAGS_GENERATION_PROMPT_TEMPLATE',
     'task.tags.prompt_template',
     os.environ.get('TAGS_GENERATION_PROMPT_TEMPLATE', ''),
@@ -1693,7 +1693,7 @@ JSON format: { "tags": ["tag1", "tag2", "tag3"] }
 {{MESSAGES:END:6}}
 </chat_history>"""
 
-IMAGE_PROMPT_GENERATION_PROMPT_TEMPLATE = PersistentConfig(
+IMAGE_PROMPT_GENERATION_PROMPT_TEMPLATE = ConfigVar(
     'IMAGE_PROMPT_GENERATION_PROMPT_TEMPLATE',
     'task.image.prompt_template',
     os.environ.get('IMAGE_PROMPT_GENERATION_PROMPT_TEMPLATE', ''),
@@ -1720,7 +1720,7 @@ Strictly return in JSON format:
 </chat_history>"""
 
 
-FOLLOW_UP_GENERATION_PROMPT_TEMPLATE = PersistentConfig(
+FOLLOW_UP_GENERATION_PROMPT_TEMPLATE = ConfigVar(
     'FOLLOW_UP_GENERATION_PROMPT_TEMPLATE',
     'task.follow_up.prompt_template',
     os.environ.get('FOLLOW_UP_GENERATION_PROMPT_TEMPLATE', ''),
@@ -1742,39 +1742,39 @@ JSON format: { "follow_ups": ["Question 1?", "Question 2?", "Question 3?"] }
 {{MESSAGES:END:6}}
 </chat_history>"""
 
-ENABLE_FOLLOW_UP_GENERATION = PersistentConfig(
+ENABLE_FOLLOW_UP_GENERATION = ConfigVar(
     'ENABLE_FOLLOW_UP_GENERATION',
     'task.follow_up.enable',
     os.environ.get('ENABLE_FOLLOW_UP_GENERATION', 'True').lower() == 'true',
 )
 
-ENABLE_TAGS_GENERATION = PersistentConfig(
+ENABLE_TAGS_GENERATION = ConfigVar(
     'ENABLE_TAGS_GENERATION',
     'task.tags.enable',
     os.environ.get('ENABLE_TAGS_GENERATION', 'True').lower() == 'true',
 )
 
-ENABLE_TITLE_GENERATION = PersistentConfig(
+ENABLE_TITLE_GENERATION = ConfigVar(
     'ENABLE_TITLE_GENERATION',
     'task.title.enable',
     os.environ.get('ENABLE_TITLE_GENERATION', 'True').lower() == 'true',
 )
 
 
-ENABLE_SEARCH_QUERY_GENERATION = PersistentConfig(
+ENABLE_SEARCH_QUERY_GENERATION = ConfigVar(
     'ENABLE_SEARCH_QUERY_GENERATION',
     'task.query.search.enable',
     os.environ.get('ENABLE_SEARCH_QUERY_GENERATION', 'True').lower() == 'true',
 )
 
-ENABLE_RETRIEVAL_QUERY_GENERATION = PersistentConfig(
+ENABLE_RETRIEVAL_QUERY_GENERATION = ConfigVar(
     'ENABLE_RETRIEVAL_QUERY_GENERATION',
     'task.query.retrieval.enable',
     os.environ.get('ENABLE_RETRIEVAL_QUERY_GENERATION', 'True').lower() == 'true',
 )
 
 
-QUERY_GENERATION_PROMPT_TEMPLATE = PersistentConfig(
+QUERY_GENERATION_PROMPT_TEMPLATE = ConfigVar(
     'QUERY_GENERATION_PROMPT_TEMPLATE',
     'task.query.prompt_template',
     os.environ.get('QUERY_GENERATION_PROMPT_TEMPLATE', ''),
@@ -1804,19 +1804,19 @@ Strictly return in JSON format:
 </chat_history>
 """
 
-ENABLE_AUTOCOMPLETE_GENERATION = PersistentConfig(
+ENABLE_AUTOCOMPLETE_GENERATION = ConfigVar(
     'ENABLE_AUTOCOMPLETE_GENERATION',
     'task.autocomplete.enable',
     os.environ.get('ENABLE_AUTOCOMPLETE_GENERATION', 'False').lower() == 'true',
 )
 
-AUTOCOMPLETE_GENERATION_INPUT_MAX_LENGTH = PersistentConfig(
+AUTOCOMPLETE_GENERATION_INPUT_MAX_LENGTH = ConfigVar(
     'AUTOCOMPLETE_GENERATION_INPUT_MAX_LENGTH',
     'task.autocomplete.input_max_length',
     int(os.environ.get('AUTOCOMPLETE_GENERATION_INPUT_MAX_LENGTH', '-1')),
 )
 
-AUTOCOMPLETE_GENERATION_PROMPT_TEMPLATE = PersistentConfig(
+AUTOCOMPLETE_GENERATION_PROMPT_TEMPLATE = ConfigVar(
     'AUTOCOMPLETE_GENERATION_PROMPT_TEMPLATE',
     'task.autocomplete.prompt_template',
     os.environ.get('AUTOCOMPLETE_GENERATION_PROMPT_TEMPLATE', ''),
@@ -1866,13 +1866,13 @@ Output:
 """
 
 
-VOICE_MODE_PROMPT_TEMPLATE = PersistentConfig(
+VOICE_MODE_PROMPT_TEMPLATE = ConfigVar(
     'VOICE_MODE_PROMPT_TEMPLATE',
     'task.voice.prompt_template',
     os.environ.get('VOICE_MODE_PROMPT_TEMPLATE', ''),
 )
 
-ENABLE_VOICE_MODE_PROMPT = PersistentConfig(
+ENABLE_VOICE_MODE_PROMPT = ConfigVar(
     'ENABLE_VOICE_MODE_PROMPT',
     'task.voice.prompt.enable',
     os.environ.get('ENABLE_VOICE_MODE_PROMPT', 'True').lower() == 'true',
@@ -1903,7 +1903,7 @@ ERROR HANDLING:
 
 Stay consistent, helpful, and easy to listen to."""
 
-TOOLS_FUNCTION_CALLING_PROMPT_TEMPLATE = PersistentConfig(
+TOOLS_FUNCTION_CALLING_PROMPT_TEMPLATE = ConfigVar(
     'TOOLS_FUNCTION_CALLING_PROMPT_TEMPLATE',
     'task.tools.prompt_template',
     os.environ.get('TOOLS_FUNCTION_CALLING_PROMPT_TEMPLATE', ''),
@@ -5524,38 +5524,38 @@ LDAP_ATTRIBUTE_FOR_GROUPS = ConfigVar(
 )
 
 # For LDAP Project Management
-ENABLE_LDAP_PROJECT_MANAGEMENT = PersistentConfig(
+ENABLE_LDAP_PROJECT_MANAGEMENT = ConfigVar(
     'ENABLE_LDAP_PROJECT_MANAGEMENT',
     'ldap.project.enable_management',
     os.environ.get('ENABLE_LDAP_PROJECT_MANAGEMENT', 'False').lower() == 'true',
 )
 
-ENABLE_LDAP_PROJECT_CREATION = PersistentConfig(
+ENABLE_LDAP_PROJECT_CREATION = ConfigVar(
     'ENABLE_LDAP_PROJECT_CREATION',
     'ldap.project.enable_creation',
     os.environ.get('ENABLE_LDAP_PROJECT_CREATION', 'False').lower() == 'true',
 )
 
-LDAP_ATTRIBUTE_FOR_PROJECTS = PersistentConfig(
+LDAP_ATTRIBUTE_FOR_PROJECTS = ConfigVar(
     'LDAP_ATTRIBUTE_FOR_PROJECTS',
     'ldap.server.attribute_for_projects',
     os.environ.get('LDAP_ATTRIBUTE_FOR_PROJECTS', 'memberOf'),
 )
 
 # For LDAP Project Management
-ENABLE_LDAP_PROJECT_MANAGEMENT = PersistentConfig(
+ENABLE_LDAP_PROJECT_MANAGEMENT = ConfigVar(
     'ENABLE_LDAP_PROJECT_MANAGEMENT',
     'ldap.project.enable_management',
     os.environ.get('ENABLE_LDAP_PROJECT_MANAGEMENT', 'False').lower() == 'true',
 )
 
-ENABLE_LDAP_PROJECT_CREATION = PersistentConfig(
+ENABLE_LDAP_PROJECT_CREATION = ConfigVar(
     'ENABLE_LDAP_PROJECT_CREATION',
     'ldap.project.enable_creation',
     os.environ.get('ENABLE_LDAP_PROJECT_CREATION', 'False').lower() == 'true',
 )
 
-LDAP_ATTRIBUTE_FOR_PROJECTS = PersistentConfig(
+LDAP_ATTRIBUTE_FOR_PROJECTS = ConfigVar(
     'LDAP_ATTRIBUTE_FOR_PROJECTS',
     'ldap.server.attribute_for_projects',
     os.environ.get('LDAP_ATTRIBUTE_FOR_PROJECTS', 'memberOf'),
