@@ -1,17 +1,23 @@
 <!-- ModelPermissions.svelte -->
 <script lang="ts">
-	import { getContext } from 'svelte';
+	import { getContext, onDestroy } from 'svelte';
 	import Switch from '$lib/components/common/Switch.svelte';
+	import { addAllowedModelsToProject, removeAllowedModelsFromProject, getAllowedModelsOfProject } from '$lib/apis/projects';
 	import { onMount } from 'svelte';
+	import { toast } from 'svelte-sonner';
 	import { getModels } from '$lib/apis';
 
 	const i18n = getContext('i18n');
 
 	export let allowedModelIds: string[] = [];
-	export let onAdd: Function = () => {};
-	export let onRemove: Function = () => {};
-
 	let allModels = [];
+	export let projectId: string;
+	let query = '';
+	let searchDebounceTimer: ReturnType<typeof setTimeout>;
+	let orderBy = projectId ? `project_id:${projectId}` : 'last_active_at';
+	let direction = 'desc';
+
+	let page = 1;
 
 	onMount(async () => {
 		try {
@@ -24,26 +30,77 @@
 
 	const isAllowed = (modelId: string) => allowedModelIds.includes(modelId);
 
-	const handleChange = (modelId: string, enabled: boolean) => {
-		if (enabled) {
-			onAdd(modelId);
-		} else {
-			onRemove(modelId);
+	const getAllowedModels = async () => {
+		try {
+			const res = await getAllowedModelsOfProject(localStorage.token, projectId).catch((error) => {
+				toast.error(`${error}`);
+				return null;
+			});
+
+			if (res) {
+				allowedModelIds = res ?? [];
+			}
+		} catch (err) {
+			console.error(err);
 		}
+		
 	};
+
+	const handleChange = async (modelId: string, enabled: boolean) => {
+			if (enabled) {
+				await addAllowedModelsToProject(localStorage.token, projectId, [modelId]).catch((error) => {
+					toast.error(`${error}`);
+					return null;
+				});
+			} else {
+				await removeAllowedModelsFromProject(localStorage.token, projectId, [modelId]).catch((error) => {
+					toast.error(`${error}`);
+					return null;
+				});
+			}
+		getAllowedModels();
+	};
+
+	$: if (page !== null && orderBy !== null && direction !== null) {
+		getAllowedModels();
+	}
+
+	$: if (query !== undefined) {
+		clearTimeout(searchDebounceTimer);
+		searchDebounceTimer = setTimeout(() => {
+			page = 1;
+			getAllowedModels();
+		}, 300);
+	}
+
+	onDestroy(() => {
+		clearTimeout(searchDebounceTimer);
+	});
 </script>
 
 <div class="flex flex-col gap-2">
 	<div class="text-sm font-medium px-1">
 		{$i18n.t('Models')}
 	</div>
-	{#each allModels as model (model.id)}
-		<div class="flex items-center justify-between px-3 py-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-850">
-			<span class="text-sm">{model.name}</span>
-			<Switch
-				state={isAllowed(model.id)}
-				on:change={(e) => handleChange(model.id, e.detail)}
-			/>
+	{#if allModels === null}
+		<div class="my-10">
+			<Spinner className="size-5" />
 		</div>
-	{/each}
+	{:else}
+		{#if allModels.length > 0}
+			{#each allModels as model (model.id)}
+				<div class="flex items-center justify-between px-3 py-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-850">
+					<span class="text-sm">{model.name}</span>
+					<Switch
+						state={isAllowed(model.id)} 
+						on:change={(e) => handleChange(model.id, e.detail)}
+					/>
+				</div>
+			{/each}
+		{:else}
+			<div class="text-gray-500 text-xs text-center py-2 px-10">
+				{$i18n.t('No models were found.')}
+			</div>
+		{/if}
+	{/if}
 </div>

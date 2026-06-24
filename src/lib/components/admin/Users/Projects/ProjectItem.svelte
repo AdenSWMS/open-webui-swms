@@ -57,6 +57,7 @@
 	edit
 	{project}
 	{defaultPermissions}
+	tabs={['general', 'permissions', 'allowed_models', 'users']}
 	onSubmit={updateHandler}
 	onDelete={deleteHandler}
 />

@@ -82,41 +82,6 @@
 		}
 	};
 
-	const setAllowedModelsHandler = async (projectId) => {
-		const res = await getAllowedModelsOfProject(localStorage.token, projectId).catch((error) => {
-			toast.error(`${error}`);
-			return null;
-		});
-
-		if (res) {
-			modelId = res.allowed_model_ids;
-		}
-	};
-
-	const addAllowedModelHandler = async (projectId, modelId) => {
-		const res = await addAllowedModelsToProject(localStorage.token, projectId, [modelId]).catch((error) => {
-			toast.error(`${error}`);
-			return null;
-		});
-
-		if (res) {
-			toast.success($i18n.t('Allowed models updated successfully'));
-			await setProjects();
-		}
-	};
-
-	const removeAllowedModelHandler = async (projectId, modelId) => {
-		const res = await removeAllowedModelsFromProject(localStorage.token, projectId, [modelId]).catch((error) => {
-			toast.error(`${error}`);
-			return null;
-		});
-
-		if (res) {
-			toast.success($i18n.t('Allowed models updated successfully'));
-			await setProjects();
-		}
-	};
-
 	const updateDefaultPermissionsHandler = async (project) => {
 		console.debug(project.permissions);
 
@@ -149,11 +114,9 @@
 	<EditProjectModal
 		bind:show={showAddProjectModal}
 		edit={false}
-		tabs={['general', 'permissions', 'allowed_models']}
+		tabs={['general', 'permissions']}
 		permissions={defaultPermissions}
 		onSubmit={addProjectHandler}
-		onAddAllowedModel={addAllowedModelHandler}
-		onRemoveAllowedModel={removeAllowedModelHandler}
 	/>
 
 	<div class="flex flex-col gap-1 px-1 mt-1.5 mb-3">
