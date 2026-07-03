@@ -44,10 +44,12 @@
 	const dispatch = createEventDispatcher();
 
 	export let id = '';
-	export let value = '';
+	export let value: string | null = '';
 	export let placeholder = $i18n.t('Select a model');
 	export let searchEnabled = true;
 	export let searchPlaceholder = $i18n.t('Search a model');
+	export let selectionOnly = false;
+	export let includeHidden = false;
 
 	export let items: {
 		label: string;
@@ -247,7 +249,7 @@
 							return item.model?.direct;
 						}
 					})
-	).filter((item) => !(item.model?.info?.meta?.hidden ?? false));
+	).filter((item) => includeHidden || !(item.model?.info?.meta?.hidden ?? false));
 
 	$: if (
 		selectedTag !== undefined ||
@@ -420,7 +422,7 @@
 	onMount(async () => {
 		if (items) {
 			tags = items
-				.filter((item) => !(item.model?.info?.meta?.hidden ?? false))
+				.filter((item) => includeHidden || !(item.model?.info?.meta?.hidden ?? false))
 				.flatMap((item) => item.model?.tags ?? [])
 				.map((tag) => tag.name.toLowerCase());
 			// Remove duplicates and sort
@@ -428,7 +430,7 @@
 		}
 	});
 
-	$: if (show) {
+	$: if (show && !selectionOnly) {
 		setOllamaVersion();
 	}
 
@@ -617,7 +619,7 @@
 					{/if}
 
 					<div class="px-2">
-						{#if tags && items.filter((item) => !(item.model?.info?.meta?.hidden ?? false)).length > 0}
+						{#if tags && items.filter((item) => includeHidden || !(item.model?.info?.meta?.hidden ?? false)).length > 0}
 							<div
 								class=" flex w-full bg-white dark:bg-gray-850 overflow-x-auto scrollbar-none font-[450] mb-0.5"
 								on:wheel={(e) => {
@@ -765,6 +767,7 @@
 										{pinModelHandler}
 										{unloadModelHandler}
 										{deleteModelHandler}
+										{selectionOnly}
 										onClick={() => {
 											value = item.value;
 											selectedModelIdx = index;
@@ -777,7 +780,7 @@
 							</div>
 						{/if}
 
-						{#if !(searchValue.trim() in $MODEL_DOWNLOAD_POOL) && searchValue && ollamaVersion && $user?.role === 'admin'}
+						{#if !selectionOnly && !(searchValue.trim() in $MODEL_DOWNLOAD_POOL) && searchValue && ollamaVersion && $user?.role === 'admin'}
 							<Tooltip
 								content={$i18n.t(`Pull "{{searchValue}}" from Ollama.com`, {
 									searchValue: searchValue
@@ -799,7 +802,7 @@
 							</Tooltip>
 						{/if}
 
-						{#each Object.keys($MODEL_DOWNLOAD_POOL) as model}
+						{#each selectionOnly ? [] : Object.keys($MODEL_DOWNLOAD_POOL) as model}
 							<div
 								class="flex w-full justify-between font-medium select-none rounded-button py-2 pl-3 pr-1.5 text-sm text-gray-700 dark:text-gray-100 outline-hidden transition-all duration-75 rounded-xl cursor-pointer data-highlighted:bg-muted"
 							>
