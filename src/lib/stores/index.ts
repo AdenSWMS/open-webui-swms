@@ -68,6 +68,9 @@ export const selectedFolder = writable(null);
 
 export const models: Writable<Model[]> = writable([]);
 
+export const projects: Writable<Project[]> = writable([]);
+export const selectedProject = writable(null);
+
 export const knowledge: Writable<null | Document[]> = writable(null);
 export const tools = writable(null);
 export const skills = writable(null);
@@ -178,6 +181,11 @@ type OllamaModelDetails = {
 	quantization_level: string;
 };
 
+export type Project = {
+  id: string;
+  name: string;
+};
+
 type Settings = {
 	pinnedModels?: never[];
 	toolServers?: never[];
@@ -217,6 +225,7 @@ type Settings = {
 	chatBubble?: boolean;
 	copyFormatted?: boolean;
 	models?: string[];
+	projects?: string[];
 	conversationMode?: boolean;
 	speechAutoSend?: boolean;
 	responseAutoPlayback?: boolean;

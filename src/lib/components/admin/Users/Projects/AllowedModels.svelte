@@ -5,6 +5,7 @@
 	import { addAllowedModelsToProject, removeAllowedModelsFromProject, getAllowedModelsOfProject } from '$lib/apis/projects';
 	import { onMount } from 'svelte';
 	import { toast } from 'svelte-sonner';
+	import Spinner from '$lib/components/common/Spinner.svelte';
 	import { getModels } from '$lib/apis';
 
 	const i18n = getContext('i18n');
@@ -12,10 +13,8 @@
 	export let allowedModelIds: string[] = [];
 	let allModels = [];
 	export let projectId: string;
-	let query = '';
 	let searchDebounceTimer: ReturnType<typeof setTimeout>;
-	let orderBy = projectId ? `project_id:${projectId}` : 'last_active_at';
-	let direction = 'desc';
+	let query = '';
 
 	let page = 1;
 
@@ -61,7 +60,7 @@
 		getAllowedModels();
 	};
 
-	$: if (page !== null && orderBy !== null && direction !== null) {
+	$: if (page !== null) {
 		getAllowedModels();
 	}
 

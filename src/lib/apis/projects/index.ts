@@ -68,10 +68,10 @@ export const getProjects = async (token: string = '', share?: boolean) => {
 	return res;
 };
 
-export async function getProjectByUser(token: string) {
+export async function getProjectsByUser(token: string) {
 	let error = null;
 
-	const res = await fetch(`${WEBUI_API_BASE_URL}/projects/`, {
+	const res = await fetch(`${WEBUI_API_BASE_URL}/projects/member`, {
 		method: 'GET',
 		cache: 'no-store',
 		headers: {

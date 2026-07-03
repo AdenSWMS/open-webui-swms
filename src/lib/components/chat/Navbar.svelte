@@ -22,6 +22,7 @@
 
 	import ShareChatModal from '../chat/ShareChatModal.svelte';
 	import ModelSelector from '../chat/ModelSelector.svelte';
+	import ProjectSelector from '../chat/ProjectSelector.svelte';
 	import Tooltip from '../common/Tooltip.svelte';
 	import Menu from '$lib/components/layout/Navbar/Menu.svelte';
 	import UserMenu from '$lib/components/layout/Sidebar/UserMenu.svelte';
@@ -52,7 +53,8 @@
 	export let selectedModels;
 	export let showModelSelector = true;
 
-	export let selectedProject;
+	export let selectedProjects;
+	export let showProjectSelector = true;
 
 	export let onSaveTempChat: () => {};
 	export let archiveChatHandler: (id: string) => void;
@@ -118,16 +120,19 @@
 					</div>
 				{/if}
 
-				<div
-					class="flex-1 overflow-hidden max-w-full mt-0.5 py-0.5
-			{$showSidebar ? 'ml-1' : ''}
-			"
-				>
+				<div class="flex-1 flex items-baseline gap-4 overflow-hidden max-w-full mt-0.5 py-0.5 {$showSidebar ? 'ml-1' : ''}">
 					{#if showModelSelector}
-						<ModelSelector bind:selectedModels showSetDefault={!shareEnabled} />
+						<div class="shrink-0">
+							<ModelSelector bind:selectedModels showSetDefault={!shareEnabled} />
+						</div>
 					{/if}
-				</div>
-
+					
+					{#if showProjectSelector}
+						<div class="shrink-0">
+							<ProjectSelector bind:selectedProjects showSetDefault={!shareEnabled} />
+						</div>
+					{/if}
+				</div>		
 				<div class="self-start flex flex-none items-center text-gray-600 dark:text-gray-400">
 					<!-- <div class="md:hidden flex self-center w-[1px] h-5 mx-2 bg-gray-300 dark:bg-stone-700" /> -->
 

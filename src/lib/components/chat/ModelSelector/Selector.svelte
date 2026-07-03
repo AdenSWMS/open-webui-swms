@@ -14,6 +14,7 @@
 	import { goto } from '$app/navigation';
 
 	import { deleteModel, getOllamaVersion, pullModel } from '$lib/apis/ollama';
+	import { getAllowedModelsOfProject } from '$lib/apis/projects';
 	import { unloadModel } from '$lib/apis';
 
 	import {
@@ -23,6 +24,7 @@
 		mobile,
 		temporaryChatEnabled,
 		settings,
+		selectedProject,
 		config
 	} from '$lib/stores';
 	import { toast } from 'svelte-sonner';
@@ -120,6 +122,34 @@
 			document.getElementById(`model-selector-${id}-button`)?.blur();
 		}
 	};
+
+	let allowedModelIds: string[] = [];
+
+	const fetchAndFilterModels = async () => {
+		const allModels = await getModels(
+			localStorage.token,
+			$config?.features?.enable_direct_connections && ($settings?.directConnections ?? null)
+		);
+
+		if ($selectedProject?.value) {
+			try {
+				allowedModelIds = await getAllowedModelsOfProject(
+					localStorage.token,
+					$selectedProject.value
+				);
+				models.set(allModels.filter((m) => allowedModelIds.includes(m.id)));
+			} catch (e) {
+				console.error('Konnte erlaubte Modelle für Projekt nicht laden', e);
+				models.set(allModels);
+			}
+		} else {
+			models.set(allModels);
+		}
+	};
+
+	$: if ($selectedProject) {
+		fetchAndFilterModels();
+	}
 
 	let tags = [];
 
@@ -522,14 +552,7 @@
 			false)
 				? 'dark:placeholder-gray-100 placeholder-gray-800'
 				: 'placeholder-gray-400'}"
-			on:mouseenter={async () => {
-				models.set(
-					await getModels(
-						localStorage.token,
-						$config?.features?.enable_direct_connections && ($settings?.directConnections ?? null)
-					)
-				);
-			}}
+			on:mouseenter={fetchAndFilterModels}
 		>
 			{#if selectedModel}
 				{selectedModel.label}
