@@ -121,9 +121,9 @@
 					</div>
 				{/if}
 
-				<div class="flex-1 flex items-baseline gap-4 overflow-hidden max-w-full mt-0.5 py-0.5 {$showSidebar ? 'ml-1' : ''}">
+				<div class="flex-1 flex flex-col md:flex-row md:items-baseline gap-2 md:gap-4 overflow-hidden max-w-full mt-0.5 py-0.5 {$showSidebar ? 'ml-1' : ''}">
 					{#if showModelSelector}
-						<div class="shrink-0">
+						<div class="shrink-0 w-full md:w-auto">
 							<ModelSelector
 								bind:selectedModels
 								showSetDefault={!shareEnabled && !readOnly}
@@ -133,14 +133,14 @@
 					{/if}
 					
 					{#if showProjectSelector}
-						<div class="shrink-0">
+						<div class="shrink-0 w-full md:w-auto">
 							<ProjectSelector
 								bind:selectedProjects
 								showSetDefault={!shareEnabled}
 							/>
 						</div>
 					{/if}
-				</div>	
+				</div>
 				<div class="self-start flex flex-none items-center text-gray-600 dark:text-gray-400">
 					<!-- <div class="md:hidden flex self-center w-[1px] h-5 mx-2 bg-gray-300 dark:bg-stone-700" /> -->
 
