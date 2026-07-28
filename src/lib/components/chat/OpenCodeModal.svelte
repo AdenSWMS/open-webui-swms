@@ -1,13 +1,11 @@
 <script lang="ts">
-	// Passe den Importpfad an deine Projektstruktur an,
-	// z.B. '$lib/components/common/Modal.svelte'
+	
 	import Modal from '$lib/components/common/Modal.svelte';
-    import { WEBUI_API_BASE_URL } from '$lib/constants';
     import { generateLiteLLMApiKey } from '$lib/apis/litellm';
 
 	export let show = false;
 
-	// Downloads liegen auf einer ANDEREN Domain.
+
 	const downloads = [
 		{ label: 'Windows Version', os: 'Windows', url: 'https://opencode.ai/de/download/stable/windows-x64-nsis' },
 		{ label: 'macOS Silicon Version', os: 'macOS', url: 'https://opencode.ai/de/download/stable/darwin-aarch64-dmg' },
@@ -66,8 +64,6 @@
 		setTimeout(() => (copied = false), 2000);
 	}
 
-	// Beim Schließen State zurücksetzen, damit man beim nächsten
-	// Öffnen nicht den alten Key sieht.
 	$: if (!show) {
 		apiKey = null;
 		keyError = null;
@@ -155,12 +151,16 @@
 				</button>
 			</div>
 		{/if}
+        <div class="text-xs text-gray-600 dark:text-gray-400 mt-2">
+            <p class="font-medium mb-1 text-gray-800 dark:text-gray-200">
+		    Der generierte API-Key wird nur einmal angezeigt und kann danach nicht mehr abgerufen werden. Wenn Sie ihren verloren haben, wenden sie sich an ihren Administrator.</p>
+        </div>
 
 		<hr class="my-4 border-gray-100 dark:border-gray-850" />
 
 		<div class="text-xs text-gray-600 dark:text-gray-400">
 			<p class="font-medium mb-1 text-gray-800 dark:text-gray-200">
-				📖 Anleitung zur Installation:
+				Anleitung zur Installation:
 			</p>
 			<ol class="list-decimal list-inside space-y-1 pl-1">
 				<li>Kopiere den generierten API-Key oben.</li>
