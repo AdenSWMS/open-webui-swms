@@ -23,7 +23,6 @@
 		temporaryChatEnabled,
 		settings,
 		selectedProject,
-		config
 		config,
 		showSettings
 	} from '$lib/stores';
