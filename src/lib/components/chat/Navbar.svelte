@@ -20,7 +20,6 @@
 	import { goto } from '$app/navigation';
 
 	import ShareChatModal from '../chat/ShareChatModal.svelte';
-	import ModelSelector from '../chat/ModelSelector.svelte';
 	import ProjectSelector from '../chat/ProjectSelector.svelte';
 	import Tooltip from '../common/Tooltip.svelte';
 	import Menu from '$lib/components/layout/Navbar/Menu.svelte';
@@ -50,8 +49,6 @@
 	export let chat;
 	export let history;
 	export let title = '';
-	export let selectedModels;
-	export let showModelSelector = true;
 
 	export let selectedProjects;
 	export let showProjectSelector = true;
@@ -124,16 +121,6 @@
 				{/if}
 
 				<div class="flex-1 flex flex-col md:flex-row md:items-baseline gap-2 md:gap-4 overflow-hidden max-w-full mt-0.5 py-0.5 {$showSidebar ? 'ml-1' : ''}">
-					{#if showModelSelector}
-						<div class="shrink-0 w-full md:w-auto">
-							<ModelSelector
-								bind:selectedModels
-								showSetDefault={!shareEnabled && !readOnly}
-								disabled={readOnly}
-							/>
-						</div>
-					{/if}
-					
 					{#if showProjectSelector}
 						<div class="shrink-0 w-full md:w-auto">
 							<ProjectSelector
