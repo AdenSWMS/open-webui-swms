@@ -73,6 +73,9 @@
 
 	let showShareChatModal = false;
 	let showDownloadChatModal = false;
+
+	import OpenCodeModal from './OpenCodeModal.svelte';
+  	let showOpenCodeModal = false;
 </script>
 
 <ShareChatModal bind:show={showShareChatModal} chatId={$chatId} />
@@ -186,6 +189,15 @@
 				</div>
 
 				<div class="self-start flex flex-none items-center text-gray-600 dark:text-gray-400">
+					<div class="shrink-0 w-full md:w-auto md:ml-auto mr-3 mt-1.5">
+						<button 
+							class="px-3 py-1 text-xs font-medium bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-gray-700 dark:text-gray-200 shadow-sm hover:bg-gray-50 dark:hover:bg-gray-700 transition cursor-pointer"
+							on:click={() => (showOpenCodeModal = true)}
+						>
+						OpenCode & API-Key
+						</button>
+						<OpenCodeModal bind:show={showOpenCodeModal} />
+					</div>
 					<!-- <div class="md:hidden flex self-center w-[1px] h-5 mx-2 bg-gray-300 dark:bg-stone-700" /> -->
 
 					{#if $user?.role === 'user' ? ($user?.permissions?.chat?.temporary ?? true) && !($user?.permissions?.chat?.temporary_enforced ?? false) : true}
