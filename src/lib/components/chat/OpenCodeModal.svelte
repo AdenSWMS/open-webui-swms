@@ -64,11 +64,19 @@
 		copied = true;
 		setTimeout(() => (copied = false), 2000);
 	}
+	let showConfirmModal = false; // Neuer Status für das Bestätigungs-Modal
+
+
+	async function confirmAndGenerateKey() {
+		showConfirmModal = false;
+		await handleGenerateKey();
+	}
 
 	$: if (!show) {
 		apiKey = null;
 		keyError = null;
 		copied = false;
+		showConfirmModal = false;
 	}
 </script>
 
@@ -127,7 +135,7 @@
 
 		<button
 			class="w-full px-3.5 py-2 text-sm rounded-xl bg-black text-white hover:bg-gray-900 dark:bg-white dark:text-black dark:hover:bg-gray-100 transition disabled:opacity-50"
-			on:click={handleGenerateKey}
+			on:click={() => (showConfirmModal = true)}
 			disabled={isLoading}
 		>
 			{isLoading ? 'Generiere…' : 'API-Key generieren'}
@@ -171,5 +179,38 @@
 			</ol>
 		</div>
 
+	</div>
+</Modal
+>
+<Modal bind:show={showConfirmModal} size="sm">
+	<div class="p-6 text-center">
+		<div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-amber-100 dark:bg-amber-900/30 mb-4 text-amber-600 dark:text-amber-400">
+			<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6">
+				<path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z" />
+			</svg>
+		</div>
+
+		<h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">
+			Wichtiger Hinweis zum API-Key
+		</h3>
+
+		<p class="text-sm text-gray-600 dark:text-gray-300 mb-6">
+			Der generierte API-Key wird <strong>nur einmal angezeigt</strong> und kann danach nicht mehr abgerufen werden. Wenn Sie ihn verlieren, müssen Sie sich an Ihren Administrator wenden.
+		</p>
+
+		<div class="flex gap-3 justify-end">
+			<button
+				class="flex-1 px-4 py-2 text-sm rounded-xl border border-gray-300 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 transition"
+				on:click={() => (showConfirmModal = false)}
+			>
+				Abbrechen
+			</button>
+			<button
+				class="flex-1 px-4 py-2 text-sm rounded-xl bg-black text-white dark:bg-white dark:text-black font-medium hover:opacity-90 transition"
+				on:click={confirmAndGenerateKey}
+			>
+				Verstanden
+			</button>
+		</div>
 	</div>
 </Modal>
