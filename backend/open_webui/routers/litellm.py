@@ -14,7 +14,9 @@ LITELLM_URL = os.getenv("LITELLM_URL")
 LITELLM_MASTER_KEY = os.getenv("LITELLM_MASTER_KEY")
 LITELLM_MAX_BUDGET = os.getenv("LITELLM_MAX_BUDGET", "0.0") 
 LITELLM_KEY_DURATION = os.getenv("LITELLM_KEY_DURATION", "30m")  # Standardmäßig 30 Minuten
-LITELLM_BUDGET_DURATION = os.getenv("LITELLM_BUDGET_DURATION", "30d")  # Standardmäßig 30 Tage
+LITELLM_BUDGET_DURATION = os.getenv("LITELLM_BUDGET_DURATION", "30d")  
+
+openCodeName = "OpenCode"
 
 
 @router.post("/generate-litellm-api-key")
@@ -31,7 +33,7 @@ async def generate_litellm_key(user = Depends(get_verified_user)):
     }
 
     payload = {
-        "key_alias": user.id,
+        "key_alias": f"{openCodeName} {user.name}({user.email})",
         "max_budget": float(LITELLM_MAX_BUDGET),
         "budget_duration": LITELLM_BUDGET_DURATION,
         "duration": LITELLM_KEY_DURATION,
@@ -48,10 +50,16 @@ async def generate_litellm_key(user = Depends(get_verified_user)):
             )
             
             if response.status_code != 200:
-                raise HTTPException(
-                    status_code=response.status_code, 
-                    detail=f"LiteLLM Fehler: {response.text}"
-                )
+                if "already exists" in response.text:
+                    raise HTTPException(
+                        status_code=400, 
+                        detail="Ein API-Schlüssel für diesen Benutzer existiert bereits."
+                    )
+                else:
+                    raise HTTPException(
+                        status_code=response.status_code, 
+                        detail=f"LiteLLM Fehler: {response.text}"
+                    )
 
             return response.json()
 

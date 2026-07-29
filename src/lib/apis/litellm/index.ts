@@ -17,7 +17,7 @@ export const generateLiteLLMApiKey = async (token: string) => {
 		.catch((err) => {
 			console.error(err);
 			error = err.detail ?? err;
-			return null;
+			return error;
 		});
 
 	if (error) {

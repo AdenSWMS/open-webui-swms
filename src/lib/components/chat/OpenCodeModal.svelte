@@ -16,6 +16,7 @@
 
 
 	let apiKey: string | null = null;
+	let response: any = null;
 	let isLoading = false;
     let keyError: string | null = null;
 	let copied = false;
@@ -23,14 +24,14 @@
 
     async function handleGenerateKey() {
         isLoading = true;
-        apiKey = null;
+        response = null;
         generateLiteLLMApiKey(localStorage.token)
             .then((key) => {
-                apiKey = key;
+                response = key;
+				apiKey = response.key;
             })
             .catch((err) => {
-                console.error('Fehler beim Generieren des API-Keys:', err);
-                keyError = 'Fehler beim Generieren des API-Keys. Bitte versuche es erneut.';
+                keyError = `Fehler beim Generieren des API-Keys: ${err}`;
             })
             .finally(() => {
                 isLoading = false;
