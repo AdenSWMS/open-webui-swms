@@ -1,6 +1,7 @@
 <script lang="ts">
 	import Modal from '$lib/components/common/Modal.svelte';
 	import { generateLiteLLMApiKey, deleteLiteLLMApiKey } from '$lib/apis/litellm';
+	import { Button } from 'bits-ui';
 
 	export let show = false;
 
@@ -18,6 +19,9 @@
 	let keyError: string | null = null;
 	let copied = false;
 	let showConfirmModal = false; // Steuert das Modal für die Neu-Generierung
+
+	// State für den Anleitungs-Switch ('windows' oder 'unix')
+	let activeTab: 'windows' | 'unix' = 'windows';
 
 	async function handleGenerateKey() {
 		isLoading = true;
@@ -38,7 +42,7 @@
 
 	async function handleReGenerateKey() {
 		await deleteLiteLLMApiKey(localStorage.token);
-		await handleGenerateKey()
+		await handleGenerateKey();
 	}
 
 	async function confirmAndReGenerateKey() {
@@ -78,6 +82,7 @@
 		keyError = null;
 		copied = false;
 		showConfirmModal = false;
+		activeTab = 'windows'; // Auf Standard zurücksetzen beim Schließen
 	}
 </script>
 
@@ -114,7 +119,13 @@
 				Dein Browser unterstützt dieses Video-Format leider nicht.
 			</video>
 		</div>
-		<div class="text-md font-medium dark:text-gray-100 mb-4">
+		<button
+			class="mb-4 px-3.5 py-2 text-sm rounded-xl bg-gray-50 hover:bg-gray-100 dark:bg-gray-850 dark:hover:bg-gray-800 dark:text-gray-100 transition"
+			on:click={() => window.open('https://opencode.ai/docs/de', '_blank')}
+		>
+			OpenCode Dokumentation öffnen
+		</button>
+		<div class="text-md font-medium dark:text-gray-100 ml-2 mb-4">
 			OpenCode ist ein Open-Source-Agent, der dir hilft, Code in deinem Terminal, deiner IDE oder auf dem Desktop zu schreiben.
 		</div>
 		<div class="space-y-4">
@@ -188,7 +199,7 @@
 				</div>
 			</div>
 		</div>
-		<div class="text-md font-medium dark:text-gray-100 mt-4 mb-4">
+		<div class="text-md font-medium dark:text-gray-100 ml-2 mt-4 mb-4">
 			Der Open-Source AI-Coding-Agent
 		</div>
 		<div class="space-y-4">
@@ -202,7 +213,7 @@
 			</div>
 		</div>
 		<div>
-			<h2 class="font-semibold text-gray-900 dark:text-white mb-2">Downloads:</h2>
+			<h2 class="font-semibold text-gray-900 dark:text-white ml-2 mb-2">Downloads:</h2>
 		</div>
 		<div class="flex flex-col gap-2">
 			{#each downloads as item}
@@ -239,7 +250,8 @@
 				API-Key neu generieren
 			</button>
 		</div>
-				{#if keyError}
+
+		{#if keyError}
 			<div class="text-red-500 text-xs mt-2">{keyError}</div>
 		{/if}
 
@@ -261,17 +273,115 @@
 
 		<hr class="my-4 border-gray-100 dark:border-gray-850" />
 
-		<div class="text-xs text-gray-600 dark:text-gray-400">
-			<p class="font-medium mb-1 text-gray-800 dark:text-gray-200">
-				Anleitung zur Installation:
-			</p>
-			<ol class="list-decimal list-inside space-y-1 pl-1">
-				<li>Kopiere den generierten API-Key oben.</li>
-				<li>Öffne deine Einstellungen / Konfigurationsdatei.</li>
-				<li>Füge den Key im Feld <code class="bg-gray-100 dark:bg-gray-800 px-1 py-0.5 rounded">API_KEY</code> ein.</li>
-				<li>Speichere die Änderungen und starte die Anwendung neu.</li>
-			</ol>
-		</div>
+		<div class="text-sm text-gray-600 dark:text-gray-400 mb-20">
+			<div class="flex flex-col items-start gap-2 mb-3">
+				
+				<div class="flex bg-gray-100 dark:bg-gray-850 p-1 rounded-lg">
+					<button
+						class="px-2.5 py-1 text-sm font-medium rounded-md transition {activeTab === 'windows' ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm' : 'text-gray-500 hover:text-gray-900 dark:hover:text-white'}"
+						on:click={() => (activeTab = 'windows')}
+					>
+						Windows
+					</button>
+					<button
+						class="px-2.5 py-1 text-sm font-medium rounded-md transition {activeTab === 'unix' ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm' : 'text-gray-500 hover:text-gray-900 dark:hover:text-white'}"
+						on:click={() => (activeTab = 'unix')}
+					>
+						macOS / Linux
+					</button>
+				</div>
+
+				<p class="font-medium text-gray-800 dark:text-gray-200 mt-1">
+					Anleitung zur Installation:
+				</p>
+			</div>
+
+			{#if activeTab === 'windows'}
+				<ol class="list-decimal list-inside space-y-3 pl-1 mb-10">
+					<li>Installieren Sie OpenCode.</li>
+					<li>Wenn Sie schon eine Config-Datei für OpenCode hast, dann nutze die Anleitung zum Updaten.</li>
+					<li>
+						<span>Kopiere diesen Befehl und gib ihn in dein Terminal ein:</span>
+						<div class="my-2">
+							<code class="block whitespace-pre-wrap bg-gray-100 dark:bg-gray-800 px-2 py-1.5 rounded font-mono text-[11px] text-gray-800 dark:text-gray-200 overflow-x-auto">
+mkdir "$HOME\.config\opencode" -Force | Out-Null
+iwr http://10.30.0.90:1234/opencode.json -OutFile "$HOME\.config\opencode\opencode.json"
+							</code>
+						</div>
+					</li>
+					<li>
+						<span>Jetzt müssen wir noch den API-Key in die Config eintragen, nutze dazu folgenden Befehl und den oben generierten Key:</span>
+						<div class="my-2">
+							<code class="block bg-gray-100 dark:bg-gray-800 px-2 py-1.5 rounded font-mono text-[11px] text-gray-800 dark:text-gray-200 overflow-x-auto">
+								opencode config set api_key DEIN_KEY
+							</code>
+						</div>
+					</li>
+					<li>Starte OpenCode neu und Sie sind fertig!</li>
+				</ol>
+
+				<p class="font-medium text-gray-800 dark:text-gray-200 mt-4 mb-2">
+					Anleitung zum Updaten:
+				</p>
+				<ol class="list-decimal list-inside space-y-1 pl-1">
+					<li>Wenn Sie OpenCode schon installiert hast und auch schon eine Config-Datei für OpenCode hast, dann nutze die Anleitung zum Updaten.</li>
+					<li>Dein API-Key, sofern Sie ihn nicht neu generieren möchtest, bleibt in der Config erhalten.</li>
+					<li>
+						<span>Um die Config mit aktuellen Modellen und anderen Inhalten zu aktualisieren kopiere diesen Befehl und gib ihn in dein Terminal ein:</span>
+						<div class="my-2">
+							<code class="block whitespace-pre-wrap bg-gray-100 dark:bg-gray-800 px-2 py-1.5 rounded font-mono text-[11px] text-gray-800 dark:text-gray-200 overflow-x-auto">
+iwr http://10.30.0.90:1234/opencode.json -OutFile "$env:TEMP\opencode.remote.json"
+jq -s ".[1] * .[0]" "$HOME\.config\opencode\opencode.json" "$env:TEMP\opencode.remote.json" > "$HOME\.config\opencode\opencode.json.tmp"
+Move-Item "$HOME\.config\opencode\opencode.json.tmp" "$HOME\.config\opencode\opencode.json" -Force
+							</code>
+						</div>
+					</li>
+					<li>Starte OpenCode neu und Sie sind fertig!</li>
+				</ol>
+
+			{:else if activeTab === 'unix'}
+				<ol class="list-decimal list-inside space-y-3 pl-1 mb-10">
+					<li>Installieren Sie OpenCode.</li>
+					<li>Wenn Sie schon eine Config-Datei für OpenCode hast, dann nutze die Anleitung zum Updaten.</li>
+					<li>
+						<span>Kopiere diesen Befehl und gib ihn in dein Terminal ein:</span>
+						<div class="my-2">
+							<code class="block whitespace-pre-wrap bg-gray-100 dark:bg-gray-800 px-2 py-1.5 rounded font-mono text-[11px] text-gray-800 dark:text-gray-200 overflow-x-auto">
+mkdir -p ~/.config/opencode
+curl -fsSL http://10.30.0.90:1234/opencode.json -o ~/.config/opencode/opencode.json
+							</code>
+						</div>
+					</li>
+					<li>
+						<span>Jetzt müssen wir noch den API-Key in die Config eintragen, nutze dazu folgenden Befehl und den oben generierten Key:</span>
+						<div class="my-2">
+							<code class="block bg-gray-100 dark:bg-gray-800 px-2 py-1.5 rounded font-mono text-[11px] text-gray-800 dark:text-gray-200 overflow-x-auto">
+								opencode config set api_key DEIN_KEY
+							</code>
+						</div>
+					</li>
+					<li>Starte OpenCode neu und Sie bist fertig!</li>
+				</ol>
+
+				<p class="font-medium text-gray-800 dark:text-gray-200 mt-4 mb-2">
+					Anleitung zum Updaten:
+				</p>
+				<ol class="list-decimal list-inside space-y-1 pl-1">
+					<li>Wenn Sie OpenCode schon installiert hast und auch schon eine Config-Datei für OpenCode hast, dann nutze die Anleitung zum Updaten.</li>
+					<li>Dein API-Key, sofern Sie ihn nicht neu generieren möchtest, bleibt in der Config erhalten.</li>
+					<li>
+						<span>Um die Config mit aktuellen Modellen und anderen Inhalten zu aktualisieren kopiere diesen Befehl und gib ihn in dein Terminal ein:</span>
+						<div class="my-2">
+							<code class="block whitespace-pre-wrap bg-gray-100 dark:bg-gray-800 px-2 py-1.5 rounded font-mono text-[11px] text-gray-800 dark:text-gray-200 overflow-x-auto">
+curl -fsSL http://10.30.0.90:1234/opencode.json -o /tmp/opencode.remote.json
+jq -s '.[0] * .[1]' ~/.config/opencode/opencode.json /tmp/opencode.remote.json > ~/.config/opencode/opencode.json.tmp && mv ~/.config/opencode/opencode.json.tmp ~/.config/opencode/opencode.json
+							</code>
+						</div>
+					</li>
+					<li>Starte OpenCode neu und Sie bist fertig!</li>
+				</ol>
+			{/if}
+		</div>		
 
 	</div>
 </Modal>
