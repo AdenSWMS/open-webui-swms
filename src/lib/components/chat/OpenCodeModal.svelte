@@ -213,7 +213,7 @@
 			</div>
 		</div>
 		<div>
-			<h2 class="font-semibold text-gray-900 dark:text-white ml-2 mb-2">Downloads:</h2>
+			<h2 class="font-semibold text-gray-900 dark:text-white ml-2 mb-2">Downloads</h2>
 		</div>
 		<div class="flex flex-col gap-2">
 			{#each downloads as item}
@@ -228,7 +228,7 @@
 
 		<hr class="my-4 border-gray-100 dark:border-gray-850" />
 
-		<div class="text-sm font-medium mb-2 dark:text-gray-100">API-Key</div>
+		<h2 class="font-semibold mb-2 dark:text-gray-100">API-Key</h2>
 
 		<button
 			class="w-full px-3.5 py-2 text-sm rounded-xl bg-black text-white hover:bg-gray-900 dark:bg-white dark:text-black dark:hover:bg-gray-100 transition disabled:opacity-50"
@@ -273,7 +273,7 @@
 
 		<hr class="my-4 border-gray-100 dark:border-gray-850" />
 
-		<div class="text-sm text-gray-600 dark:text-gray-400 mb-20">
+		<div class="text-sm text-gray-600 dark:text-gray-400 mt-5 mb-20">
 			<div class="flex flex-col items-start gap-2 mb-3">
 				
 				<div class="flex bg-gray-100 dark:bg-gray-850 p-1 rounded-lg">
