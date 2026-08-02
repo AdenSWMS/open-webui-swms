@@ -82,7 +82,7 @@
 		keyError = null;
 		copied = false;
 		showConfirmModal = false;
-		activeTab = 'windows'; // Auf Standard zurücksetzen beim Schließen
+		activeTab = 'windows'; 
 	}
 </script>
 
@@ -304,7 +304,7 @@
 						<span>Kopiere diesen Befehl und gib ihn in dein Terminal ein:</span>
 						<div class="my-2">
 							<code class="block whitespace-pre-wrap bg-gray-100 dark:bg-gray-800 px-2 py-1.5 rounded font-mono text-[11px] text-gray-800 dark:text-gray-200 overflow-x-auto">
-mkdir "$HOME\.config\opencode" -Force | Out-Null
+							mkdir "$HOME\.config\opencode" -Force | Out-Null
 iwr http://10.30.0.90:1234/opencode.json -OutFile "$HOME\.config\opencode\opencode.json"
 							</code>
 						</div>
@@ -312,8 +312,9 @@ iwr http://10.30.0.90:1234/opencode.json -OutFile "$HOME\.config\opencode\openco
 					<li>
 						<span>Jetzt müssen wir noch den API-Key in die Config eintragen, nutze dazu folgenden Befehl und den oben generierten Key:</span>
 						<div class="my-2">
-							<code class="block bg-gray-100 dark:bg-gray-800 px-2 py-1.5 rounded font-mono text-[11px] text-gray-800 dark:text-gray-200 overflow-x-auto">
-								opencode config set api_key DEIN_KEY
+							<code class="block whitespace-pre-wrap bg-gray-100 dark:bg-gray-800 px-2 py-1.5 rounded font-mono text-[11px] text-gray-800 dark:text-gray-200 overflow-x-auto">
+jq --arg key "DEIN_API_KEY" ".provider.swms.options.apiKey = `$key" "$HOME\.config\opencode\opencode.json" > "$HOME\.config\opencode\opencode.json.tmp"
+Move-Item "$HOME\.config\opencode\opencode.json.tmp" "$HOME\.config\opencode\opencode.json" -Force
 							</code>
 						</div>
 					</li>
@@ -355,8 +356,8 @@ curl -fsSL http://10.30.0.90:1234/opencode.json -o ~/.config/opencode/opencode.j
 					<li>
 						<span>Jetzt müssen wir noch den API-Key in die Config eintragen, nutze dazu folgenden Befehl und den oben generierten Key:</span>
 						<div class="my-2">
-							<code class="block bg-gray-100 dark:bg-gray-800 px-2 py-1.5 rounded font-mono text-[11px] text-gray-800 dark:text-gray-200 overflow-x-auto">
-								opencode config set api_key DEIN_KEY
+							<code class="block whitespace-pre-wrap bg-gray-100 dark:bg-gray-800 px-2 py-1.5 rounded font-mono text-[11px] text-gray-800 dark:text-gray-200 overflow-x-auto">
+								jq --arg key "DEIN_API_KEY" '.provider.swms.options.apiKey = $key' ~/.config/opencode/opencode.json > ~/.config/opencode/opencode.json.tmp && mv ~/.config/opencode/opencode.json.tmp ~/.config/opencode/opencode.json
 							</code>
 						</div>
 					</li>
@@ -374,7 +375,7 @@ curl -fsSL http://10.30.0.90:1234/opencode.json -o ~/.config/opencode/opencode.j
 						<div class="my-2">
 							<code class="block whitespace-pre-wrap bg-gray-100 dark:bg-gray-800 px-2 py-1.5 rounded font-mono text-[11px] text-gray-800 dark:text-gray-200 overflow-x-auto">
 curl -fsSL http://10.30.0.90:1234/opencode.json -o /tmp/opencode.remote.json
-jq -s '.[0] * .[1]' ~/.config/opencode/opencode.json /tmp/opencode.remote.json > ~/.config/opencode/opencode.json.tmp && mv ~/.config/opencode/opencode.json.tmp ~/.config/opencode/opencode.json
+jq -s '.[1] * .[0]' ~/.config/opencode/opencode.json /tmp/opencode.remote.json > ~/.config/opencode/opencode.json.tmp && mv ~/.config/opencode/opencode.json.tmp ~/.config/opencode/opencode.json
 							</code>
 						</div>
 					</li>

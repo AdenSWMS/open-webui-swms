@@ -1191,6 +1191,7 @@ async def chat_completion(
             'assistant_message_id': form_data.pop('assistant_message_id', None),
             'session_id': form_data.pop('session_id', None),
             'folder_id': form_data.pop('folder_id', None),
+            'project_id': form_data.pop('project_id', None),
             'filter_ids': form_data.pop('filter_ids', []),
             'tool_ids': form_data.get('tool_ids', None),
             'tool_servers': tool_servers,
@@ -1317,6 +1318,7 @@ async def chat_completion(
                             },
                             variables=chat_variables,
                             folder_id=metadata.get('folder_id'),
+                            project_id=metadata.get('project_id'),
                         ),
                     )
                     await publish_event(

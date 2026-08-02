@@ -75,6 +75,8 @@ class Chat(Base):  # database table mapping for chat entity
     title = Column(Text)  # user-visible conversation title
     chat = Column(JSON)
 
+    project_id = Column(String, nullable=True)  
+
     created_at = Column(BigInteger, index=True)  # conversation creation timestamp
     updated_at = Column(BigInteger, index=True)  # conversation modification timestamp
 
@@ -110,6 +112,7 @@ class ChatModel(BaseModel):
     model_config = ConfigDict(from_attributes=True)  # allows ORM model binding
     id: str
     user_id: str
+    project_id: str | None = None
     title: str
     chat: dict
 
@@ -175,6 +178,7 @@ class ChatForm(BaseModel):
     chat: dict
     variables: dict | None = None
     folder_id: str | None = None
+    project_id: str | None = None
 
 
 class ChatImportForm(ChatForm):
@@ -201,6 +205,7 @@ class ChatTitleForm(BaseModel):
 class ChatResponse(BaseModel):
     id: str
     user_id: str
+    project_id: str | None = None
     title: str
     chat: dict
     updated_at: int  # timestamp in epoch
@@ -432,6 +437,7 @@ class ChatTable:
                     ),
                     'chat': self._clean_null_bytes(form_data.chat),
                     'folder_id': form_data.folder_id,
+                    'project_id': form_data.project_id,
                     'meta': internal_meta or {},
                     'variables': form_data.variables or {},
                     'current_message_id': self.get_current_message_id(form_data.chat),
@@ -524,6 +530,7 @@ class ChatTable:
                 'variables': form_data.variables or {},
                 'pinned': form_data.pinned,
                 'folder_id': form_data.folder_id,
+                'project_id': form_data.project_id,
                 'current_message_id': form_data.current_message_id or self.get_current_message_id(form_data.chat),
                 'created_at': (form_data.created_at if form_data.created_at else int(time.time())),
                 'updated_at': (form_data.updated_at if form_data.updated_at else int(time.time())),

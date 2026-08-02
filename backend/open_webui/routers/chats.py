@@ -32,6 +32,7 @@ from open_webui.models.chats import (
     MessageStats,
 )
 from open_webui.models.folders import Folders
+from open_webui.models.projects import Projects
 from open_webui.models.shared_chats import SharedChatResponse, SharedChats
 from open_webui.models.tags import TagModel, Tags
 from open_webui.socket.main import get_event_emitter
@@ -765,6 +766,16 @@ async def create_new_chat(
                     detail=ERROR_MESSAGES.NOT_FOUND,
                 )
 
+    if form_data.project_id is not None:
+        # Falls ihr eine Projects-Klasse habt:
+        project = await Projects.get_project_by_id(form_data.project_id, db=db)
+        if not project or project.user_id != user.id: # oder `has_project_access`
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=ERROR_MESSAGES.NOT_FOUND,
+            )
+
+
     try:
         chat = await Chats.insert_new_chat(str(uuid4()), user.id, form_data, db=db)
         await publish_event(
@@ -772,7 +783,7 @@ async def create_new_chat(
             EVENTS.CHAT_CREATED,
             actor=user,
             subject_id=chat.id,
-            data={'title': chat.title, 'folder_id': chat.folder_id},
+            data={'title': chat.title, 'folder_id': chat.folder_id, 'project_id': chat.project_id},
         )
         return ChatResponse.model_validate(chat, from_attributes=True)
     except Exception as e:

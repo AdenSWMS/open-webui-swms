@@ -2,7 +2,7 @@
 	import { projects, showSettings, settings, user, mobile, config } from '$lib/stores';
 	import { onMount, tick, getContext } from 'svelte';
 	import { toast } from 'svelte-sonner';
-	import Selector from './ProjectSelector/Selector.svelte';
+	import Selector from './ProjectSelector/ProjectPresenter.svelte';
 	import Tooltip from '../common/Tooltip.svelte';
 
 	import { updateUserSettings } from '$lib/apis/users';
@@ -30,7 +30,7 @@
 				<div class="max-w-full {($settings?.highContrastMode ?? false) ? 'm-1' : 'mr-1'}">
 					<Selector
 						id={`${selectedProjectIdx}`}
-						placeholder={$i18n.t('Select a project')}
+						placeholder={$i18n.t('Wähle ein Projekt')}
 						items={$projects.map((project) => ({
 							value: project.id,
 							label: project.name,

@@ -30,7 +30,7 @@
 <button
 	role="option"
 	aria-selected={value === item.value}
-	aria-label={$i18n.t('Select {{projectName}} project', { projectName: item.label })}
+	aria-label={$i18n.t('Select {{projectName}} project', { projectName: item.name })}
 	class="flex group/item w-full text-left font-medium line-clamp-1 select-none items-center rounded-button py-2 pl-3 pr-1.5 text-sm text-gray-700 dark:text-gray-100 outline-hidden transition-all duration-75 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-xl cursor-pointer data-highlighted:bg-muted {index ===
 	selectedProjectIdx
 		? 'bg-gray-100 dark:bg-gray-800 group-hover:bg-transparent'
@@ -62,9 +62,9 @@
 			<div class="flex items-center min-w-fit">
 
 			<div class="flex items-center">
-				<Tooltip content={`${item.label} (${item.value})`} placement="top-start">
+				<Tooltip content={`${item.name} (${item.id})`} placement="top-start">
 					<div class="line-clamp-1">
-						{item.label}
+						{item.name}
 					</div>
 				</Tooltip>
 			</div>

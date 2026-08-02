@@ -220,11 +220,11 @@
 			$config?.features?.enable_direct_connections && ($settings?.directConnections ?? null)
 		);
 
-		if ($selectedProject?.value) {
+		if ($selectedProject?.id) {
 			try {
 				allowedModelIds = await getAllowedModelsOfProject(
 					localStorage.token,
-					$selectedProject.value
+					$selectedProject.id
 				);
 				models.set(allModels.filter((m) => allowedModelIds.includes(m.id)));
 			} catch (e) {
