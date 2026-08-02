@@ -9,6 +9,7 @@ from open_webui.models.chat_messages import ChatMessageModel, ChatMessages
 from open_webui.models.chats import Chats
 from open_webui.models.feedbacks import Feedbacks
 from open_webui.models.groups import Groups
+from open_webui.models.projects import Projects
 from open_webui.models.users import Users
 from open_webui.utils.auth import get_admin_user
 from pydantic import BaseModel
@@ -48,6 +49,19 @@ class UserAnalyticsEntry(BaseModel):
 
 class UserAnalyticsResponse(BaseModel):
     users: list[UserAnalyticsEntry]
+
+
+class ProjectAnalyticsEntry(BaseModel):
+    project_id: str
+    name: Optional[str] = None
+    description: Optional[str] = None
+    count: int
+    input_tokens: int = 0
+    output_tokens: int = 0
+    total_tokens: int = 0
+
+class ProjectAnalyticsResponse(BaseModel):
+    projects: list[ProjectAnalyticsEntry]
 
 
 ####################
@@ -120,6 +134,55 @@ async def get_user_analytics(
         )
 
     return UserAnalyticsResponse(users=users)
+
+
+@router.get('/projects', response_model=ProjectAnalyticsResponse)
+async def get_project_analytics(
+    start_date: Optional[int] = Query(None, description='Start timestamp (epoch)'),
+    end_date: Optional[int] = Query(None, description='End timestamp (epoch)'),
+    limit: int = Query(50, description='Max users to return'),
+    user=Depends(get_admin_user),
+    db: AsyncSession = Depends(get_async_session),
+):
+    """Get message counts and token usage per user with user info."""
+    counts = await ChatMessages.get_message_count_by_project(
+        start_date=start_date, end_date=end_date, db=db
+    )
+    token_usage = await ChatMessages.get_token_usage_by_project(
+        start_date=start_date, end_date=end_date, db=db
+    )
+    
+    # Get project info for top projects
+    top_project_ids = [uid for uid, _ in sorted(counts.items(), key=lambda x: -x[1])[:limit]]
+
+    if not top_project_ids:
+        return ProjectAnalyticsResponse(projects=[])
+
+    clean_project_ids = [str(pid) for pid in top_project_ids]
+    raw_projects = await Projects.get_projects_by_project_ids(clean_project_ids, db=db) or []
+    project_info = {p.id: p for p in raw_projects if p is not None}
+
+    print(list(project_info.keys()))
+    print(list(raw_projects))
+    print(top_project_ids)
+
+    projects = []
+    for project_id in top_project_ids:
+        p = project_info.get(project_id)
+        tokens = token_usage.get(project_id, {})
+        projects.append(
+            ProjectAnalyticsEntry(
+                project_id=project_id,
+                name=p.name if p else None,
+                count=counts[project_id],
+                input_tokens=tokens.get('input_tokens', 0),
+                output_tokens=tokens.get('output_tokens', 0),
+                total_tokens=tokens.get('total_tokens', 0),
+            )
+        )
+
+    return ProjectAnalyticsResponse(projects=projects)
+
 
 
 @router.get('/messages', response_model=list[ChatMessageModel])

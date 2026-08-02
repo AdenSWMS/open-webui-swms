@@ -340,6 +340,17 @@ class ProjectTable:
                 return ProjectModel.model_validate(project) if project else None
         except Exception:
             return None
+        
+    async def get_projects_by_project_ids(self, ids: list[str], db: Optional[AsyncSession] = None) -> list[ProjectModel]:
+        if not ids:
+            return []
+        try:
+            async with get_async_db_context(db) as db:
+                result = await db.execute(select(Project).where(Project.id.in_(ids)))
+                projects = result.scalars().all()
+                return [ProjectModel.model_validate(p) for p in projects]
+        except Exception as e:
+            return []
 
     async def get_project_user_ids_by_id(self, id: str, db: Optional[AsyncSession] = None) -> list[str]:
         async with get_async_db_context(db) as db:

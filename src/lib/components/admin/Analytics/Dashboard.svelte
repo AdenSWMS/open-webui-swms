@@ -5,6 +5,7 @@
 		getSummary,
 		getModelAnalytics,
 		getUserAnalytics,
+		getProjectAnalytics,
 		getDailyStats,
 		getTokenUsage
 	} from '$lib/apis/analytics';
@@ -76,7 +77,22 @@
 		unique_chats?: number;
 		name?: string;
 	}> = [];
-	let userStats: Array<{ user_id: string; name?: string; email?: string; count: number }> = [];
+	let userStats: Array<{
+		user_id: string;
+		name?: string;
+		count: number;
+		input_tokens?: number;
+		output_tokens?: number;
+		total_tokens?: number;
+	}> = [];
+	let projectStats: Array<{
+		project_id: string;
+		name?: string;
+		count: number;
+		input_tokens?: number;
+		output_tokens?: number;
+		total_tokens?: number;
+	}> = [];
 	let dailyStats: Array<{ date: string; models: Record<string, number> }> = [];
 	let tokenStats: Record<
 		string,
@@ -95,6 +111,8 @@
 	let modelDirection: 'asc' | 'desc' = 'desc';
 	let userOrderBy = 'count';
 	let userDirection: 'asc' | 'desc' = 'desc';
+	let projectOrderBy = 'count';
+	let projectDirection: 'asc' | 'desc' = 'desc';
 
 	const toggleModelSort = (key: string) => {
 		if (modelOrderBy === key) {
@@ -114,15 +132,25 @@
 		}
 	};
 
+	const toggleProjectSort = (key: string) => {
+		if (projectOrderBy === key) {
+			projectDirection = projectDirection === 'asc' ? 'desc' : 'asc';
+		} else {
+			projectOrderBy = key;
+			projectDirection = key === 'name' ? 'asc' : 'desc';
+		}
+	};
+
 	const loadDashboard = async () => {
 		loading = true;
 		try {
 			const { start, end } = getDateRange(selectedPeriod);
 			const granularity = selectedPeriod === '24h' ? 'hourly' : 'daily';
-			const [summaryRes, modelsRes, usersRes, dailyRes, tokensRes] = await Promise.all([
+			const [summaryRes, modelsRes, usersRes, projectsRes, dailyRes, tokensRes] = await Promise.all([
 				getSummary(localStorage.token, start, end, selectedGroupId),
 				getModelAnalytics(localStorage.token, start, end, selectedGroupId),
 				getUserAnalytics(localStorage.token, start, end, 50, selectedGroupId),
+				getProjectAnalytics(localStorage.token, start, end, 50),
 				getDailyStats(localStorage.token, start, end, granularity, selectedGroupId),
 				getTokenUsage(localStorage.token, start, end, selectedGroupId)
 			]);
@@ -136,6 +164,7 @@
 			}));
 
 			userStats = usersRes?.users ?? [];
+			projectStats = projectsRes?.projects ?? [];
 			dailyStats = dailyRes?.data ?? [];
 
 			// Process token data
@@ -161,9 +190,7 @@
 	};
 
 	// Reload when the period, group, or custom range changes.
-	// In custom mode, wait until both dates are set to avoid a half-specified query.
 	$: if (selectedPeriod === 'custom' ? customStart && customEnd : selectedPeriod) {
-		// reference customStart/customEnd so this block reruns when they change
 		customStart;
 		customEnd;
 		selectedGroupId;
@@ -171,7 +198,6 @@
 	}
 
 	onMount(async () => {
-		// Load groups for filter
 		try {
 			const res = await getGroups(localStorage.token);
 			groups = res ?? [];
@@ -214,6 +240,20 @@
 			return userDirection === 'asc' ? aTokens - bTokens : bTokens - aTokens;
 		}
 		return userDirection === 'asc' ? a.count - b.count : b.count - a.count;
+	});
+
+	$: sortedProjects = [...projectStats].sort((a, b) => {
+		if (projectOrderBy === 'name') {
+			const nameA = a.name || a.project_id;
+			const nameB = b.name || b.project_id;
+			return projectDirection === 'asc' ? nameA.localeCompare(nameB) : nameB.localeCompare(nameA);
+		}
+		if (projectOrderBy === 'tokens') {
+			const aTokens = a.total_tokens ?? 0;
+			const bTokens = b.total_tokens ?? 0;
+			return projectDirection === 'asc' ? aTokens - bTokens : bTokens - aTokens;
+		}
+		return projectDirection === 'asc' ? a.count - b.count : b.count - a.count;
 	});
 
 	$: totalModelMessages = modelStats.reduce((sum, m) => sum + m.count, 0);
@@ -272,7 +312,6 @@
 	</div>
 </div>
 
-<!-- Model Details Modal -->
 <AnalyticsModelModal
 	bind:show={showModelModal}
 	model={selectedModel}
@@ -280,7 +319,6 @@
 	endDate={getDateRange(selectedPeriod).end}
 />
 
-<!-- Summary stats -->
 {#if !loading}
 	<div class="flex gap-3 text-xs text-gray-500 dark:text-gray-400 px-0.5 pb-2">
 		<span
@@ -309,7 +347,6 @@
 		>
 	</div>
 
-	<!-- Daily usage chart -->
 	{#if dailyStats.length > 1}
 		{@const allModels = [...new Set(dailyStats.flatMap((d) => Object.keys(d.models || {})))]}
 		{@const topModels = allModels.slice(0, 8)}
@@ -344,8 +381,7 @@
 		<Spinner className="size-5" />
 	</div>
 {:else}
-	<div class="grid md:grid-cols-2 gap-4">
-		<!-- Model Usage Table -->
+	<div class="md:col-span-2 mt-2 mb-10">
 		<div>
 			<div class="text-xs font-normal text-gray-700 dark:text-gray-300 mb-1 px-0.5">
 				{$i18n.t('Model Usage')}
@@ -512,8 +548,8 @@
 				</table>
 			</div>
 		</div>
-
-		<!-- User Activity Table -->
+	</div>
+	<div class="md:col-span-2 mt-2 mb-10">
 		<div>
 			<div class="text-xs font-normal text-gray-700 dark:text-gray-300 mb-1 px-0.5">
 				{$i18n.t('User Activity')}
@@ -559,18 +595,24 @@
 									{/if}
 								</div>
 							</th>
+							<th scope="col" class="px-2.5 py-2 text-right">
+								{$i18n.t('Input Tokens')}
+							</th>
+
+							<th scope="col" class="px-2.5 py-2 text-right">
+								{$i18n.t('Output Tokens')}
+							</th>
+
 							<th
 								scope="col"
 								class="px-2.5 py-2 cursor-pointer select-none text-right"
-								on:click={() => toggleUserSort('tokens')}
+								on:click={() => toggleProjectSort('tokens')}
 							>
 								<div class="flex gap-1.5 items-center justify-end">
-									{$i18n.t('Tokens')}
-									{#if userOrderBy === 'tokens'}
+									{$i18n.t('Total Tokens')}
+									{#if projectOrderBy === 'tokens'}
 										<span class="font-normal">
-											{#if userDirection === 'asc'}<ChevronUp
-													className="size-2"
-												/>{:else}<ChevronDown className="size-2" />{/if}
+											{#if projectDirection === 'asc'}<ChevronUp className="size-2" />{:else}<ChevronDown className="size-2" />{/if}
 										</span>
 									{:else}
 										<span class="invisible"><ChevronUp className="size-2" /></span>
@@ -594,11 +636,13 @@
 											}}
 										/>
 										<span class="truncate max-w-[150px]"
-											>{user.name || user.email || user.user_id.substring(0, 8)}</span
+											>{user.name || user.user_id.substring(0, 8)}</span
 										>
 									</div>
 								</td>
 								<td class="px-3 py-1 text-right">{user.count.toLocaleString()}</td>
+								<td class="px-3 py-1 text-right">{formatNumber(user.input_tokens ?? 0)}</td>
+								<td class="px-3 py-1 text-right">{formatNumber(user.output_tokens ?? 0)}</td>
 								<td class="px-3 py-1 text-right">{formatNumber(user.total_tokens ?? 0)}</td>
 							</tr>
 						{/each}
@@ -614,7 +658,104 @@
 			</div>
 		</div>
 	</div>
+	<div class="md:col-span-2 mt-2 mb-10">
+		<div class="text-xs font-normal text-gray-700 dark:text-gray-300 mb-1 px-0.5">
+			{$i18n.t('Project Activity')}
+		</div>
+		<div class="scrollbar-hidden relative whitespace-nowrap overflow-x-auto max-w-full">
+			<table class="w-full text-sm text-left text-gray-500 dark:text-gray-400 table-auto">
+				<thead class="text-xs text-gray-800 uppercase bg-transparent dark:text-gray-200">
+					<tr class="border-b-[1.5px] border-gray-50 dark:border-gray-850/30">
+						<th scope="col" class="px-2.5 py-2 w-8">#</th>
+						<th
+							scope="col"
+							class="px-2.5 py-2 cursor-pointer select-none"
+							on:click={() => toggleProjectSort('name')}
+						>
+							<div class="flex gap-1.5 items-center">
+								{$i18n.t('Project')}
+								{#if projectOrderBy === 'name'}
+									<span class="font-normal">
+										{#if projectDirection === 'asc'}<ChevronUp
+												className="size-2"
+											/>{:else}<ChevronDown className="size-2" />{/if}
+									</span>
+								{:else}
+									<span class="invisible"><ChevronUp className="size-2" /></span>
+								{/if}
+							</div>
+						</th>
+						<th
+							scope="col"
+							class="px-2.5 py-2 cursor-pointer select-none text-right"
+							on:click={() => toggleProjectSort('count')}
+						>
+							<div class="flex gap-1.5 items-center justify-end">
+								{$i18n.t('Messages')}
+								{#if projectOrderBy === 'count'}
+									<span class="font-normal">
+										{#if projectDirection === 'asc'}<ChevronUp
+												className="size-2"
+											/>{:else}<ChevronDown className="size-2" />{/if}
+									</span>
+								{:else}
+									<span class="invisible"><ChevronUp className="size-2" /></span>
+								{/if}
+							</div>
+						</th>
+					<th scope="col" class="px-2.5 py-2 text-right">
+						{$i18n.t('Input Tokens')}
+					</th>
 
+					<th scope="col" class="px-2.5 py-2 text-right">
+						{$i18n.t('Output Tokens')}
+					</th>
+
+					<th
+						scope="col"
+						class="px-2.5 py-2 cursor-pointer select-none text-right"
+						on:click={() => toggleProjectSort('tokens')}
+					>
+						<div class="flex gap-1.5 items-center justify-end">
+							{$i18n.t('Total Tokens')}
+							{#if projectOrderBy === 'tokens'}
+								<span class="font-normal">
+									{#if projectDirection === 'asc'}<ChevronUp className="size-2" />{:else}<ChevronDown className="size-2" />{/if}
+								</span>
+							{:else}
+								<span class="invisible"><ChevronUp className="size-2" /></span>
+							{/if}
+						</div>
+					</th>
+
+				</tr>
+				</thead>
+				<tbody>
+					{#each sortedProjects as project, idx (project.project_id)}
+						<tr class="dark:border-gray-850 text-xs">
+							<td class="px-3 py-1 text-gray-400">{idx + 1}</td>
+							<td class="px-3 py-1 font-normal text-gray-900 dark:text-white">
+								<span class="truncate max-w-[200px]"
+									>{project.name || project.project_id}</span
+								>
+							</td>
+							<td class="px-3 py-1 text-right">{project.count.toLocaleString()}</td>
+							<td class="px-3 py-1 text-right">{formatNumber(project.input_tokens ?? 0)}</td>
+							<td class="px-3 py-1 text-right">{formatNumber(project.output_tokens ?? 0)}</td>
+							<td class="px-3 py-1 text-right">{formatNumber(project.total_tokens ?? 0)}</td>
+						</tr>
+					{/each}
+					{#if sortedProjects.length === 0}
+						<tr
+							><td colspan="4" class="px-3 py-2 text-center text-gray-400"
+								>{$i18n.t('No data')}</td
+							></tr
+						>
+					{/if}
+				</tbody>
+			</table>
+		</div>
+	</div>
 	<div class="text-gray-500 text-xs mt-1.5 text-right">
 		ⓘ {$i18n.t('Message counts are based on assistant responses.')}
 	</div>

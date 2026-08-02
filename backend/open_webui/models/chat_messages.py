@@ -144,6 +144,9 @@ class ChatMessage(Base):
     # Model (for assistant messages)
     model_id = Column(Text, nullable=True, index=True)
 
+    # Project (for Project based token and cost analytics)
+    project_id = Column(Text, nullable=True, index=True)
+
     # Attachments
     files = Column(JSON, nullable=True)
     sources = Column(JSON, nullable=True)
@@ -188,6 +191,7 @@ class ChatMessageModel(BaseModel):
     content: Optional[Any] = None  # str or list of blocks
     output: Optional[list] = None
     model_id: Optional[str] = None
+    project_id: Optional[str] = None
     files: Optional[list] = None
     sources: Optional[list] = None
     embeds: Optional[list] = None
@@ -236,6 +240,8 @@ class ChatMessageTable:
                     existing.output = data.get('output')
                 if 'model_id' in data or 'model' in data:
                     existing.model_id = data.get('model_id') or data.get('model')
+                if 'project_id' in data or 'projectId' in data:
+                    existing.project_id = data.get('project_id') or data.get('projectId')
                 if 'files' in data:
                     existing.files = data.get('files')
                 if 'sources' in data:
@@ -273,6 +279,7 @@ class ChatMessageTable:
                     content=data.get('content'),
                     output=data.get('output'),
                     model_id=data.get('model_id') or data.get('model'),
+                    project_id=data.get('project_id') or data.get('projectId'),
                     files=data.get('files'),
                     sources=data.get('sources'),
                     embeds=data.get('embeds'),
@@ -324,6 +331,7 @@ class ChatMessageTable:
         'status_history': 'statusHistory',
         'context_summary': 'contextSummary',
         'created_at': 'timestamp',
+        'project_id': 'projectId'
     }
     # DB-internal columns excluded from the reconstructed message dict.
     EXCLUDED_COLUMNS = frozenset({'id', 'chat_id', 'user_id', 'updated_at'})
@@ -649,6 +657,49 @@ class ChatMessageTable:
                 }
                 for row in result.all()
             }
+        
+    async def get_token_usage_by_project(
+        self,
+        start_date: Optional[int] = None,
+        end_date: Optional[int] = None,
+        db: Optional[AsyncSession] = None,
+    ) -> dict[str, dict]:
+        """Aggregate token usage by project_id using database-level aggregation."""
+        async with get_async_db_context(db) as db:
+
+            bind = await db.connection()
+            dialect = bind.dialect.name
+
+            input_tokens, output_tokens = _token_columns(dialect)
+
+            stmt = select(
+                ChatMessage.project_id,
+                func.coalesce(func.sum(input_tokens), 0).label('input_tokens'),
+                func.coalesce(func.sum(output_tokens), 0).label('output_tokens'),
+                func.count(ChatMessage.id).label('message_count'),
+            ).filter(
+                ChatMessage.role == 'assistant',
+                ChatMessage.project_id.isnot(None),
+                ChatMessage.usage.isnot(None),
+            )
+
+            if start_date:
+                stmt = stmt.filter(ChatMessage.created_at >= start_date)
+            if end_date:
+                stmt = stmt.filter(ChatMessage.created_at <= end_date)
+
+            stmt = stmt.group_by(ChatMessage.project_id)
+            result = await db.execute(stmt)
+
+            return {
+                row.project_id: {
+                    'input_tokens': row.input_tokens,
+                    'output_tokens': row.output_tokens,
+                    'total_tokens': row.input_tokens + row.output_tokens,
+                    'message_count': row.message_count,
+                }
+                for row in result.all()
+            }
 
     async def get_user_usage_summary(
         self,
@@ -902,6 +953,28 @@ class ChatMessageTable:
             stmt = stmt.group_by(ChatMessage.user_id)
             result = await db.execute(stmt)
             return {row.user_id: row.count for row in result.all()}
+        
+    async def get_message_count_by_project(
+        self,
+        start_date: Optional[int] = None,
+        end_date: Optional[int] = None,
+        db: Optional[AsyncSession] = None,
+    ) -> dict[str, int]:
+        async with get_async_db_context(db) as db:
+            from open_webui.models.groups import GroupMember
+
+            stmt = select(ChatMessage.project_id, func.count(ChatMessage.id).label('count')).filter(
+                ChatMessage.role == 'assistant',
+            )
+
+            if start_date:
+                stmt = stmt.filter(ChatMessage.created_at >= start_date)
+            if end_date:
+                stmt = stmt.filter(ChatMessage.created_at <= end_date)
+
+            stmt = stmt.group_by(ChatMessage.project_id)
+            result = await db.execute(stmt)
+            return {row.project_id: row.count for row in result.all()}
 
     async def get_message_count_by_chat(
         self,

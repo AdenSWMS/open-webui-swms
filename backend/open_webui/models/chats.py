@@ -463,6 +463,9 @@ class ChatTable:
                     }
                 for message_id, message in messages.items():
                     if isinstance(message, dict) and message.get('role'):
+                        if form_data.project_id:
+                            message['project_id'] = form_data.project_id
+
                         await ChatMessages.upsert_message(
                             message_id=message_id,
                             chat_id=id,
