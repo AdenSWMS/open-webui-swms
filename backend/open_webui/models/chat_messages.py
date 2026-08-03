@@ -679,7 +679,6 @@ class ChatMessageTable:
                 func.count(ChatMessage.id).label('message_count'),
             ).filter(
                 ChatMessage.role == 'assistant',
-                ChatMessage.project_id.isnot(None),
                 ChatMessage.usage.isnot(None),
             )
 

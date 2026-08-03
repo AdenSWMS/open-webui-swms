@@ -298,88 +298,102 @@
 
 			{#if activeTab === 'windows'}
 				<ol class="list-decimal list-inside space-y-3 pl-1 mb-10">
-					<li>Installieren Sie OpenCode.</li>
-					<li>Wenn Sie schon eine Config-Datei für OpenCode hast, dann nutze die Anleitung zum Updaten.</li>
+					<li>Installieren Sie zuerst OpenCode.</li>
+					<li>Wenn OpenCode schon installiert ist, und eine Config-Datei für OpenCode auf Ihrem Rechner vorhanden ist, dann nutzen Sie die Anleitung zum Updaten.</li>
 					<li>
-						<span>Kopiere diesen Befehl und gib ihn in dein Terminal ein:</span>
+						<span>Damit die opencode.json-Dateien, für die Konfiguration von Opencode, korrekt zusammengeführt werden können, wird das Tool jq benötigt.</span>
+						<span>Installieren Sie jq, indem Sie den folgenden Befehl in einer Windows PowerShell mit den entsprechenden Berechtigungen ausführen:</span>
 						<div class="my-2">
 							<code class="block whitespace-pre-wrap bg-gray-100 dark:bg-gray-800 px-2 py-1.5 rounded font-mono text-[11px] text-gray-800 dark:text-gray-200 overflow-x-auto">
-							mkdir "$HOME\.config\opencode" -Force | Out-Null
-iwr http://10.30.0.90:1234/opencode.json -OutFile "$HOME\.config\opencode\opencode.json"
+							winget install jqlang.jq
 							</code>
 						</div>
 					</li>
 					<li>
-						<span>Jetzt müssen wir noch den API-Key in die Config eintragen, nutze dazu folgenden Befehl und den oben generierten Key:</span>
+						<span>Kopieren Sie den folgenden Befehl und führen Sie ihn in der Windows PowerShell aus:</span>
 						<div class="my-2">
 							<code class="block whitespace-pre-wrap bg-gray-100 dark:bg-gray-800 px-2 py-1.5 rounded font-mono text-[11px] text-gray-800 dark:text-gray-200 overflow-x-auto">
-jq --arg key "DEIN_API_KEY" ".provider.swms.options.apiKey = `$key" "$HOME\.config\opencode\opencode.json" > "$HOME\.config\opencode\opencode.json.tmp"
+							mkdir "$HOME\.config\opencode" -Force | Out-Null
+iwr https://opencode.office.swms.de/opencode.json -OutFile "$HOME\.config\opencode\opencode.json"
+							</code>
+						</div>
+					</li>
+					<li>
+						<span>Im nächsten Schritt muss der API-Schlüssel in die Konfigurationsdatei eingetragen werden.
+Führen Sie dazu den folgenden Befehl aus. Sofern der zuvor generierte API-Schlüssel oberhalb noch sichtbar ist, wurde dieser bereits automatisch in den Befehl eingesetzt.
+Ist dieser nicht mehr zu sehen und im Befehl unterhalb findet sich "API Key hier", so generieren Sie einen neuen API-Schlüssel und fahren dann fort:</span><div class="my-2">
+							<code class="block whitespace-pre-wrap bg-gray-100 dark:bg-gray-800 px-2 py-1.5 rounded font-mono text-[11px] text-gray-800 dark:text-gray-200 overflow-x-auto">
+jq --arg key {apiKey || '"API Key hier"'} ".provider.swms.options.apiKey = `$key" "$HOME\.config\opencode\opencode.json" > "$HOME\.config\opencode\opencode.json.tmp"
 Move-Item "$HOME\.config\opencode\opencode.json.tmp" "$HOME\.config\opencode\opencode.json" -Force
 							</code>
 						</div>
 					</li>
-					<li>Starte OpenCode neu und Sie sind fertig!</li>
+					<li>Starten Sie OpenCode neu und Sie sind fertig!</li>
 				</ol>
 
 				<p class="font-medium text-gray-800 dark:text-gray-200 mt-4 mb-2">
 					Anleitung zum Updaten:
 				</p>
 				<ol class="list-decimal list-inside space-y-1 pl-1">
-					<li>Wenn Sie OpenCode schon installiert hast und auch schon eine Config-Datei für OpenCode hast, dann nutze die Anleitung zum Updaten.</li>
-					<li>Dein API-Key, sofern Sie ihn nicht neu generieren möchtest, bleibt in der Config erhalten.</li>
+					<li>Der API-Key, sofern Sie ihn nicht neu generieren möchten, bleibt in der Config erhalten.</li>
 					<li>
-						<span>Um die Config mit aktuellen Modellen und anderen Inhalten zu aktualisieren kopiere diesen Befehl und gib ihn in dein Terminal ein:</span>
+						<span>Um die Config mit aktuellen Modellen und anderen Inhalten zu aktualisieren kopieren Sie diesen Befehl und geben Sie ihn in die Windows PowerShell ein:</span>
 						<div class="my-2">
 							<code class="block whitespace-pre-wrap bg-gray-100 dark:bg-gray-800 px-2 py-1.5 rounded font-mono text-[11px] text-gray-800 dark:text-gray-200 overflow-x-auto">
-iwr http://10.30.0.90:1234/opencode.json -OutFile "$env:TEMP\opencode.remote.json"
+iwr https://opencode.office.swms.de/opencode.json -OutFile "$env:TEMP\opencode.remote.json"
 jq -s ".[1] * .[0]" "$HOME\.config\opencode\opencode.json" "$env:TEMP\opencode.remote.json" > "$HOME\.config\opencode\opencode.json.tmp"
 Move-Item "$HOME\.config\opencode\opencode.json.tmp" "$HOME\.config\opencode\opencode.json" -Force
 							</code>
 						</div>
 					</li>
-					<li>Starte OpenCode neu und Sie sind fertig!</li>
+					<li>Starten Sie OpenCode neu und Sie sind fertig!</li>
 				</ol>
+
+
+
 
 			{:else if activeTab === 'unix'}
 				<ol class="list-decimal list-inside space-y-3 pl-1 mb-10">
-					<li>Installieren Sie OpenCode.</li>
-					<li>Wenn Sie schon eine Config-Datei für OpenCode hast, dann nutze die Anleitung zum Updaten.</li>
+					<li>Installieren Sie zuerst OpenCode.</li>
+					<li>Wenn schon eine Config-Datei für OpenCode auf Ihrem Rechner vorhanden ist, dann nutzen Sie die Anleitung zum Updaten.</li>
 					<li>
-						<span>Kopiere diesen Befehl und gib ihn in dein Terminal ein:</span>
+						<span>Kopieren Sie diesen Befehl und geben Sie ihn in Ihr Terminal ein:</span>
 						<div class="my-2">
 							<code class="block whitespace-pre-wrap bg-gray-100 dark:bg-gray-800 px-2 py-1.5 rounded font-mono text-[11px] text-gray-800 dark:text-gray-200 overflow-x-auto">
 mkdir -p ~/.config/opencode
-curl -fsSL http://10.30.0.90:1234/opencode.json -o ~/.config/opencode/opencode.json
+curl -fsSL https://opencode.office.swms.de/opencode.json -o ~/.config/opencode/opencode.json
 							</code>
 						</div>
 					</li>
 					<li>
-						<span>Jetzt müssen wir noch den API-Key in die Config eintragen, nutze dazu folgenden Befehl und den oben generierten Key:</span>
+					<span>Im nächsten Schritt muss der API-Schlüssel in die Konfigurationsdatei eingetragen werden.
+Führen Sie dazu den folgenden Befehl aus. Sofern der zuvor generierte API-Schlüssel oberhalb noch sichtbar ist, wurde dieser bereits automatisch in den Befehl eingesetzt.
+Ist dieser nicht mehr zu sehen und im Befehl unterhalb findet sich "API Key hier", so generieren Sie einen neuen API-Schlüssel und fahren dann fort:</span>
 						<div class="my-2">
 							<code class="block whitespace-pre-wrap bg-gray-100 dark:bg-gray-800 px-2 py-1.5 rounded font-mono text-[11px] text-gray-800 dark:text-gray-200 overflow-x-auto">
-								jq --arg key "DEIN_API_KEY" '.provider.swms.options.apiKey = $key' ~/.config/opencode/opencode.json > ~/.config/opencode/opencode.json.tmp && mv ~/.config/opencode/opencode.json.tmp ~/.config/opencode/opencode.json
+								jq --arg key {apiKey || '"API Key hier"'} '.provider.swms.options.apiKey = $key' ~/.config/opencode/opencode.json > ~/.config/opencode/opencode.json.tmp && mv ~/.config/opencode/opencode.json.tmp ~/.config/opencode/opencode.json
 							</code>
 						</div>
 					</li>
-					<li>Starte OpenCode neu und Sie bist fertig!</li>
+					<li>Starten Sie OpenCode neu und Sie sind fertig!</li>
 				</ol>
 
 				<p class="font-medium text-gray-800 dark:text-gray-200 mt-4 mb-2">
 					Anleitung zum Updaten:
 				</p>
 				<ol class="list-decimal list-inside space-y-1 pl-1">
-					<li>Wenn Sie OpenCode schon installiert hast und auch schon eine Config-Datei für OpenCode hast, dann nutze die Anleitung zum Updaten.</li>
-					<li>Dein API-Key, sofern Sie ihn nicht neu generieren möchtest, bleibt in der Config erhalten.</li>
+					<li>Wenn Sie OpenCode schon installiert haben und auch schon eine Config-Datei für OpenCode haben, dann nutzen Sie die Anleitung zum Updaten.</li>
+					<li>Der API-Key, sofern Sie ihn nicht neu generieren möchten, bleibt in der Config erhalten.</li>
 					<li>
-						<span>Um die Config mit aktuellen Modellen und anderen Inhalten zu aktualisieren kopiere diesen Befehl und gib ihn in dein Terminal ein:</span>
+						<span>Um die Config mit aktuellen Modellen und anderen Inhalten zu aktualisieren kopieren Sie diesen Befehl und geben Sie ihn in das Terminal ein:</span>
 						<div class="my-2">
 							<code class="block whitespace-pre-wrap bg-gray-100 dark:bg-gray-800 px-2 py-1.5 rounded font-mono text-[11px] text-gray-800 dark:text-gray-200 overflow-x-auto">
-curl -fsSL http://10.30.0.90:1234/opencode.json -o /tmp/opencode.remote.json
+curl -fsSL https://opencode.office.swms.de/opencode.json -o /tmp/opencode.remote.json
 jq -s '.[1] * .[0]' ~/.config/opencode/opencode.json /tmp/opencode.remote.json > ~/.config/opencode/opencode.json.tmp && mv ~/.config/opencode/opencode.json.tmp ~/.config/opencode/opencode.json
 							</code>
 						</div>
 					</li>
-					<li>Starte OpenCode neu und Sie bist fertig!</li>
+					<li>Starten Sie OpenCode neu und Sie sind fertig!</li>
 				</ol>
 			{/if}
 		</div>		

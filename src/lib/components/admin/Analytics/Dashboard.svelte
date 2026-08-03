@@ -736,7 +736,7 @@
 							<td class="px-3 py-1 text-gray-400">{idx + 1}</td>
 							<td class="px-3 py-1 font-normal text-gray-900 dark:text-white">
 								<span class="truncate max-w-[200px]"
-									>{project.name || project.project_id}</span
+									>{project.name ? project.name : 'Ohne Projekt'}</span
 								>
 							</td>
 							<td class="px-3 py-1 text-right">{project.count.toLocaleString()}</td>
