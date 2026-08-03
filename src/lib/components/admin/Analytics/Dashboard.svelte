@@ -660,7 +660,7 @@
 	</div>
 	<div class="md:col-span-2 mt-2 mb-10">
 		<div class="text-xs font-normal text-gray-700 dark:text-gray-300 mb-1 px-0.5">
-			{$i18n.t('Project Activity')}
+			{$i18n.t('Projekt Aktivitäten')}
 		</div>
 		<div class="scrollbar-hidden relative whitespace-nowrap overflow-x-auto max-w-full">
 			<table class="w-full text-sm text-left text-gray-500 dark:text-gray-400 table-auto">
