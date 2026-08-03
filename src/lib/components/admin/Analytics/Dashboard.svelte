@@ -606,13 +606,13 @@
 							<th
 								scope="col"
 								class="px-2.5 py-2 cursor-pointer select-none text-right"
-								on:click={() => toggleProjectSort('tokens')}
+								on:click={() => toggleUserSort('tokens')}
 							>
 								<div class="flex gap-1.5 items-center justify-end">
 									{$i18n.t('Total Tokens')}
-									{#if projectOrderBy === 'tokens'}
+									{#if userOrderBy === 'tokens'}
 										<span class="font-normal">
-											{#if projectDirection === 'asc'}<ChevronUp className="size-2" />{:else}<ChevronDown className="size-2" />{/if}
+											{#if userDirection === 'asc'}<ChevronUp className="size-2" />{:else}<ChevronDown className="size-2" />{/if}
 										</span>
 									{:else}
 										<span class="invisible"><ChevronUp className="size-2" /></span>
@@ -648,7 +648,7 @@
 						{/each}
 						{#if sortedUsers.length === 0}
 							<tr
-								><td colspan="4" class="px-3 py-2 text-center text-gray-400"
+								><td colspan="6" class="px-3 py-2 text-center text-gray-400"
 									>{$i18n.t('No data')}</td
 								></tr
 							>
@@ -747,7 +747,7 @@
 					{/each}
 					{#if sortedProjects.length === 0}
 						<tr
-							><td colspan="4" class="px-3 py-2 text-center text-gray-400"
+							><td colspan="6" class="px-3 py-2 text-center text-gray-400"
 								>{$i18n.t('No data')}</td
 							></tr
 						>

@@ -405,7 +405,7 @@
 
 	<div class="flex-1 min-h-0 p-4 lg:px-5 flex flex-col">
 		<div class="w-full h-full min-h-0 flex flex-col">
-			<div class="flex-1 min-h-0 overflow-hidden">
+			<div class="flex-1 min-h-0 overflow-y-auto">
 				{#if selectedTab === 'general'}
 					<General
 						saveHandler={async () => {
