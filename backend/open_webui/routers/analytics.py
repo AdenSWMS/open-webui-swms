@@ -52,7 +52,7 @@ class UserAnalyticsResponse(BaseModel):
 
 
 class ProjectAnalyticsEntry(BaseModel):
-    project_id: str
+    Optional[str] = None
     name: Optional[str] = None
     description: Optional[str] = None
     count: int
