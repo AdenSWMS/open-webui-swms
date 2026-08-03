@@ -228,7 +228,10 @@
 
 		<hr class="my-4 border-gray-100 dark:border-gray-850" />
 
-		<h2 class="font-semibold mb-2 dark:text-gray-100">API-Key</h2>
+		<h2 class="font-semibold mb-1 dark:text-gray-100">API-Key</h2>
+		<div class="text-gray-500 text-xs mt-1 mb-2 text-left">
+			ⓘ Der generierte API-Key ist für ein Jahr gültig, danach muss er neu generiert werden.
+		</div>
 
 		<button
 			class="w-full px-3.5 py-2 text-sm rounded-xl bg-black text-white hover:bg-gray-900 dark:bg-white dark:text-black dark:hover:bg-gray-100 transition disabled:opacity-50"
