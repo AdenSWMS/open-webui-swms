@@ -12,6 +12,7 @@
 
 	import { createNewFeedback, getFeedbackById, updateFeedbackById } from '$lib/apis/evaluations';
 	import { getChatById } from '$lib/apis/chats';
+	import { getSpendForMessage } from '$lib/apis/litellm';
 	import { generateTags } from '$lib/apis';
 
 	import {
@@ -446,6 +447,64 @@
 		await tick();
 	};
 
+	
+	$: tokenStats = (() => {
+		if (!message) return null;
+
+		const u = (message as any)?.usage;
+		if (!u) return null;
+
+		const input_tokens = u.input ?? u.input_tokens ?? 0;
+		const output_tokens = u.output ?? u.output_tokens ?? 0;
+		const total_tokens = u.total ?? u.total_tokens ?? (input_tokens + output_tokens);
+
+		const reasoning = u.reasoning ?? null;
+		const cached = u.cached ?? null;
+
+		const responseSpeed = u["response_token/s"] ?? null
+		const rawDuration = u.approximate_total ?? u.total_duration_str ?? null;
+
+		const formattedDuration = rawDuration 
+			? rawDuration.replace(/^0h0m/, '').replace(/^0h/, '')
+			: null;
+
+		if (total_tokens === 0 && input_tokens === 0 && output_tokens === 0) return null;
+
+		return { input_tokens, output_tokens, total_tokens, reasoning, cached, responseSpeed, formattedDuration };
+	})();
+
+	let isLoadingCost = false;
+	let cost = null;
+	let formattedCost = null;
+	async function fetchMessageCost() {
+		if (!tokenStats) return;
+
+		isLoadingCost = true;
+		try {
+			
+			const res = await getSpendForMessage(localStorage.token, "ollama/" + model.id, tokenStats);
+
+			if (res) {
+				cost = res.cost;
+
+				if (cost !== undefined && cost !== null) {
+					formattedCost = `$${cost.toFixed(4)}`;
+				}
+
+			} else {
+				console.error("Fehler bei der Kostenberechnung");
+			}
+		} catch (err) {
+			console.error("Netzwerkfehler bei Kostenberechnung:", err);
+		} finally {
+			isLoadingCost = false;
+		}
+	}
+
+	$: if (tokenStats) {
+		fetchMessageCost();
+	}
+
 	let feedbackLoading = false;
 
 	const feedbackHandler = async (rating: number | null = null, details: object | null = null) => {
@@ -668,15 +727,76 @@
 
 		<div class="flex-auto w-0 pl-1 relative">
 			{#if !compactPreview}
-				<Name>
-					<Tooltip content={model?.name ?? message.model} placement="top-start">
-						<span id="response-message-model-name" class="line-clamp-1 text-black dark:text-white">
-							{model?.name ?? message.model}
-						</span>
-					</Tooltip>
-				</Name>
-			{/if}
+			<Name>
+				<Tooltip content={model?.name ?? message.model} placement="top-start">
+					<span id="response-message-model-name" class="line-clamp-1 text-black dark:text-white">
+						{model?.name ?? message.model}
+					</span>
+				</Tooltip>
+			</Name>
 
+			{#if tokenStats}
+				<div 
+					class="flex items-center gap-1.5 text-sm text-gray-500 dark:text-gray-500 select-none mt-1"
+					title="Token-Verbrauch"
+				>
+					<span title="Prompt / Input Tokens" class="flex items-center gap-1">
+						<span class="text-gray-500 dark:text-gray-500">⬆︎ </span>
+						<span>{tokenStats.input_tokens ?? 0}</span>
+					</span>
+
+					{#if tokenStats.cached ?? tokenStats.cached}
+						<span title="Aus dem Cache geladen" class="text-gray-500 dark:text-gray-500">
+							(⚡{tokenStats.cached ?? tokenStats.cached})
+						</span>
+					{/if}
+
+					<span class="text-gray-300 dark:text-gray-600">•</span>
+
+					<span title="Completion / Output Tokens" class="flex items-center gap-1">
+						<span class="text-gray-500 dark:text-gray-500">⬇︎ </span>
+						<span>{tokenStats.output_tokens ?? 0}</span>
+					</span>
+
+					{#if tokenStats.reasoning ?? tokenStats.reasoning}
+						<span title="Reasoning / Denk-Tokens" class="text-gray-500 dark:text-gray-500">
+							(🧠 {tokenStats.reasoning ?? tokenStats.reasoning})
+						</span>
+					{/if}
+
+					<span class="text-gray-300 dark:text-gray-600">•</span>
+
+					<span title="Gesamte Tokens" class="flex items-center gap-1">
+						<span class="text-gray-500 dark:text-gray-500">Σ</span>
+						<span class="font-medium">{tokenStats.total_tokens ?? 0}</span>
+					</span>
+
+					<span class="text-gray-300 dark:text-gray-600">•</span>
+
+					<span title="Token/s" class="flex items-center gap-1">
+						<span class="text-gray-500 dark:text-gray-500">⚡ </span>
+						<span class="font-medium">{tokenStats.responseSpeed ?? 0}</span>
+					</span>
+
+					<span class="text-gray-300 dark:text-gray-600">•</span>
+
+					<span title="Total Time" class="flex items-center gap-1">
+						<span class="text-gray-500 dark:text-gray-500">⏱ </span>
+						<span class="font-medium">{tokenStats.formattedDuration ?? 0}</span>
+					</span>
+					<span class="text-gray-300 dark:text-gray-600">•</span>
+
+					{#if isLoadingCost}
+						<span class="flex items-center gap-1">
+							<Spinner size="xs" />
+							<span class="text-gray-500 dark:text-gray-500">Brechne Kosten...</span>
+						</span>
+					{:else}
+						<span class="font-medium">{formattedCost}</span>
+					{/if}		
+				</div>
+			{/if}
+		{/if}
 			<div>
 				<div class="chat-{message.role} w-full min-w-full">
 					<div>
