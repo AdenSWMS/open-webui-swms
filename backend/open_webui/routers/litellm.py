@@ -111,3 +111,9 @@ async def delete_litellm_key(user = Depends(get_verified_user)):
                 status_code=503, 
                 detail=f"LiteLLM Server nicht erreichbar: {exc}"
             ) 
+
+async def get_litellm_budget():
+    ...
+
+async def get_user_daily_usage():
+    ...
