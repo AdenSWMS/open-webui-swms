@@ -1,7 +1,8 @@
 import os
 import httpx
 from fastapi import APIRouter, HTTPException, Depends
-from pydantic import BaseModel, json
+from pydantic import BaseModel
+import json
 from typing import List, Dict, Any, Optional
 
 # Nutze den auth-helper von Open WebUI, um Anfragen abzusichern
@@ -152,8 +153,6 @@ async def litell_get_spend_for_message(user = Depends(get_verified_user), spend_
             detail="LITELLM_MASTER_KEY ist im Open WebUI Backend nicht konfiguriert."
         )
 
-    model_with_provider = get_litellm_provider_header(spend_data.completion_response.model)
-
     headers = {
         "Authorization": f"Bearer {LITELLM_MASTER_KEY}",
         "Content-Type": "application/json"
@@ -161,7 +160,7 @@ async def litell_get_spend_for_message(user = Depends(get_verified_user), spend_
 
     payload = {
         "completion_response": {
-            "model": model_with_provider,
+            "model": "ollama/" + spend_data.completion_response.model,
             "usage": {
                 "prompt_tokens": spend_data.completion_response.usage.prompt_tokens,
                 "completion_tokens": spend_data.completion_response.usage.completion_tokens,

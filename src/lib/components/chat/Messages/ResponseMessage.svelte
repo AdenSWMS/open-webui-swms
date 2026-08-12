@@ -456,21 +456,16 @@
 
 		const input_tokens = u.input ?? u.input_tokens ?? 0;
 		const output_tokens = u.output ?? u.output_tokens ?? 0;
+		const reasoning_tokens = u.completion_tokens_details?.reasoning_tokens ?? 0;
+
 		const total_tokens = u.total ?? u.total_tokens ?? (input_tokens + output_tokens);
 
-		const reasoning = u.reasoning ?? null;
 		const cached = u.cached ?? null;
 
-		const responseSpeed = u["response_token/s"] ?? null
-		const rawDuration = u.approximate_total ?? u.total_duration_str ?? null;
-
-		const formattedDuration = rawDuration 
-			? rawDuration.replace(/^0h0m/, '').replace(/^0h/, '')
-			: null;
 
 		if (total_tokens === 0 && input_tokens === 0 && output_tokens === 0) return null;
 
-		return { input_tokens, output_tokens, total_tokens, reasoning, cached, responseSpeed, formattedDuration };
+		return { input_tokens, output_tokens, total_tokens, reasoning_tokens, cached };
 	})();
 
 	let isLoadingCost = false;
@@ -482,10 +477,11 @@
 		isLoadingCost = true;
 		try {
 			
-			const res = await getSpendForMessage(localStorage.token, "ollama/" + model.id, tokenStats);
+			const res = await getSpendForMessage(localStorage.token, model.id, tokenStats);
 
 			if (res) {
 				cost = res.cost;
+				console.log("Kosten für Nachricht", cost);
 
 				if (cost !== undefined && cost !== null) {
 					formattedCost = `$${cost.toFixed(4)}`;
@@ -758,32 +754,20 @@
 						<span>{tokenStats.output_tokens ?? 0}</span>
 					</span>
 
-					{#if tokenStats.reasoning ?? tokenStats.reasoning}
-						<span title="Reasoning / Denk-Tokens" class="text-gray-500 dark:text-gray-500">
-							(🧠 {tokenStats.reasoning ?? tokenStats.reasoning})
-						</span>
-					{/if}
-
 					<span class="text-gray-300 dark:text-gray-600">•</span>
+
+					{#if tokenStats.reasoning_tokens}
+						<span title="Reasoning / Denk-Tokens" class="text-gray-500 dark:text-gray-500">
+							🧠 {tokenStats.reasoning_tokens}
+						</span>
+						<span class="text-gray-300 dark:text-gray-600">•</span>
+					{/if}
 
 					<span title="Gesamte Tokens" class="flex items-center gap-1">
 						<span class="text-gray-500 dark:text-gray-500">Σ</span>
 						<span class="font-medium">{tokenStats.total_tokens ?? 0}</span>
 					</span>
-
-					<span class="text-gray-300 dark:text-gray-600">•</span>
-
-					<span title="Token/s" class="flex items-center gap-1">
-						<span class="text-gray-500 dark:text-gray-500">⚡ </span>
-						<span class="font-medium">{tokenStats.responseSpeed ?? 0}</span>
-					</span>
-
-					<span class="text-gray-300 dark:text-gray-600">•</span>
-
-					<span title="Total Time" class="flex items-center gap-1">
-						<span class="text-gray-500 dark:text-gray-500">⏱ </span>
-						<span class="font-medium">{tokenStats.formattedDuration ?? 0}</span>
-					</span>
+					
 					<span class="text-gray-300 dark:text-gray-600">•</span>
 
 					{#if isLoadingCost}
