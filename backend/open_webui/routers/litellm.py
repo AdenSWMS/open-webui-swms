@@ -166,6 +166,10 @@ async def litell_get_spend_for_message(user = Depends(get_verified_user), spend_
                 "completion_tokens": spend_data.completion_response.usage.completion_tokens,
                 "total_tokens": spend_data.completion_response.usage.total_tokens
             }
+        },
+        "custom_pricing": {
+            "input_cost_per_token": 15.0,   # Preis pro Input-Token in USD
+            "output_cost_per_token": 20.0   # Preis pro Output-Token in USD
         }
     }
 

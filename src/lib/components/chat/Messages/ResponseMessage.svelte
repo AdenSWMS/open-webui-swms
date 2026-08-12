@@ -477,7 +477,7 @@
 		isLoadingCost = true;
 		try {
 			
-			const res = await getSpendForMessage(localStorage.token, model.id, tokenStats);
+			const res = await getSpendForMessage(localStorage.token, "ollama/" + model.id, tokenStats);
 
 			if (res) {
 				cost = res.cost;
