@@ -160,7 +160,7 @@ async def litell_get_spend_for_message(user = Depends(get_verified_user), spend_
 
     payload = {
         "completion_response": {
-            "model": "ollama/" + spend_data.completion_response.model,
+            "model": spend_data.completion_response.model,
             "usage": {
                 "prompt_tokens": spend_data.completion_response.usage.prompt_tokens,
                 "completion_tokens": spend_data.completion_response.usage.completion_tokens,
