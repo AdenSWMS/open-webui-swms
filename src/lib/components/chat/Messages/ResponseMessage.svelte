@@ -480,11 +480,15 @@
 			const res = await getSpendForMessage(localStorage.token, model.id, tokenStats);
 
 			if (res) {
-				cost = res.cost;
-				console.log("Kosten für Nachricht", cost);
+   		 		cost = res.cost;
+    			console.log("Kosten für Nachricht", cost);
 
 				if (cost !== undefined && cost !== null) {
-					formattedCost = `$${cost.toFixed(10)}`;
+					if (cost === 0) {
+						formattedCost = "0.0";
+					} else {
+						formattedCost = `$${cost.toFixed(8)}`;
+					}
 				}
 
 			} else {
