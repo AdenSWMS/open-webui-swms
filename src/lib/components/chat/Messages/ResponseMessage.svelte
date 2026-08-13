@@ -476,15 +476,15 @@
 
 		isLoadingCost = true;
 		try {
-			
-			const res = await getSpendForMessage(localStorage.token, "ollama/" + model.id, tokenStats);
+			console.log("model:", model);
+			const res = await getSpendForMessage(localStorage.token, model.id, tokenStats);
 
 			if (res) {
 				cost = res.cost;
 				console.log("Kosten für Nachricht", cost);
 
 				if (cost !== undefined && cost !== null) {
-					formattedCost = `$${cost.toFixed(4)}`;
+					formattedCost = `$${cost.toFixed(10)}`;
 				}
 
 			} else {

@@ -5,9 +5,10 @@ from pydantic import BaseModel
 import json
 from typing import List, Dict, Any, Optional
 
-# Nutze den auth-helper von Open WebUI, um Anfragen abzusichern
+
 from open_webui.models.users import User
 from open_webui.utils.auth import get_verified_user
+from open_webui.utils.model_mapping import add_provider_to_model
 from sqlalchemy import null 
 
 router = APIRouter()
@@ -152,6 +153,7 @@ async def litell_get_spend_for_message(user = Depends(get_verified_user), spend_
             status_code=500, 
             detail="LITELLM_MASTER_KEY ist im Open WebUI Backend nicht konfiguriert."
         )
+    model_with_provider = add_provider_to_model(spend_data.completion_response.model)
 
     headers = {
         "Authorization": f"Bearer {LITELLM_MASTER_KEY}",
@@ -160,16 +162,12 @@ async def litell_get_spend_for_message(user = Depends(get_verified_user), spend_
 
     payload = {
         "completion_response": {
-            "model": spend_data.completion_response.model,
+            "model": model_with_provider,
             "usage": {
                 "prompt_tokens": spend_data.completion_response.usage.prompt_tokens,
                 "completion_tokens": spend_data.completion_response.usage.completion_tokens,
                 "total_tokens": spend_data.completion_response.usage.total_tokens
             }
-        },
-        "custom_pricing": {
-            "input_cost_per_token": 15.0,   # Preis pro Input-Token in USD
-            "output_cost_per_token": 20.0   # Preis pro Output-Token in USD
         }
     }
 

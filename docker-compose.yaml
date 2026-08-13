@@ -7,6 +7,7 @@ services:
     container_name: open-webui
     volumes:
       - open-webui:/app/backend/data
+      - ./providers.json:/app/providers.json
     ports:
       - ${OPEN_WEBUI_PORT-3000}:8080
     environment:
