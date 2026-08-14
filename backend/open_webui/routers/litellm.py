@@ -154,6 +154,12 @@ async def litell_get_spend_for_message(user = Depends(get_verified_user), spend_
             detail="LITELLM_MASTER_KEY ist im Open WebUI Backend nicht konfiguriert."
         )
     model_with_provider = add_provider_to_model(spend_data.completion_response.model)
+    
+    if not model_with_provider:
+        raise HTTPException(
+            status_code=400, 
+            detail=f"Modell {spend_data.completion_response.model} konnte nicht auf einen Anbieter abgebildet werden."
+        )
 
     headers = {
         "Authorization": f"Bearer {LITELLM_MASTER_KEY}",
