@@ -11,7 +11,6 @@ def load_provider_mapping() -> Dict[str, str]:
         with open(MAPPING_FILE, "r", encoding="utf-8") as f:
             return json.load(f)
     except FileNotFoundError:
-        print(f"Warnung: {MAPPING_FILE} nicht gefunden. Nutze leeres Mapping.")
         return {}
 
 def add_provider_to_model(model_id: str) -> str:
@@ -20,7 +19,6 @@ def add_provider_to_model(model_id: str) -> str:
     model_lower = model_id.lower()
 
     for prefix, provider in mapping.items():
-        print(f"Überprüfe Präfix: {prefix} für Modell: {model_lower}")
         if model_lower.startswith(prefix.lower()):
             return f"{provider}/{model_id}"
 

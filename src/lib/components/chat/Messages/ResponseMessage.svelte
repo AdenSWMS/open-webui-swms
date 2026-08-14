@@ -475,27 +475,24 @@
 		if (!tokenStats) return;
 
 		isLoadingCost = true;
+		formattedCost = null;
+		cost = null;
+
 		try {
-			console.log("model:", model);
 			const res = await getSpendForMessage(localStorage.token, model.id, tokenStats);
 
-			if (res) {
-   		 		cost = res.cost;
-    			console.log("Kosten für Nachricht", cost);
+			if (res && res.cost !== undefined && res.cost !== null) {
+				cost = res.cost;
+				console.log("Kosten für Nachricht", cost);
 
-				if (cost !== undefined && cost !== null) {
-					if (cost === 0) {
-						formattedCost = "0.0";
-					} else {
-						formattedCost = `$${cost.toFixed(8)}`;
-					}
-				}
-
+				formattedCost = cost === 0 ? "0.0" : `$${cost.toFixed(8)}`;
 			} else {
-				console.error("Fehler bei der Kostenberechnung");
+				console.error("Fehler bei der Kostenberechnung oder keine Kosten angegeben");
+				formattedCost = "Keine Kosten angegeben";
 			}
 		} catch (err) {
 			console.error("Netzwerkfehler bei Kostenberechnung:", err);
+			formattedCost = "Keine Kosten angegeben";
 		} finally {
 			isLoadingCost = false;
 		}
