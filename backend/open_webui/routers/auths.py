@@ -59,6 +59,7 @@ from open_webui.models.users import (
     Users,
     UserStatus,
 )
+from open_webui.routers.litellm import ( ensure_litellm_user )
 from open_webui.utils.access_control import get_permissions, has_permission
 from open_webui.utils.auth import (
     create_api_key,
@@ -241,6 +242,8 @@ class SessionUserInfoResponse(SessionUserResponse, UserStatus):
     bio: str | None = None
     gender: str | None = None
     date_of_birth: datetime.date | None = None
+    litellm_user_created: bool | None = None
+    litellm_user_exists: bool | None = None
 
 
 @router.get('/', response_model=SessionUserInfoResponse)
@@ -287,6 +290,13 @@ async def get_session_user(
 
     user_permissions = await get_permissions(user.id, await Config.get('user.permissions'), db=db)
 
+    litellm_status = {'created': False, 'exists': False}
+
+    try:
+        litellm_status = await ensure_litellm_user(user)
+    except Exception as e:
+        print(f'LiteLLM User Sync Fehler für {user.email}: {e}')
+
     response_data = {
         'token': token,
         'token_type': 'Bearer',
@@ -303,6 +313,8 @@ async def get_session_user(
         'status_message': user.status_message,
         'status_expires_at': user.status_expires_at,
         'permissions': user_permissions,
+        'litellm_user_created': litellm_status.get('created', False),
+        'litellm_user_exists': litellm_status.get('exists', False),
     }
 
     return response_data

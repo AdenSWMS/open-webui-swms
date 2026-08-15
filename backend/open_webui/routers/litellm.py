@@ -13,12 +13,11 @@ from sqlalchemy import null
 
 router = APIRouter()
 
-# Umgebungsvariablen aus Open WebUI laden
 LITELLM_URL = os.getenv("LITELLM_URL")
 LITELLM_TEAM_ID = os.getenv("LITELLM_TEAM_ID")
 LITELLM_MASTER_KEY = os.getenv("LITELLM_MASTER_KEY")
 LITELLM_MAX_BUDGET = os.getenv("LITELLM_MAX_BUDGET", "0.0") 
-LITELLM_KEY_DURATION = os.getenv("LITELLM_KEY_DURATION", "30m")  # Standardmäßig 30 Minuten
+LITELLM_KEY_DURATION = os.getenv("LITELLM_KEY_DURATION", "30m") 
 LITELLM_BUDGET_DURATION = os.getenv("LITELLM_BUDGET_DURATION", "30d")  
 
 openCodeName = "OpenCode"
@@ -28,12 +27,10 @@ class Usage(BaseModel):
     completion_tokens: int
     total_tokens: int
 
-# Modell für die Completion Response
 class CompletionResponse(BaseModel):
     model: str
     usage: Usage
 
-# Haupt-Payload für den "after making call" Fall
 class SpendCalculateRequest(BaseModel):
     completion_response: CompletionResponse
 
@@ -52,6 +49,51 @@ def get_litellm_provider_header(model_name: str):
         model_with_provider = model_map[current_model]
         
     return model_with_provider
+
+
+async def ensure_litellm_user(user):
+  if not LITELLM_MASTER_KEY:
+    return {'created': False, 'exists': False, 'error': 'No Master Key'}
+
+  headers = {
+      'Authorization': f'Bearer {LITELLM_MASTER_KEY}',
+      'Content-Type': 'application/json',
+  }
+
+  async with httpx.AsyncClient() as client:
+    try:
+      check_res = await client.get(
+          f'{LITELLM_URL}/user/info',
+          params={'user_id': user.email},
+          headers=headers,
+          timeout=5.0,
+      )
+
+      if check_res.status_code == 200:
+        return {'created': False, 'exists': True}
+
+      payload = {
+          'user_id': user.email,
+          'user_alias': f"{user.name} ({user.email})",
+          'user_email': user.email,
+          'team_id': LITELLM_TEAM_ID,
+          'budget_duration': LITELLM_BUDGET_DURATION,
+          'max_budget': float(LITELLM_MAX_BUDGET),
+          'key_alias': f"{openCodeName} {user.name}({user.email})",
+          'duration': LITELLM_KEY_DURATION,
+      }
+
+      create_res = await client.post(
+          f'{LITELLM_URL}/user/new', json=payload, headers=headers, timeout=10.0
+      )
+
+      if create_res.status_code == 200:
+        return {'created': True, 'exists': False}
+
+    except Exception as exc:
+      print(f'Exception in LiteLLM: {exc}')
+
+  return {'created': False, 'exists': False}
 
 
 @router.post("/generate-litellm-api-key")
