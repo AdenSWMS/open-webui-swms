@@ -248,9 +248,38 @@ async def litell_get_spend_for_message(user = Depends(get_verified_user), spend_
                 detail=f"LiteLLM Server nicht erreichbar: {exc}"
             )
 
+@router.get("/get-user-info")
+async def get_user_info(user = Depends(get_verified_user)):
+    if not LITELLM_MASTER_KEY:
+        raise HTTPException(
+            status_code=500, 
+            detail="LITELLM_MASTER_KEY ist im Open WebUI Backend nicht konfiguriert."
+        )
 
-async def get_litellm_budget():
-    ...
+    headers = {
+        "Authorization": f"Bearer {LITELLM_MASTER_KEY}",
+        "Content-Type": "application/json"
+    }
 
-async def get_user_daily_usage():
-    ...
+    async with httpx.AsyncClient() as client:
+        try:
+            response = await client.get(
+                f"{LITELLM_URL}/v2/user/info", 
+                params={"user_id": user.email}, 
+                headers=headers,
+                timeout=10.0
+            )
+            
+            if response.status_code != 200:
+                raise HTTPException(
+                    status_code=response.status_code, 
+                    detail=f"LiteLLM Fehler: {response.text}"
+                )
+
+            return response.json()
+
+        except httpx.RequestError as exc:
+            raise HTTPException(
+                status_code=503, 
+                detail=f"LiteLLM Server nicht erreichbar: {exc}"
+            )

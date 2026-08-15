@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { getContext } from 'svelte';
+	import { getContext, onMount } from 'svelte';
 	import { toast } from 'svelte-sonner';
 
 	import {
@@ -37,7 +37,9 @@
 	import ChatCheck from '../icons/ChatCheck.svelte';
 	import Knobs from '../icons/Knobs.svelte';
 	import { isTemporaryChatId } from '$lib/utils/chatId';
-
+	import { getUserInfo } from '$lib/apis/litellm'
+	import type { UserInfoResponse } from '$lib/apis/litellm';
+	import NavbarBudgetButton from './NavbarBudgetButton.svelte';
 	const i18n = getContext('i18n');
 
 	export let initNewChat: Function;
@@ -73,6 +75,46 @@
 
 	import OpenCodeModal from './OpenCodeModal.svelte';
   	let showOpenCodeModal = false;
+
+	import BudgetModal from './BudgetModal.svelte';
+	let showBudgetModal = false;
+	let userData: UserInfoResponse | null = null;
+	let error: string | null = null;
+	async function loadUserData() {
+		error = null;
+
+		try {
+
+			const token = localStorage.getItem('token') || '';
+
+			if (!token) {
+				throw new Error('Kein Authentifizierungs-Token gefunden.');
+			}
+
+
+			userData = await getUserInfo(token);
+		} catch (err: any) {
+			console.error('Fehler beim Laden der Budgetdaten:', err);
+			error = typeof err === 'string' ? err : err?.message || 'Fehler beim Laden der Daten.';
+		}
+	}
+
+	async function openBudgetModal() {
+		showBudgetModal = true;
+		await loadUserData();
+	}
+
+	onMount(async () => {
+		try {
+			const token = localStorage.getItem('token') || '';
+			if (token) {
+				userData = await getUserInfo(token);
+			}
+		} catch (err) {
+			console.error('Fehler beim Abrufen der Nutzerdaten für Navbar:', err);
+		}
+	});
+
 </script>
 
 <ShareChatModal bind:show={showShareChatModal} chatId={$chatId} />
@@ -176,12 +218,33 @@
 				</div>
 
 				<div class="self-start flex flex-none items-center text-gray-600 dark:text-gray-400">
-					<div class="shrink-0 w-full md:w-auto md:ml-auto mr-3 mt-1.5">
+					<div class="shrink-0 w-full md:w-auto md:ml-auto mr-3 mt-1.5 flex items-center gap-2">
+						{#if userData}
+							<NavbarBudgetButton 
+								{userData} 
+								onClick={openBudgetModal} 
+							/>
+						{:else if error}
+							<div class="px-3 py-1.5 text-xs text-red-500 bg-red-100 dark:bg-red-900/20 rounded-lg border border-red-200 dark:border-red-800/30">
+								{error}
+							</div>
+						{:else}
+							<button
+								type="button"
+								on:click={openBudgetModal}
+								class="inline-flex items-center gap-2 px-3 py-1 text-xs font-medium bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-gray-700 dark:text-gray-200 shadow-sm hover:bg-gray-50 dark:hover:bg-gray-700 transition cursor-pointer"
+							>
+								Budget abrufen
+							</button>
+						{/if}
+
+						<BudgetModal bind:show={showBudgetModal} {userData} />
+						<!-- OpenCode Button -->
 						<button 
 							class="px-3 py-1 text-xs font-medium bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-gray-700 dark:text-gray-200 shadow-sm hover:bg-gray-50 dark:hover:bg-gray-700 transition cursor-pointer"
 							on:click={() => (showOpenCodeModal = true)}
 						>
-						OpenCode & API-Key
+							OpenCode & API-Key
 						</button>
 						<OpenCodeModal bind:show={showOpenCodeModal} />
 					</div>
