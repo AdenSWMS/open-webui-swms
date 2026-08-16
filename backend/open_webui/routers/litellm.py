@@ -188,66 +188,6 @@ async def delete_litellm_key(user = Depends(get_verified_user)):
                 detail=f"LiteLLM Server nicht erreichbar: {exc}"
             ) 
         
-@router.post("/spend-for-message")
-async def litell_get_spend_for_message(user = Depends(get_verified_user), spend_data: SpendCalculateRequest = None):
-    if not LITELLM_MASTER_KEY:
-        raise HTTPException(
-            status_code=500, 
-            detail="LITELLM_MASTER_KEY ist im Open WebUI Backend nicht konfiguriert."
-        )
-    model_with_provider = add_provider_to_model(spend_data.completion_response.model)
-    
-    if not model_with_provider:
-        raise HTTPException(
-            status_code=400, 
-            detail=f"Modell {spend_data.completion_response.model} konnte nicht auf einen Anbieter abgebildet werden."
-        )
-
-    headers = {
-        "Authorization": f"Bearer {LITELLM_MASTER_KEY}",
-        "Content-Type": "application/json"
-    }
-
-    payload = {
-        "completion_response": {
-            "model": model_with_provider,
-            "usage": {
-                "prompt_tokens": spend_data.completion_response.usage.prompt_tokens,
-                "completion_tokens": spend_data.completion_response.usage.completion_tokens,
-                "total_tokens": spend_data.completion_response.usage.total_tokens
-            }
-        }
-    }
-
-    async with httpx.AsyncClient() as client:
-        try:
-            response = await client.post(
-                f"{LITELLM_URL}/spend/calculate", 
-                json=payload, 
-                headers=headers,
-                timeout=10.0
-            )
-            
-            if response.status_code != 200:
-                if "already exists" in response.text:
-                    raise HTTPException(
-                        status_code=400, 
-                        detail="Kosten konnten nicht berechnet werden."
-                    )
-                else:
-                    raise HTTPException(
-                        status_code=response.status_code, 
-                        detail=f"LiteLLM Fehler: {response.text}"
-                    )
-
-            return response.json()
-
-        except httpx.RequestError as exc:
-            raise HTTPException(
-                status_code=503, 
-                detail=f"LiteLLM Server nicht erreichbar: {exc}"
-            )
-
 @router.get("/get-user-info")
 async def get_user_info(user = Depends(get_verified_user)):
     if not LITELLM_MASTER_KEY:

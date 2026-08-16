@@ -12,7 +12,6 @@
 
 	import { createNewFeedback, getFeedbackById, updateFeedbackById } from '$lib/apis/evaluations';
 	import { getChatById } from '$lib/apis/chats';
-	import { getSpendForMessage } from '$lib/apis/litellm';
 	import { generateTags } from '$lib/apis';
 
 	import {
@@ -447,60 +446,26 @@
 		await tick();
 	};
 
-	
+
 	$: tokenStats = (() => {
 		if (!message) return null;
-
 		const u = (message as any)?.usage;
 		if (!u) return null;
 
 		const input_tokens = u.input ?? u.input_tokens ?? 0;
 		const output_tokens = u.output ?? u.output_tokens ?? 0;
 		const reasoning_tokens = u.completion_tokens_details?.reasoning_tokens ?? 0;
-
 		const total_tokens = u.total ?? u.total_tokens ?? (input_tokens + output_tokens);
-
 		const cached = u.cached ?? null;
 
+		const hasCost = u.cost !== undefined && u.cost !== null;
+		const cost = hasCost ? `${u.cost.toFixed(8)}` : "Kostenlos";
 
 		if (total_tokens === 0 && input_tokens === 0 && output_tokens === 0) return null;
 
-		return { input_tokens, output_tokens, total_tokens, reasoning_tokens, cached };
+		return { input_tokens, output_tokens, total_tokens, reasoning_tokens, cached, cost };
 	})();
 
-	let isLoadingCost = false;
-	let cost = null;
-	let formattedCost = null;
-	async function fetchMessageCost() {
-		if (!tokenStats) return;
-
-		isLoadingCost = true;
-		formattedCost = null;
-		cost = null;
-
-		try {
-			const res = await getSpendForMessage(localStorage.token, model.id, tokenStats);
-
-			if (res && res.cost !== undefined && res.cost !== null) {
-				cost = res.cost;
-				console.log("Kosten für Nachricht", cost);
-
-				formattedCost = cost === 0 ? "0.0" : `$${cost.toFixed(8)}`;
-			} else {
-				console.error("Fehler bei der Kostenberechnung oder keine Kosten angegeben");
-				formattedCost = "Keine Kosten angegeben";
-			}
-		} catch (err) {
-			console.error("Netzwerkfehler bei Kostenberechnung:", err);
-			formattedCost = "Keine Kosten angegeben";
-		} finally {
-			isLoadingCost = false;
-		}
-	}
-
-	$: if (tokenStats) {
-		fetchMessageCost();
-	}
 
 	let feedbackLoading = false;
 
@@ -771,14 +736,9 @@
 					
 					<span class="text-gray-300 dark:text-gray-600">•</span>
 
-					{#if isLoadingCost}
-						<span class="flex items-center gap-1">
-							<Spinner size="xs" />
-							<span class="text-gray-500 dark:text-gray-500">Brechne Kosten...</span>
+					<span title="Kosten der Anfrage" class="text-gray-500 dark:text-gray-500">
+							$ {tokenStats.cost}
 						</span>
-					{:else}
-						<span class="font-medium">{formattedCost}</span>
-					{/if}		
 				</div>
 			{/if}
 		{/if}
