@@ -122,7 +122,7 @@
 	import XMark from '../icons/XMark.svelte';
 	import EmbeddedChatHistoryDropdown from './EmbeddedChatHistoryDropdown.svelte';
 	import InputVariablesModal from './MessageInput/InputVariablesModal.svelte';
-	import ProjectSelectorModal from '$lib/components/chat/ProjectSelector/ProjectSelectorModal.svelte';
+	import ProjectSelectorModal from '$lib/components/chat/ProjectSelectorModal.svelte';
 
 	export let chatIdProp = '';
 	export let embedded = false;

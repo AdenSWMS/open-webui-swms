@@ -20,7 +20,7 @@
 	import { goto } from '$app/navigation';
 
 	import ShareChatModal from '../chat/ShareChatModal.svelte';
-	import ProjectSelector from '../chat/ProjectSelector.svelte';
+	import ProjectPresenter from './ProjectSelector/ProjectPresenter.svelte';
 	import Tooltip from '../common/Tooltip.svelte';
 	import Menu from '$lib/components/layout/Navbar/Menu.svelte';
 	import AdjustmentsHorizontal from '../icons/AdjustmentsHorizontal.svelte';
@@ -53,7 +53,6 @@
 	export let title = '';
 
 	export let selectedProjects;
-	export let showProjectSelector = true;
 
 	export let onSaveTempChat: () => {};
 	export let archiveChatHandler: (id: string) => void;
@@ -163,14 +162,11 @@
 				{/if}
 
 				<div class="flex-1 flex flex-col md:flex-row md:items-baseline gap-2 md:gap-4 overflow-hidden max-w-full mt-0.5 py-0.5 {$showSidebar ? 'ml-1' : ''}">
-					{#if showProjectSelector}
-						<div class="shrink-0 w-full md:w-auto">
-							<ProjectSelector
-								bind:selectedProjects
-								showSetDefault={!shareEnabled}
-							/>
-						</div>
-					{/if}
+					<div class="shrink-0 w-full md:w-auto">
+						<ProjectPresenter
+							bind:selectedProjects
+						/>
+					</div>
 					{#if chat?.id}
 						<div class="flex max-w-full min-w-0 items-center gap-2 mr-2">
 							<div

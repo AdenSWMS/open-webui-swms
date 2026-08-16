@@ -3,7 +3,7 @@
 	import { getContext, tick } from 'svelte';
 	import Modal from '$lib/components/common/Modal.svelte';
 	import Search from '$lib/components/icons/Search.svelte';
-	import ProjectItem from './ProjectItem.svelte';
+	import ProjectItem from './ProjectSelector/ProjectItem.svelte';
 	import { user } from '$lib/stores';
 	import { getProjectsByUser } from '$lib/apis/projects';
 
