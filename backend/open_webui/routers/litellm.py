@@ -8,7 +8,6 @@ from typing import List, Dict, Any, Optional
 
 from open_webui.models.users import User
 from open_webui.utils.auth import get_verified_user
-from open_webui.utils.model_mapping import add_provider_to_model
 from sqlalchemy import null 
 
 router = APIRouter()

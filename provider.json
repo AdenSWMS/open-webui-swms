@@ -1,6 +1,0 @@
-{
-  "ollama-": "ollama",
-  "gpt-": "openai",
-  "claude-": "anthropic",
-  "gemini-": "gemini"
-}
