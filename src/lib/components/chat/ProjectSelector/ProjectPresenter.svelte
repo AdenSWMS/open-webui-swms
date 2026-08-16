@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { getContext } from 'svelte';
 	import { selectedProject, settings } from '$lib/stores';
-	import Folder from '$lib/components/icons/Folder.svelte'; // Optionales Icon, falls vorhanden
+	import Folder from '$lib/components/icons/Folder.svelte';
 
 	const i18n = getContext('i18n');
 

@@ -184,9 +184,10 @@
 
 
 	$: if (!showProjectModal && resolveProjectSelection) {
-	resolveProjectSelection(null);
-	resolveProjectSelection = null;
-}
+		const resolve = resolveProjectSelection;
+		resolveProjectSelection = null;
+		resolve(null);
+	};
 
 
 	const promptProjectSelection = (): Promise<any> => {
@@ -197,16 +198,14 @@
 	};
 
 	const handleProjectSelected = async (project: any) => {
-		// 1. Modal schließen
+		const resolve = resolveProjectSelection;
+		resolveProjectSelection = null;
+
 		showProjectModal = false;
-		
-		// 2. Zustand/Store updaten
 		selectedProject.set(project);
 		
-		// 3. Promise auflösen (falls durch promptProjectSelection aufgerufen)
-		if (resolveProjectSelection) {
-			resolveProjectSelection(project);
-			resolveProjectSelection = null;
+		if (resolve) {
+			resolve(project);
 		}
 	};
 
