@@ -21,34 +21,6 @@ LITELLM_BUDGET_DURATION = os.getenv("LITELLM_BUDGET_DURATION", "30d")
 
 openCodeName = "OpenCode"
 
-class Usage(BaseModel):
-    prompt_tokens: int
-    completion_tokens: int
-    total_tokens: int
-
-class CompletionResponse(BaseModel):
-    model: str
-    usage: Usage
-
-class SpendCalculateRequest(BaseModel):
-    completion_response: CompletionResponse
-
-
-def get_litellm_provider_header(model_name: str):
-    env_mapping = os.getenv("MODEL_MAPPING", "{}")
-        
-    try:
-        model_map = json.loads(env_mapping)
-    except json.JSONDecodeError:
-        model_map = {}
-
-    current_model = model_name
-    
-    if current_model in model_map:
-        model_with_provider = model_map[current_model]
-        
-    return model_with_provider
-
 
 async def ensure_litellm_user(user):
   if not LITELLM_MASTER_KEY:
