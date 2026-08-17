@@ -233,14 +233,6 @@
 			ⓘ Der generierte API-Key ist für ein Jahr gültig, danach muss er neu generiert werden.
 		</div>
 
-		<button
-			class="w-full px-3.5 py-2 text-sm rounded-xl bg-black text-white hover:bg-gray-900 dark:bg-white dark:text-black dark:hover:bg-gray-100 transition disabled:opacity-50"
-			on:click={handleGenerateKey}
-			disabled={isLoading}
-		>
-			{isLoading ? 'Generiere…' : 'API-Key generieren'}
-		</button>
-
 		<div class="mt-3">
 			<button
 				class="w-full px-3.5 py-2 text-xs font-medium rounded-xl border border-amber-300 bg-amber-50 text-amber-800 hover:bg-amber-100 dark:border-amber-900/50 dark:bg-amber-950/30 dark:text-amber-300 dark:hover:bg-amber-900/40 transition disabled:opacity-50 flex items-center justify-center gap-1.5"
@@ -250,7 +242,7 @@
 				<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" class="w-3.5 h-3.5">
 					<path fill-rule="evenodd" d="M13.836 2.477a.75.75 0 0 1 .75.75v3.182a.75.75 0 0 1-.75.75h-3.182a.75.75 0 0 1 0-1.5h1.37l-.84-.841a4.5 4.5 0 0 0-7.08.932.75.75 0 0 1-1.3-.75 6 6 0 0 1 9.44-1.242l.842.84V3.227a.75.75 0 0 1 .75-.75Zm-8.672 7.84a4.5 4.5 0 0 0 7.08-.931.75.75 0 0 1 1.3.75 6 6 0 0 1-9.44 1.241l-.842-.84v1.242a.75.75 0 0 1-1.5 0V8.396a.75.75 0 0 1 .75-.75h3.182a.75.75 0 0 1 0 1.5h-1.37l.84.841Z" clip-rule="evenodd" />
 				</svg>
-				API-Key neu generieren
+				API-Key generieren
 			</button>
 		</div>
 
