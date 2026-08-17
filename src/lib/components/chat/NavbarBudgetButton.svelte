@@ -7,9 +7,7 @@
 	$: spend = userData?.spend ?? 0;
 	$: maxBudget = userData?.max_budget ?? 0;
 
-	$: spentPercent = maxBudget > 0 
-		? Math.min(Math.round((spend / maxBudget) * 100), 100) 
-		: 0;
+	$: spentPercent = maxBudget > 0 ? Math.min(Math.round((spend / maxBudget) * 100), 100) : 0;
 
 	$: resetDate = userData?.budget_reset_at ? new Date(userData.budget_reset_at) : new Date();
 	$: now = new Date();
@@ -38,7 +36,7 @@
 <button
 	type="button"
 	on:click={onClick}
-	class="relative overflow-hidden group inline-flex items-center gap-2 px-3 py-1 text-xs font-medium bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-gray-700 dark:text-gray-200 shadow-sm hover:bg-gray-50 dark:hover:bg-gray-700 transition cursor-pointer"
+	class="w-full relative overflow-hidden group inline-flex items-center justify-center gap-2 px-3 py-1 text-xs font-medium bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-gray-700 dark:text-gray-200 shadow-sm hover:bg-gray-50 dark:hover:bg-gray-700 transition cursor-pointer text-center"
 	title="Klicken für detaillierte Budget-Übersicht"
 >
 	<div
@@ -46,9 +44,15 @@
 		style="width: {spentPercent}%;"
 	></div>
 
-	<div class="relative z-10 flex items-center gap-1.5">
+	<div class="relative z-10 flex w-full items-center justify-center gap-1.5 text-center">
 		<span>
-			Budget: {spend.toLocaleString('de-DE', { minimumFractionDigits: 0, maximumFractionDigits: 2 })} / {maxBudget.toLocaleString('de-DE', { minimumFractionDigits: 0, maximumFractionDigits: 2 })} €
+			Budget: {spend.toLocaleString('de-DE', {
+				minimumFractionDigits: 0,
+				maximumFractionDigits: 2
+			})} / {maxBudget.toLocaleString('de-DE', {
+				minimumFractionDigits: 0,
+				maximumFractionDigits: 2
+			})} €
 		</span>
 		<span class="font-semibold {textColorClass()}">
 			({spentPercent}%)
@@ -56,8 +60,8 @@
 	</div>
 
 	<div class="absolute bottom-0 left-0 right-0 h-[2px] bg-gray-100 dark:bg-gray-700/50">
-		<div 
-			class="h-full transition-all duration-500 ease-out {barColorClass()}" 
+		<div
+			class="h-full transition-all duration-500 ease-out {barColorClass()}"
 			style="width: {spentPercent}%;"
 		></div>
 	</div>

@@ -37,7 +37,7 @@
 	import ChatCheck from '../icons/ChatCheck.svelte';
 	import Knobs from '../icons/Knobs.svelte';
 	import { isTemporaryChatId } from '$lib/utils/chatId';
-	import { getUserInfo } from '$lib/apis/litellm'
+	import { getUserInfo } from '$lib/apis/litellm';
 	import type { UserInfoResponse } from '$lib/apis/litellm';
 	import NavbarBudgetButton from './NavbarBudgetButton.svelte';
 	const i18n = getContext('i18n');
@@ -73,7 +73,7 @@
 	let showDownloadChatModal = false;
 
 	import OpenCodeModal from './OpenCodeModal.svelte';
-  	let showOpenCodeModal = false;
+	let showOpenCodeModal = false;
 
 	import BudgetModal from './BudgetModal.svelte';
 	let showBudgetModal = false;
@@ -83,13 +83,11 @@
 		error = null;
 
 		try {
-
 			const token = localStorage.getItem('token') || '';
 
 			if (!token) {
 				throw new Error('Kein Authentifizierungs-Token gefunden.');
 			}
-
 
 			userData = await getUserInfo(token);
 		} catch (err: any) {
@@ -113,7 +111,6 @@
 			console.error('Fehler beim Abrufen der Nutzerdaten für Navbar:', err);
 		}
 	});
-
 </script>
 
 <ShareChatModal bind:show={showShareChatModal} chatId={$chatId} />
@@ -139,9 +136,8 @@
 				? 'visible'
 				: 'invisible'} bg-linear-to-b via-40% to-97% from-white/90 via-white/50 to-transparent dark:from-gray-900/90 dark:via-gray-900/50 dark:to-transparent pointer-events-none absolute inset-0 -bottom-10 z-[-1]"
 		></div>
-
 		<div class=" flex max-w-full w-full mx-auto bg-transparent">
-			<div class="flex items-center w-full max-w-full">
+			<div class="flex items-center w-full max-w-full gap-2 md:gap-4">
 				{#if $mobile && !$showSidebar}
 					<div class="mr-1 flex flex-none items-center self-center">
 						<Tooltip content={$showSidebar ? $i18n.t('Close Sidebar') : $i18n.t('Open Sidebar')}>
@@ -161,11 +157,14 @@
 					</div>
 				{/if}
 
-				<div class="flex-1 flex flex-col md:flex-row md:items-baseline gap-2 md:gap-4 overflow-hidden max-w-full mt-0.5 py-0.5 {$showSidebar ? 'ml-1' : ''}">
-					<div class="shrink-0 w-full md:w-auto">
-						<ProjectPresenter
-							bind:selectedProjects
-						/>
+				<!-- Linker Bereich: Titel / Chat-Info -->
+				<div
+					class="flex-none flex items-center gap-2 overflow-hidden max-w-[30%] mt-0.5 py-0.5 {$showSidebar
+						? 'ml-1'
+						: ''}"
+				>
+					<div class="shrink-0">
+						<ProjectPresenter bind:selectedProjects />
 					</div>
 					{#if chat?.id}
 						<div class="flex max-w-full min-w-0 items-center gap-2 mr-2">
@@ -213,30 +212,36 @@
 					{/if}
 				</div>
 
-				<div class="self-start flex flex-none items-center text-gray-600 dark:text-gray-400">
-					<div class="shrink-0 w-full md:w-auto md:ml-auto mr-3 mt-1.5 flex items-center gap-2">
+				<div class="flex-1 flex justify-center items-center px-4">
+					<div class="w-full max-w-2xl flex items-center justify-center">
 						{#if userData}
-							<NavbarBudgetButton 
-								{userData} 
-								onClick={openBudgetModal} 
+							<NavbarBudgetButton
+								{userData}
+								onClick={openBudgetModal}
 							/>
 						{:else if error}
-							<div class="px-3 py-1.5 text-xs text-red-500 bg-red-100 dark:bg-red-900/20 rounded-lg border border-red-200 dark:border-red-800/30">
+							<div
+								class="w-full text-center px-3 py-1.5 text-xs text-red-500 bg-red-100 dark:bg-red-900/20 rounded-lg border border-red-200 dark:border-red-800/30"
+							>
 								{error}
 							</div>
 						{:else}
 							<button
 								type="button"
 								on:click={openBudgetModal}
-								class="inline-flex items-center gap-2 px-3 py-1 text-xs font-medium bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-gray-700 dark:text-gray-200 shadow-sm hover:bg-gray-50 dark:hover:bg-gray-700 transition cursor-pointer"
+								class="w-full inline-flex items-center justify-center gap-2 px-3 py-1 text-xs font-medium bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-gray-700 dark:text-gray-200 shadow-sm hover:bg-gray-50 dark:hover:bg-gray-700 transition cursor-pointer"
 							>
 								Budget abrufen
 							</button>
 						{/if}
 
 						<BudgetModal bind:show={showBudgetModal} {userData} />
-						<!-- OpenCode Button -->
-						<button 
+					</div>
+				</div>
+
+				<div class="flex-none flex items-center gap-2 text-gray-600 dark:text-gray-400">
+					<div class="flex items-center gap-2">
+						<button
 							class="px-3 py-1 text-xs font-medium bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-gray-700 dark:text-gray-200 shadow-sm hover:bg-gray-50 dark:hover:bg-gray-700 transition cursor-pointer"
 							on:click={() => (showOpenCodeModal = true)}
 						>
@@ -244,7 +249,6 @@
 						</button>
 						<OpenCodeModal bind:show={showOpenCodeModal} />
 					</div>
-					<!-- <div class="md:hidden flex self-center w-[1px] h-5 mx-2 bg-gray-300 dark:bg-stone-700" /> -->
 
 					{#if $user?.role === 'user' ? ($user?.permissions?.chat?.temporary ?? true) && !($user?.permissions?.chat?.temporary_enforced ?? false) : true}
 						{#if !chat?.id}
@@ -254,7 +258,6 @@
 									id="temporary-chat-button"
 									on:click={async () => {
 										if (($settings?.temporaryChatByDefault ?? false) && $temporaryChatEnabled) {
-											// for proper initNewChat handling
 											await temporaryChatEnabled.set(null);
 										} else {
 											await temporaryChatEnabled.set(!$temporaryChatEnabled);
@@ -264,7 +267,6 @@
 											await goto('/');
 										}
 
-										// add 'temporary-chat=true' to the URL
 										if ($temporaryChatEnabled) {
 											window.history.replaceState(null, '', '?temporary-chat=true');
 										} else {
