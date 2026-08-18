@@ -17,7 +17,7 @@
 
 
 	let rawProjects: any[] = [];
-	let items: { label: string; value: string; project: any; [key: string]: any }[] = [];
+	let items: { name: string; id: string; project: any; [key: string]: any }[] = [];
 	let loading = false;
 	let searchValue = '';
 	let selectedProjectIdx = 0;
