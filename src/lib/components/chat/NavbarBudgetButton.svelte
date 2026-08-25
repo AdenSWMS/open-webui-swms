@@ -47,11 +47,11 @@
 	<div class="relative z-10 flex w-full items-center justify-center gap-1.5 text-center">
 		<span>
 			Budget: {spend.toLocaleString('de-DE', {
-				minimumFractionDigits: 0,
-				maximumFractionDigits: 2
+				minimumFractionDigits: 2,
+				maximumFractionDigits: 4
 			})} / {maxBudget.toLocaleString('de-DE', {
-				minimumFractionDigits: 0,
-				maximumFractionDigits: 2
+				minimumFractionDigits: 2,
+				maximumFractionDigits: 4
 			})} $
 		</span>
 		<span class="font-semibold {textColorClass()}">
