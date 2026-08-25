@@ -15,7 +15,7 @@
 	$: maxBudget = userData?.max_budget ?? 0;
 
 	$: spentPercent = maxBudget > 0 
-		? Math.min(Math.round((spend / maxBudget) * 100), 100) 
+		? Math.round((spend / maxBudget) * 100) 
 		: 0;
 
 	$: resetDate = userData?.budget_reset_at ? new Date(userData.budget_reset_at) : new Date();
@@ -31,7 +31,8 @@
 
 	$: timePercent = Math.min(Math.round((elapsedMs / totalPeriodMs) * 100), 100);
 
-	$: budgetLabel = `$ ${spend.toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} / $ ${maxBudget.toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+	$: budgetLabel = `$ ${spend.toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 4 })} / $ ${maxBudget.toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 4 })}`;
+
 	$: timeLabel = `(${remainingDays} T. übrig)`;
 
 	$: diff = spentPercent - timePercent;
