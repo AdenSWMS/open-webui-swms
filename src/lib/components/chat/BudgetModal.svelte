@@ -31,7 +31,7 @@
 
 	$: timePercent = Math.min(Math.round((elapsedMs / totalPeriodMs) * 100), 100);
 
-	$: budgetLabel = `${spend.toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} € / ${maxBudget.toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} €`;
+	$: budgetLabel = `$ ${spend.toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} / $ ${maxBudget.toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 	$: timeLabel = `(${remainingDays} T. übrig)`;
 
 	$: diff = spentPercent - timePercent;
@@ -130,7 +130,7 @@
 				</svg>
 
 				<div class="absolute inset-0 flex items-center justify-center pointer-events-none">
-					<span class="text-xl font-extrabold tracking-tighter opacity-80">€</span>
+					<span class="text-xl font-extrabold tracking-tighter opacity-80">$</span>
 				</div>
 			</div>
 

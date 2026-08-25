@@ -52,7 +52,7 @@
 			})} / {maxBudget.toLocaleString('de-DE', {
 				minimumFractionDigits: 0,
 				maximumFractionDigits: 2
-			})} €
+			})} $
 		</span>
 		<span class="font-semibold {textColorClass()}">
 			({spentPercent}%)
