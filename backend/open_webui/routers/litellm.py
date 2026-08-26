@@ -83,7 +83,7 @@ async def generate_litellm_key(user = Depends(get_verified_user)):
         "max_budget": float(LITELLM_MAX_BUDGET),
         "budget_duration": LITELLM_BUDGET_DURATION,
         "duration": LITELLM_KEY_DURATION,
-        "user_id": str(user.id)
+        "user_id": str(user.email)
     }
 
     async with httpx.AsyncClient() as client:
