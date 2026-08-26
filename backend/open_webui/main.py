@@ -1087,30 +1087,14 @@ async def chat_completion(
                         days_left_text = "1 Tag"
                     else:
                         days_left_text = "wenigen Stunden"
-                except Exception:
+                except Exception: 
                     pass
 
-            return JSONResponse(
-                status_code=200,
-                content={
-                    "id": f"chatcmpl-budget-{int(time.time())}",
-                    "object": "chat.completion",
-                    "created": int(time.time()),
-                    "model": form_data.get("model", "system"),
-                    "done": True,
-                    "choices": [
-                        {
-                            "index": 0,
-                            "message": {
-                                "role": "assistant",
-                                "content": f"Budget überschritten. Warte noch **{days_left_text}**, dann wird es zurückgesetzt."
-                            },
-                            "finish_reason": "stop"
-                        }
-                    ],
-                    "usage": {"prompt_tokens": 0, "completion_tokens": 0, "total_tokens": 0}
-                }
-            )
+            raise HTTPException(
+                            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+                            detail=f"⚠️ Budget überschritten. Warte noch {days_left_text}, dann wird es zurückgesetzt."
+                        )
+
     except HTTPException as e:
         raise e
     except Exception as e:
