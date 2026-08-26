@@ -1097,6 +1097,7 @@ async def chat_completion(
                     "object": "chat.completion",
                     "created": int(time.time()),
                     "model": form_data.get("model", "system"),
+                    "done": True,
                     "choices": [
                         {
                             "index": 0,
