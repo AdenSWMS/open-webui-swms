@@ -31,7 +31,7 @@
 
 	$: timePercent = Math.min(Math.round((elapsedMs / totalPeriodMs) * 100), 100);
 
-	$: budgetLabel = `$ ${maxBudget.toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 4 })} / $ ${spend.toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 4 })}`;
+	$: budgetLabel = `$${spend.toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 4 })} von $${maxBudget.toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 4 })}`;
 
 	$: timeLabel = `(${remainingDays} T. übrig)`;
 

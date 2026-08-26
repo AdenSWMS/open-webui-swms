@@ -1055,6 +1055,30 @@ async def _set_direct_model(request: Request, model_item: dict, user) -> None:
 from datetime import datetime, timezone
 import time
 
+def _raise_budget_exception(user_info: dict):
+    reset_at_str = user_info.get("budget_reset_at")
+    days_left_text = "einigen Tagen"
+
+    if reset_at_str:
+        try:
+            reset_date = datetime.fromisoformat(reset_at_str.replace("Z", "+00:00"))
+            now = datetime.now(timezone.utc)
+            diff_days = (reset_date - now).days
+            
+            if diff_days > 1:
+                days_left_text = f"{diff_days} Tagen"
+            elif diff_days == 1:
+                days_left_text = "1 Tag"
+            else:
+                days_left_text = "wenigen Stunden"
+        except Exception: 
+            pass
+
+    raise HTTPException(
+        status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+        detail=f"Budget überschritten. Warte noch {days_left_text}, dann wird es zurückgesetzt."
+    )
+
 @app.post('/api/chat/completions')
 @app.post('/api/v1/chat/completions')  # Experimental: Compatibility with OpenAI API
 async def chat_completion(
@@ -1068,32 +1092,23 @@ async def chat_completion(
     try:
         user_info = await litellm.get_user_info(user=user)
         
-        spend = user_info.get("spend", 0.0)
+        spend = user_info.get("spend")
         max_budget = user_info.get("max_budget")
 
         if max_budget is not None and spend >= max_budget:
-            reset_at_str = user_info.get("budget_reset_at")
-            days_left_text = "einigen Tagen"
+            model_id = form_data.get('model')
+            is_free = False
 
-            if reset_at_str:
+            if model_id:
                 try:
-                    reset_date = datetime.fromisoformat(reset_at_str.replace("Z", "+00:00"))
-                    now = datetime.now(timezone.utc)
-                    diff_days = (reset_date - now).days
-                    
-                    if diff_days > 1:
-                        days_left_text = f"{diff_days} Tagen"
-                    elif diff_days == 1:
-                        days_left_text = "1 Tag"
-                    else:
-                        days_left_text = "wenigen Stunden"
-                except Exception: 
+                    info = await litellm.get_model_info(model_id)
+                    if info and info.get("is_free", False):
+                        is_free = True
+                except Exception:
                     pass
 
-            raise HTTPException(
-                            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
-                            detail=f"⚠️ Budget überschritten. Warte noch {days_left_text}, dann wird es zurückgesetzt."
-                        )
+            if not is_free:
+                _raise_budget_exception(user_info)
 
     except HTTPException as e:
         raise e

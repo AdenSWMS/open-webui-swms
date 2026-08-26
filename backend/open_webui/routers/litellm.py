@@ -191,3 +191,56 @@ async def get_user_info(user = Depends(get_verified_user)):
                 status_code=503, 
                 detail=f"LiteLLM Server nicht erreichbar: {exc}"
             )
+from typing import Optional, Dict, Any
+import httpx
+from fastapi import HTTPException
+
+async def get_model_info(model_id: str) -> Optional[Dict[str, Any]]:
+    if not LITELLM_MASTER_KEY:
+        return None
+
+    headers = {
+        "Authorization": f"Bearer {LITELLM_MASTER_KEY}",
+        "Content-Type": "application/json"
+    }
+
+    async with httpx.AsyncClient() as client:
+        try:
+            response = await client.get(
+                f"{LITELLM_URL}/v2/model/info", 
+                headers=headers,
+                timeout=10.0
+            )
+            
+            if response.status_code != 200:
+                raise HTTPException(
+                    status_code=response.status_code, 
+                    detail=f"LiteLLM Fehler: {response.text}"
+                )
+
+            data = response.json().get("data", [])
+
+            for model in data:
+                model_name = model.get("model_name")
+                litellm_params = model.get("litellm_params", {})
+
+                if model_name == model_id or litellm_params.get("model") == model_id:
+                    input_cost = litellm_params.get("input_cost_per_token", 0.0)
+                    output_cost = litellm_params.get("output_cost_per_token", 0.0)
+
+                    is_free = (input_cost == 0.0 and output_cost == 0.0)
+
+                    return {
+                        "model_name": model_name,
+                        "input_cost_per_token": input_cost,
+                        "output_cost_per_token": output_cost,
+                        "is_free": is_free,
+                        "raw_info": model 
+                    }
+
+            return None
+
+        except httpx.RequestError as exc:
+            raise HTTPException(
+                status_code=503, 
+                detail=f"LiteLLM Server nicht erreichbar: {exc}")

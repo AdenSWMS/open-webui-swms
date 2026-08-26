@@ -46,13 +46,13 @@
 
 	<div class="relative z-10 flex w-full items-center justify-center gap-1.5 text-center">
 		<span>
-			Budget: {maxBudget.toLocaleString('de-DE', {
+			Budget: ${spend.toLocaleString('de-DE', {
 				minimumFractionDigits: 2,
 				maximumFractionDigits: 4
-			})} / {spend.toLocaleString('de-DE', {
+			})} von ${maxBudget.toLocaleString('de-DE', {
 				minimumFractionDigits: 2,
 				maximumFractionDigits: 4
-			})} $
+			})}
 		</span>
 		<span class="font-semibold {textColorClass()}">
 			({spentPercent}%)
