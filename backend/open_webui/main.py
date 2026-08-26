@@ -1052,6 +1052,8 @@ async def _set_direct_model(request: Request, model_item: dict, user) -> None:
     request.state.direct = True
     request.state.model = model_item
 
+from datetime import datetime, timezone
+import time
 
 @app.post('/api/chat/completions')
 @app.post('/api/v1/chat/completions')  # Experimental: Compatibility with OpenAI API
@@ -1062,6 +1064,57 @@ async def chat_completion(
 ):
     if not request.app.state.MODELS:
         await get_all_models(request, user=user)
+
+    try:
+        user_info = await litellm.get_user_info(user=user)
+        
+        spend = user_info.get("spend", 0.0)
+        max_budget = user_info.get("max_budget")
+
+        if max_budget is not None and spend >= max_budget:
+            reset_at_str = user_info.get("budget_reset_at")
+            days_left_text = "einigen Tagen"
+
+            if reset_at_str:
+                try:
+                    reset_date = datetime.fromisoformat(reset_at_str.replace("Z", "+00:00"))
+                    now = datetime.now(timezone.utc)
+                    diff_days = (reset_date - now).days
+                    
+                    if diff_days > 1:
+                        days_left_text = f"{diff_days} Tagen"
+                    elif diff_days == 1:
+                        days_left_text = "1 Tag"
+                    else:
+                        days_left_text = "wenigen Stunden"
+                except Exception:
+                    pass
+
+            return JSONResponse(
+                status_code=200,
+                content={
+                    "id": f"chatcmpl-budget-{int(time.time())}",
+                    "object": "chat.completion",
+                    "created": int(time.time()),
+                    "model": form_data.get("model", "system"),
+                    "choices": [
+                        {
+                            "index": 0,
+                            "message": {
+                                "role": "assistant",
+                                "content": f"Budget überschritten. Warte noch **{days_left_text}**, dann wird es zurückgesetzt."
+                            },
+                            "finish_reason": "stop"
+                        }
+                    ],
+                    "usage": {"prompt_tokens": 0, "completion_tokens": 0, "total_tokens": 0}
+                }
+            )
+    except HTTPException as e:
+        raise e
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
 
     model_id = form_data.get('model', None)
     model_item = form_data.pop('model_item', {})

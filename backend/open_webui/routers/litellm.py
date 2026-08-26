@@ -13,7 +13,6 @@ from sqlalchemy import null
 router = APIRouter()
 
 LITELLM_URL = os.getenv("LITELLM_URL")
-LITELLM_TEAM_ID = os.getenv("LITELLM_TEAM_ID")
 LITELLM_MASTER_KEY = os.getenv("LITELLM_MASTER_KEY")
 LITELLM_MAX_BUDGET = os.getenv("LITELLM_MAX_BUDGET", "0.0") 
 LITELLM_KEY_DURATION = os.getenv("LITELLM_KEY_DURATION", "30m") 
@@ -47,7 +46,6 @@ async def ensure_litellm_user(user):
           'user_id': user.email,
           'user_alias': f"{user.name} ({user.email})",
           'user_email': user.email,
-          'team_id': LITELLM_TEAM_ID,
           'budget_duration': LITELLM_BUDGET_DURATION,
           'max_budget': float(LITELLM_MAX_BUDGET),
           'key_alias': f"{openCodeName} {user.name}({user.email})",
@@ -83,7 +81,6 @@ async def generate_litellm_key(user = Depends(get_verified_user)):
     payload = {
         "key_alias": f"{openCodeName} {user.name}({user.email})",
         "max_budget": float(LITELLM_MAX_BUDGET),
-        "team_id": LITELLM_TEAM_ID,
         "budget_duration": LITELLM_BUDGET_DURATION,
         "duration": LITELLM_KEY_DURATION,
         "user_id": str(user.id)
