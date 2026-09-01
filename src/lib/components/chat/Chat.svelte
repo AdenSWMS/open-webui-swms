@@ -2015,14 +2015,6 @@
 	//////////////////////////
 	// Web functions
 	//////////////////////////
-
-	const openCallOverlay = () => {
-		setTimeout(() => {
-			showCallOverlay.set(true);
-			showControls.set(true);
-		}, 0);
-	};
-
 	const openCallOverlay = () => {
 		setTimeout(() => {
 			showCallOverlay.set(true);

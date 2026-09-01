@@ -212,7 +212,7 @@
 					{/if}
 				</div>
 
-				<div class="lg:mr-1 flex-1 flex justify-center items-center gap-2 self-center"">
+				<div class="lg:mr-1 flex-1 flex justify-center items-center gap-2 self-center">
 					<div class="w-full max-w-2xl flex items-center justify-center">
 						{#if userData}
 							<NavbarBudgetButton
