@@ -169,7 +169,7 @@
 					{#if chat?.id}
 						<div class="flex max-w-full min-w-0 items-center gap-2 mr-2">
 							<div
-								class="min-w-0 truncate py-1 text-left text-[15px] font-normal text-gray-700 dark:text-gray-300"
+								class="min-w-0 truncate py-1 text-left text-[0.9375rem] font-normal text-gray-700 dark:text-gray-300"
 							>
 								{title || chat?.chat?.title || $i18n.t('New Chat')}
 							</div>
@@ -204,7 +204,7 @@
 					{:else}
 						<div class="pointer-events-none invisible flex max-w-full min-w-0 items-center gap-2">
 							<div
-								class="min-w-0 truncate py-1 text-left text-[15px] font-normal text-gray-700 dark:text-gray-300"
+								class="min-w-0 truncate py-1 text-left text-[0.9375rem] font-normal text-gray-700 dark:text-gray-300"
 							>
 								{$i18n.t('New Chat')}
 							</div>
@@ -212,7 +212,7 @@
 					{/if}
 				</div>
 
-				<div class="flex-1 flex justify-center items-center px-4">
+				<div class="lg:mr-1 flex-1 flex justify-center items-center gap-2 self-center"">
 					<div class="w-full max-w-2xl flex items-center justify-center">
 						{#if userData}
 							<NavbarBudgetButton
