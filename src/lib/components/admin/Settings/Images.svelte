@@ -102,6 +102,11 @@
 		}
 	];
 
+	
+	$: usedModelIds = (config?.IMAGE_GENERATION_MODELS || [])
+		.map((m) => m.IMAGE_GENERATION_MODEL)
+    	.filter(Boolean);
+
 	const updateConfigHandler = async () => {
 		if (config.ENABLE_IMAGE_GENERATION && Array.isArray(config.IMAGE_GENERATION_MODELS)) {
 
@@ -417,6 +422,7 @@
 								<AdminSettingField label={$i18n.t('Model')}>
 									<ModelSelect
 										bind:value={currentModel.IMAGE_GENERATION_MODEL}
+										selectedModelIds={usedModelIds}
 										{inputClass}
 										{i18n}
 									/>

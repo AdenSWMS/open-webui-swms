@@ -5,6 +5,8 @@
 	export let value = ''; 
 	export let inputClass = '';
 	export let i18n;
+	// NEU: Empfängt Array aller bereits ausgewählten Modell-IDs aus der Hauptkomponente
+	export let selectedModelIds = [];
 
 	let models = [];
 	let searchInput = '';
@@ -27,7 +29,6 @@
 	}
 
 	function syncSearchInput() {
-		// Verhindert Überschreiben, während der User aktiv in das Suchfeld tippt
 		if (isOpen) return;
 
 		const activeModel = models.find((m) => m.id === value);
@@ -40,21 +41,25 @@
 		}
 	}
 
-	// Filtert Modelle: Wenn das Feld fokussiert wird und dem gewählten Modell entspricht, 
-	// zeige alle Modelle an. Ansonsten filtere nach der Freitext-Eingabe.
-	$: filteredModels = models.filter((m) => {
-		if (!searchInput) return true;
-		
-		const currentModel = models.find((m) => m.id === value);
-		const currentName = currentModel ? (currentModel.name || currentModel.id) : value;
+	// GEÄNDERT: Filtert nun auch bereits woanders ausgewählte Modelle aus
+	$: filteredModels = models
+		.filter((m) => {
+			// Erlaube das Modell, wenn es noch NICHT ausgewählt ist ODER wenn es das aktuell HIER ausgewählte ist
+			const isAlreadySelectedElsewhere = selectedModelIds.includes(m.id) && m.id !== value;
+			return !isAlreadySelectedElsewhere;
+		})
+		.filter((m) => {
+			if (!searchInput) return true;
+			
+			const currentModel = models.find((m) => m.id === value);
+			const currentName = currentModel ? (currentModel.name || currentModel.id) : value;
 
-		// Wenn das Suchfeld genau dem aktuell ausgewählten Namen entspricht, alle anzeigen
-		if (searchInput === currentName) {
-			return true;
-		}
+			if (searchInput === currentName) {
+				return true;
+			}
 
-		return (m.name || m.id).toLowerCase().includes(searchInput.toLowerCase());
-	});
+			return (m.name || m.id).toLowerCase().includes(searchInput.toLowerCase());
+		});
 
 	function selectModel(model) {
 		value = model.id;
@@ -76,7 +81,6 @@
 				value = validModel.id;
 				searchInput = validModel.name || validModel.id;
 			} else {
-				// Wenn kein valides Modell getippt wurde, behalte manuell eingegebenen Text als Wert
 				value = searchInput;
 			}
 		}, 200);
