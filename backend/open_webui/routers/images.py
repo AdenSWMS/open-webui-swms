@@ -4,12 +4,13 @@ import asyncio
 import base64
 import io
 import logging
+import json
 import mimetypes
 import re
 import uuid
 from pathlib import Path
 from types import SimpleNamespace
-from typing import Optional
+from typing import Any, Optional, List, Dict, Union
 from urllib.parse import quote, urlparse
 
 import aiofiles
@@ -44,7 +45,7 @@ from open_webui.utils.images.comfyui import (
 from open_webui.utils.json_codec import JSONCodec
 from open_webui.utils.session_pool import get_session
 from PIL import Image, ImageOps
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from sqlalchemy.ext.asyncio import AsyncSession
 
 log = logging.getLogger(__name__)
@@ -67,38 +68,9 @@ IMAGE_FILE_EXTENSIONS = {
 IMAGE_CONFIG_KEYS = {
     'ENABLE_IMAGE_GENERATION': 'image_generation.enable',
     'ENABLE_IMAGE_PROMPT_GENERATION': 'image_generation.prompt.enable',
-    'IMAGE_GENERATION_ENGINE': 'image_generation.engine',
-    'IMAGE_GENERATION_MODEL': 'image_generation.model',
-    'IMAGE_SIZE': 'image_generation.size',
-    'IMAGE_STEPS': 'image_generation.steps',
-    'IMAGES_OPENAI_API_BASE_URL': 'image_generation.openai.api_base_url',
-    'IMAGES_OPENAI_API_KEY': 'image_generation.openai.api_key',
-    'IMAGES_OPENAI_API_VERSION': 'image_generation.openai.api_version',
-    'IMAGES_OPENAI_API_PARAMS': 'image_generation.openai.params',
-    'AUTOMATIC1111_BASE_URL': 'image_generation.automatic1111.base_url',
-    'AUTOMATIC1111_API_AUTH': 'image_generation.automatic1111.api_auth',
-    'AUTOMATIC1111_PARAMS': 'image_generation.automatic1111.api_params',
-    'COMFYUI_BASE_URL': 'image_generation.comfyui.base_url',
-    'COMFYUI_API_KEY': 'image_generation.comfyui.api_key',
-    'COMFYUI_WORKFLOW': 'image_generation.comfyui.workflow',
-    'COMFYUI_WORKFLOW_NODES': 'image_generation.comfyui.nodes',
-    'IMAGES_GEMINI_API_BASE_URL': 'image_generation.gemini.api_base_url',
-    'IMAGES_GEMINI_API_KEY': 'image_generation.gemini.api_key',
-    'IMAGES_GEMINI_ENDPOINT_METHOD': 'image_generation.gemini.endpoint_method',
-    'ENABLE_IMAGE_EDIT': 'images.edit.enable',
-    'IMAGE_EDIT_ENGINE': 'images.edit.engine',
-    'IMAGE_EDIT_MODEL': 'images.edit.model',
-    'IMAGE_EDIT_SIZE': 'images.edit.size',
-    'IMAGES_EDIT_OPENAI_API_BASE_URL': 'images.edit.openai.api_base_url',
-    'IMAGES_EDIT_OPENAI_API_KEY': 'images.edit.openai.api_key',
-    'IMAGES_EDIT_OPENAI_API_VERSION': 'images.edit.openai.api_version',
-    'IMAGES_EDIT_GEMINI_API_BASE_URL': 'images.edit.gemini.api_base_url',
-    'IMAGES_EDIT_GEMINI_API_KEY': 'images.edit.gemini.api_key',
-    'IMAGES_EDIT_COMFYUI_BASE_URL': 'images.edit.comfyui.base_url',
-    'IMAGES_EDIT_COMFYUI_API_KEY': 'images.edit.comfyui.api_key',
-    'IMAGES_EDIT_COMFYUI_WORKFLOW': 'images.edit.comfyui.workflow',
-    'IMAGES_EDIT_COMFYUI_WORKFLOW_NODES': 'images.edit.comfyui.nodes',
+    'IMAGE_GENERATION_MODELS': 'image_generation.models',
     'USER_PERMISSIONS': 'user.permissions',
+    
 }
 
 
@@ -199,73 +171,67 @@ async def set_image_model(request: Request, model: str):
     return image_config.IMAGE_GENERATION_MODEL
 
 
-async def get_image_model(request):
-    image_config = await get_image_config()
-    if image_config.IMAGE_GENERATION_ENGINE == 'openai':
-        return image_config.IMAGE_GENERATION_MODEL if image_config.IMAGE_GENERATION_MODEL else 'dall-e-2'
-    elif image_config.IMAGE_GENERATION_ENGINE == 'gemini':
-        return image_config.IMAGE_GENERATION_MODEL if image_config.IMAGE_GENERATION_MODEL else 'imagen-3.0-generate-002'
-    elif image_config.IMAGE_GENERATION_ENGINE == 'comfyui':
-        return image_config.IMAGE_GENERATION_MODEL if image_config.IMAGE_GENERATION_MODEL else ''
-    elif image_config.IMAGE_GENERATION_ENGINE == 'automatic1111' or image_config.IMAGE_GENERATION_ENGINE == '':
-        try:
-            session = await get_session()
-            async with session.get(
-                url=f'{image_config.AUTOMATIC1111_BASE_URL}/sdapi/v1/options',
-                headers={'authorization': get_automatic1111_api_auth(image_config)},
-                ssl=AIOHTTP_CLIENT_SESSION_SSL,
-            ) as r:
-                options = await r.json()
-            return options['sd_model_checkpoint']
-        except Exception as e:
-            log.exception(f'Failed to get default model from automatic1111: {e}')
-            raise HTTPException(
-                status_code=400,
-                detail=ERROR_MESSAGES.DEFAULT(e, 'Failed to connect to the image generation engine'),
-            )
+#async def get_image_model(request):
+#    image_config = await get_image_config()
+#    if image_config.IMAGE_GENERATION_ENGINE == 'openai':
+#        return image_config.IMAGE_GENERATION_MODEL if image_config.IMAGE_GENERATION_MODEL else 'dall-e-2'
+#    elif image_config.IMAGE_GENERATION_ENGINE == 'gemini':
+#        return image_config.IMAGE_GENERATION_MODEL if image_config.IMAGE_GENERATION_MODEL else 'imagen-3.0-generate-002'
+#    elif image_config.IMAGE_GENERATION_ENGINE == 'comfyui':
+#        return image_config.IMAGE_GENERATION_MODEL if image_config.IMAGE_GENERATION_MODEL else ''
+#    elif image_config.IMAGE_GENERATION_ENGINE == 'automatic1111' or image_config.IMAGE_GENERATION_ENGINE == '':
+#        try:
+#            session = await get_session()
+#            async with session.get(
+#                url=f'{image_config.AUTOMATIC1111_BASE_URL}/sdapi/v1/options',
+#                headers={'authorization': get_automatic1111_api_auth(image_config)},
+#                ssl=AIOHTTP_CLIENT_SESSION_SSL,
+#            ) as r:
+#                options = await r.json()
+#            return options['sd_model_checkpoint']
+#        except Exception as e:
+#            log.exception(f'Failed to get default model from automatic1111: {e}')
+#            raise HTTPException(
+#                status_code=400,
+#                detail=ERROR_MESSAGES.DEFAULT(e, 'Failed to connect to the image generation engine'),
+#            )
+#
 
+class ImageModelConfig(BaseModel):
+    title: Optional[str] = None
+    
+    IMAGE_GENERATION_ENGINE: Optional[str] = ""
+    
+    IMAGE_GENERATION_MODEL: Optional[str] = ""
+    IMAGE_SIZE: List[str] = []
+    IMAGE_STEPS: Optional[int] = None
+    
+    # Engine-Spezifische API Keys & Base URLs
+    IMAGES_OPENAI_API_KEY: Optional[str] = ""
+    IMAGES_OPENAI_API_BASE_URL: Optional[str] = "https://api.openai.com/v1"
+    IMAGES_OPENAI_API_PARAMS: Optional[Union[Dict[str, Any], str]] = {}
+    
+    IMAGES_GEMINI_API_KEY: Optional[str] = ""
+    
+    AUTOMATIC1111_BASE_URL: Optional[str] = ""
+    AUTOMATIC1111_PARAMS: Optional[Union[Dict[str, Any], str]] = {}
+    
+    COMFYUI_BASE_URL: Optional[str] = ""
+    COMFYUI_API_KEY: Optional[str] = ""
+    COMFYUI_WORKFLOW: Optional[str] = ""
+    COMFYUI_WORKFLOW_NODES: Optional[List[Dict[str, Any]]] = []
+    
+    IMAGES_EDIT_COMFYUI_WORKFLOW: Optional[str] = ""
+    IMAGES_EDIT_COMFYUI_WORKFLOW_NODES: Optional[List[Dict[str, Any]]] = []
+
+
+    sizes: Optional[List[str]] = []
 
 class ImagesConfig(BaseModel):
     ENABLE_IMAGE_GENERATION: bool
     ENABLE_IMAGE_PROMPT_GENERATION: bool
 
-    IMAGE_GENERATION_ENGINE: str
-    IMAGE_GENERATION_MODEL: str
-    IMAGE_SIZE: str | None
-    IMAGE_STEPS: int | None
-
-    IMAGES_OPENAI_API_BASE_URL: str
-    IMAGES_OPENAI_API_KEY: str
-    IMAGES_OPENAI_API_VERSION: str
-    IMAGES_OPENAI_API_PARAMS: dict | str | None
-
-    AUTOMATIC1111_BASE_URL: str
-    AUTOMATIC1111_API_AUTH: dict | str | None
-    AUTOMATIC1111_PARAMS: dict | str | None
-
-    COMFYUI_BASE_URL: str
-    COMFYUI_API_KEY: str
-    COMFYUI_WORKFLOW: str
-    COMFYUI_WORKFLOW_NODES: list[dict]
-
-    IMAGES_GEMINI_API_BASE_URL: str
-    IMAGES_GEMINI_API_KEY: str
-    IMAGES_GEMINI_ENDPOINT_METHOD: str
-
-    ENABLE_IMAGE_EDIT: bool
-    IMAGE_EDIT_ENGINE: str
-    IMAGE_EDIT_MODEL: str
-    IMAGE_EDIT_SIZE: str | None
-
-    IMAGES_EDIT_OPENAI_API_BASE_URL: str
-    IMAGES_EDIT_OPENAI_API_KEY: str
-    IMAGES_EDIT_OPENAI_API_VERSION: str
-    IMAGES_EDIT_GEMINI_API_BASE_URL: str
-    IMAGES_EDIT_GEMINI_API_KEY: str
-    IMAGES_EDIT_COMFYUI_BASE_URL: str
-    IMAGES_EDIT_COMFYUI_API_KEY: str
-    IMAGES_EDIT_COMFYUI_WORKFLOW: str
-    IMAGES_EDIT_COMFYUI_WORKFLOW_NODES: list[dict]
+    IMAGE_GENERATION_MODELS: List[ImageModelConfig] = Field(default_factory=list)
 
 
 @router.get('/config', response_model=ImagesConfig)
@@ -273,37 +239,75 @@ async def get_config(request: Request, user=Depends(get_admin_user)):
     return await get_config_values(IMAGE_CONFIG_KEYS)
 
 
-@router.post('/config/update')
+@router.post("/config/update")
 async def update_config(request: Request, form_data: ImagesConfig, user=Depends(get_admin_user)):
-    if form_data.IMAGE_SIZE == 'auto' and not re.match(
-        IMAGE_AUTO_SIZE_MODELS_REGEX_PATTERN, form_data.IMAGE_GENERATION_MODEL
-    ):
-        raise HTTPException(
-            status_code=400,
-            detail=ERROR_MESSAGES.INCORRECT_FORMAT(
-                f'  (auto is only allowed with models matching {IMAGE_AUTO_SIZE_MODELS_REGEX_PATTERN}).'
-            ),
-        )
-
     pattern = r'^\d+x\d+$'
-    if not (form_data.IMAGE_SIZE == 'auto' or form_data.IMAGE_SIZE == '' or re.match(pattern, form_data.IMAGE_SIZE)):
-        raise HTTPException(
-            status_code=400,
-            detail=ERROR_MESSAGES.INCORRECT_FORMAT('  (e.g., 512x512).'),
-        )
 
-    if form_data.IMAGE_STEPS < 0:
-        raise HTTPException(
-            status_code=400,
-            detail=ERROR_MESSAGES.INCORRECT_FORMAT('  (e.g., 50).'),
-        )
+    # 1. Validierung der einzelnen Modelle im Array
+    for model in form_data.IMAGE_GENERATION_MODELS:
+        model_name = model.IMAGE_GENERATION_MODEL
+        engine = model.IMAGE_GENERATION_ENGINE
 
+        # A) Engine-spezifische Pflichtfeld-Validierung
+        if engine == 'automatic1111' and not getattr(model, 'AUTOMATIC1111_BASE_URL', None):
+            raise HTTPException(
+                status_code=400,
+                detail=f'AUTOMATIC1111 Base URL is required for model "{model_name}".'
+            )
+        elif engine == 'comfyui' and not getattr(model, 'COMFYUI_BASE_URL', None):
+            raise HTTPException(
+                status_code=400,
+                detail=f'ComfyUI Base URL is required for model "{model_name}".'
+            )
+        elif engine == 'openai' and not getattr(model, 'IMAGES_OPENAI_API_KEY', None):
+            raise HTTPException(
+                status_code=400,
+                detail=f'OpenAI API Key is required for model "{model_name}".'
+            )
+        elif engine == 'gemini' and not getattr(model, 'IMAGES_GEMINI_API_KEY', None):
+            raise HTTPException(
+                status_code=400,
+                detail=f'Gemini API Key is required for model "{model_name}".'
+            )
+
+        # B) JSON-Validierung für ComfyUI Workflows
+        if engine == 'comfyui':
+            for wf_field, label in [
+                ('COMFYUI_WORKFLOW', 'ComfyUI Workflow'),
+                ('IMAGES_EDIT_COMFYUI_WORKFLOW', 'ComfyUI Edit Workflow')
+            ]:
+                wf_val = getattr(model, wf_field, None)
+                if wf_val:
+                    if isinstance(wf_val, str):
+                        try:
+                            json.loads(wf_val)
+                        except Exception:
+                            raise HTTPException(
+                                status_code=400,
+                                detail=f'Invalid JSON format for {label} in model "{model_name}".'
+                            )
+
+        if getattr(model, 'AUTOMATIC1111_BASE_URL', None):
+            model.AUTOMATIC1111_BASE_URL = model.AUTOMATIC1111_BASE_URL.strip('/')
+        if getattr(model, 'COMFYUI_BASE_URL', None):
+            model.COMFYUI_BASE_URL = model.COMFYUI_BASE_URL.strip('/')
+
+
+    # 4. Updates für die DB vorbereiten
     updates = config_updates(form_data.model_dump(), IMAGE_CONFIG_KEYS)
-    updates['image_generation.comfyui.base_url'] = form_data.COMFYUI_BASE_URL.strip('/')
-    updates['images.edit.comfyui.base_url'] = form_data.IMAGES_EDIT_COMFYUI_BASE_URL.strip('/')
+    
+    # Optional globale URLs absichern (sofern im Haupt-Formular vorhanden)
+    if hasattr(form_data, 'COMFYUI_BASE_URL') and form_data.COMFYUI_BASE_URL:
+        updates['image_generation.comfyui.base_url'] = form_data.COMFYUI_BASE_URL.strip('/')
+    if hasattr(form_data, 'IMAGES_EDIT_COMFYUI_BASE_URL') and form_data.IMAGES_EDIT_COMFYUI_BASE_URL:
+        updates['images.edit.comfyui.base_url'] = form_data.IMAGES_EDIT_COMFYUI_BASE_URL.strip('/')
+
+    # In DB schreiben (speichert das vollständige JSON-Array 'IMAGE_GENERATION_MODELS')
     await Config.upsert(updates)
-    await set_image_model(request, form_data.IMAGE_GENERATION_MODEL)
+
     values = await get_config_values(IMAGE_CONFIG_KEYS)
+
+    # 5. Event publizieren
     await publish_event(
         request,
         EVENTS.CONFIG_UPDATED,
@@ -312,10 +316,10 @@ async def update_config(request: Request, form_data: ImagesConfig, user=Depends(
         data={
             'image_generation_enabled': values.get('ENABLE_IMAGE_GENERATION'),
             'image_edit_enabled': values.get('ENABLE_IMAGE_EDIT'),
-            'image_generation_engine': values.get('IMAGE_GENERATION_ENGINE'),
             'image_edit_engine': values.get('IMAGE_EDIT_ENGINE'),
         },
     )
+    
     return values
 
 
@@ -366,82 +370,43 @@ async def verify_url(request: Request, user=Depends(get_admin_user)):
 @router.get('/models')
 async def get_models(request: Request, user=Depends(get_verified_user)):
     image_config = await get_image_config()
+    
     try:
-        if image_config.IMAGE_GENERATION_ENGINE == 'openai':
-            return [
-                {'id': 'dall-e-2', 'name': 'DALL·E 2'},
-                {'id': 'dall-e-3', 'name': 'DALL·E 3'},
-                {'id': 'gpt-image-1', 'name': 'GPT-IMAGE 1'},
-                {'id': 'gpt-image-1.5', 'name': 'GPT-IMAGE 1.5'},
-            ]
-        elif image_config.IMAGE_GENERATION_ENGINE == 'gemini':
-            return [
-                {'id': 'imagen-3.0-generate-002', 'name': 'imagen-3.0 generate-002'},
-            ]
-        elif image_config.IMAGE_GENERATION_ENGINE == 'comfyui':
-            # TODO - get models from comfyui
-            headers = {'Authorization': f'Bearer {image_config.COMFYUI_API_KEY}'}
-            session = await get_session()
-            async with session.get(
-                url=f'{image_config.COMFYUI_BASE_URL}/object_info',
-                headers=headers,
-                ssl=AIOHTTP_CLIENT_SESSION_SSL,
-            ) as r:
-                info = await r.json()
+        models = getattr(image_config, 'IMAGE_GENERATION_MODELS', [])
+        
+        if not models:
+            legacy_model = getattr(image_config, 'IMAGE_GENERATION_MODEL', None)
+            legacy_engine = getattr(image_config, 'IMAGE_GENERATION_ENGINE', 'openai')
+            legacy_size = getattr(image_config, 'IMAGE_SIZE', '1024x1024')
+            
+            if legacy_model:
+                return [{
+                    'id': legacy_model,
+                    'name': legacy_model,
+                    'engine': legacy_engine,
+                    'sizes': [legacy_size]
+                }]
+            return []
 
-            workflow = JSONCodec.loads(image_config.COMFYUI_WORKFLOW)
-            model_node_id = None
+        formatted_models = []
+        for model in models:
+            # Unterbindung von Fehlern, falls 'model' als dict oder Objekt vorliegt
+            m = model if isinstance(model, dict) else model.__dict__
+            formatted_models.append({
+                'id': m.get('id'),
+                'name': m.get('name', m.get('id')),
+                'engine': m.get('engine'),
+                'sizes': m.get('sizes', [])
+            })
 
-            for node in image_config.COMFYUI_WORKFLOW_NODES:
-                if node['type'] == 'model':
-                    if node['node_ids']:
-                        model_node_id = node['node_ids'][0]
-                    break
+        return formatted_models
 
-            if model_node_id:
-                model_list_key = None
-
-                log.info(workflow[model_node_id]['class_type'])
-                for key in info[workflow[model_node_id]['class_type']]['input']['required']:
-                    if '_name' in key:
-                        model_list_key = key
-                        break
-
-                if model_list_key:
-                    return list(
-                        map(
-                            lambda model: {'id': model, 'name': model},
-                            info[workflow[model_node_id]['class_type']]['input']['required'][model_list_key][0],
-                        )
-                    )
-            else:
-                return list(
-                    map(
-                        lambda model: {'id': model, 'name': model},
-                        info['CheckpointLoaderSimple']['input']['required']['ckpt_name'][0],
-                    )
-                )
-        elif image_config.IMAGE_GENERATION_ENGINE == 'automatic1111' or image_config.IMAGE_GENERATION_ENGINE == '':
-            session = await get_session()
-            async with session.get(
-                url=f'{image_config.AUTOMATIC1111_BASE_URL}/sdapi/v1/sd-models',
-                headers={'authorization': get_automatic1111_api_auth(image_config)},
-                ssl=AIOHTTP_CLIENT_SESSION_SSL,
-            ) as r:
-                models = await r.json()
-            return list(
-                map(
-                    lambda model: {'id': model['title'], 'name': model['model_name']},
-                    models,
-                )
-            )
     except Exception as e:
         log.exception(f'Failed to list image generation models: {e}')
         raise HTTPException(
             status_code=400,
             detail=ERROR_MESSAGES.DEFAULT(e, 'Failed to retrieve image generation models'),
         )
-
 
 class CreateImageForm(BaseModel):
     model: str | None = None
@@ -606,9 +571,6 @@ async def image_generations(
     # image model other than gpt-image-1, which is warned about on settings save
 
     size = '512x512'
-    if image_config.IMAGE_SIZE and 'x' in image_config.IMAGE_SIZE:
-        size = image_config.IMAGE_SIZE
-
     if form_data.size and 'x' in form_data.size:
         size = form_data.size
 
@@ -616,40 +578,55 @@ async def image_generations(
 
     metadata = metadata or {}
 
-    model = await get_image_model(request)
+    if form_data.model is not None:
+        model = form_data.model
+    else:
+        return HTTPException(
+            status_code=400,
+            detail=ERROR_MESSAGES.INCORRECT_FORMAT('  (model is required).'),
+        )
+
+    selected_model = None
+    for model_data in image_config.IMAGE_GENERATION_MODELS:
+        if model_data.get('IMAGE_GENERATION_MODEL') == form_data.model:
+            selected_model = model_data
+            break
+
+    if not selected_model:
+        raise HTTPException(
+            status_code=404,
+            detail=f'Model "{form_data.model}" not found in image generation configuration.',
+        )
 
     try:
-        if image_config.IMAGE_GENERATION_ENGINE == 'openai':
+        if selected_model.get('IMAGE_GENERATION_ENGINE') == 'openai':
             headers = {
-                'Authorization': f'Bearer {image_config.IMAGES_OPENAI_API_KEY}',
+                'Authorization': f'Bearer {selected_model.get("IMAGES_OPENAI_API_KEY")}',
                 'Content-Type': 'application/json',
             }
 
             if ENABLE_FORWARD_USER_INFO_HEADERS:
                 headers = include_user_info_headers(headers, user)
 
-            url = f'{image_config.IMAGES_OPENAI_API_BASE_URL}/images/generations'
-            if image_config.IMAGES_OPENAI_API_VERSION:
-                url = f'{url}?api-version={image_config.IMAGES_OPENAI_API_VERSION}'
+            url = f'{selected_model.get("IMAGES_OPENAI_API_BASE_URL")}/images/generations'
+            if selected_model.get("IMAGES_OPENAI_API_VERSION"):
+                url = f'{url}?api-version={selected_model.get("IMAGES_OPENAI_API_VERSION")}'
 
             data = {
                 'model': model,
                 'prompt': form_data.prompt,
                 'n': form_data.n,
                 **(
-                    {'size': form_data.size or image_config.IMAGE_SIZE}
-                    if (form_data.size or image_config.IMAGE_SIZE)
+                    {'size': form_data.size}
+                    if (form_data.size)
                     else {}
                 ),
                 **(
                     {}
-                    if re.match(
-                        IMAGE_URL_RESPONSE_MODELS_REGEX_PATTERN,
-                        image_config.IMAGE_GENERATION_MODEL,
-                    )
+                    if re.match(IMAGE_URL_RESPONSE_MODELS_REGEX_PATTERN, model) or "gpt-image" in model
                     else {'response_format': 'b64_json'}
                 ),
-                **({} if not image_config.IMAGES_OPENAI_API_PARAMS else image_config.IMAGES_OPENAI_API_PARAMS),
+                **({} if not selected_model.get("IMAGES_OPENAI_API_PARAMS") else selected_model.get("IMAGES_OPENAI_API_PARAMS")),
             }
 
             session = await get_session()
@@ -659,6 +636,9 @@ async def image_generations(
                 headers=headers,
                 ssl=AIOHTTP_CLIENT_SESSION_SSL,
             ) as r:
+                if r.status != 200:
+                    error_text = await r.text()
+                    log.error('OpenAI image generation failed: %s', error_text)
                 r.raise_for_status()
                 res = await r.json(content_type=None)
 
@@ -677,17 +657,17 @@ async def image_generations(
                 images.append(image_file)
             return images
 
-        elif image_config.IMAGE_GENERATION_ENGINE == 'gemini':
+        elif selected_model.get('IMAGE_GENERATION_ENGINE') == 'gemini':
             headers = {
                 'Content-Type': 'application/json',
-                'x-goog-api-key': image_config.IMAGES_GEMINI_API_KEY,
+                'x-goog-api-key': selected_model.get('IMAGES_GEMINI_API_KEY'),
             }
 
             data = {}
 
             if (
-                image_config.IMAGES_GEMINI_ENDPOINT_METHOD == ''
-                or image_config.IMAGES_GEMINI_ENDPOINT_METHOD == 'predict'
+                selected_model.get('IMAGES_GEMINI_ENDPOINT_METHOD') == ''
+                or selected_model.get('IMAGES_GEMINI_ENDPOINT_METHOD') == 'predict'
             ):
                 model = f'{model}:predict'
                 data = {
@@ -698,13 +678,13 @@ async def image_generations(
                     },
                 }
 
-            elif image_config.IMAGES_GEMINI_ENDPOINT_METHOD == 'generateContent':
+            elif selected_model.get('IMAGES_GEMINI_ENDPOINT_METHOD') == 'generateContent':
                 model = f'{model}:generateContent'
                 data = {'contents': [{'parts': [{'text': form_data.prompt}]}]}
 
             session = await get_session()
             async with session.post(
-                url=f'{image_config.IMAGES_GEMINI_API_BASE_URL}/models/{model}',
+                url=f'{selected_model.get("IMAGES_GEMINI_API_BASE_URL")}/models/{model}',
                 json=data,
                 headers=headers,
                 ssl=AIOHTTP_CLIENT_SESSION_SSL,
@@ -735,7 +715,7 @@ async def image_generations(
 
             return images
 
-        elif image_config.IMAGE_GENERATION_ENGINE == 'comfyui':
+        elif selected_model.get('IMAGE_GENERATION_ENGINE') == 'comfyui':
             data = {
                 'prompt': form_data.prompt,
                 'width': width,
@@ -743,8 +723,8 @@ async def image_generations(
                 'n': form_data.n,
             }
 
-            if image_config.IMAGE_STEPS is not None or form_data.steps is not None:
-                data['steps'] = form_data.steps if form_data.steps is not None else image_config.IMAGE_STEPS
+            if selected_model.get('IMAGE_STEPS') is not None:
+                data['steps'] = selected_model.get('IMAGE_STEPS')
 
             if form_data.negative_prompt is not None:
                 data['negative_prompt'] = form_data.negative_prompt
@@ -753,8 +733,8 @@ async def image_generations(
                 **{
                     'workflow': ComfyUIWorkflow(
                         **{
-                            'workflow': image_config.COMFYUI_WORKFLOW,
-                            'nodes': image_config.COMFYUI_WORKFLOW_NODES,
+                            'workflow': form_data.COMFYUI_WORKFLOW,
+                            'nodes': form_data.COMFYUI_WORKFLOW_NODES,
                         }
                     ),
                     **data,
@@ -764,8 +744,8 @@ async def image_generations(
                 model,
                 form_data,
                 str(uuid.uuid4()),
-                image_config.COMFYUI_BASE_URL,
-                image_config.COMFYUI_API_KEY,
+                form_data.COMFYUI_BASE_URL,
+                form_data.COMFYUI_API_KEY,
             )
             log.debug('res: %s', res)
 
@@ -773,13 +753,13 @@ async def image_generations(
 
             for image in res['data']:
                 headers = None
-                if image_config.COMFYUI_API_KEY:
-                    headers = {'Authorization': f'Bearer {image_config.COMFYUI_API_KEY}'}
+                if form_data.COMFYUI_API_KEY:
+                    headers = {'Authorization': f'Bearer {form_data.COMFYUI_API_KEY}'}
 
                 image_data, content_type = await get_image_data(
                     image['url'],
                     headers,
-                    trusted_base_url=image_config.COMFYUI_BASE_URL,
+                    trusted_base_url=form_data.COMFYUI_BASE_URL,
                 )
                 _, image_file = await upload_image(
                     request,
@@ -790,7 +770,7 @@ async def image_generations(
                 )
                 images.append(image_file)
             return images
-        elif image_config.IMAGE_GENERATION_ENGINE == 'automatic1111' or image_config.IMAGE_GENERATION_ENGINE == '':
+        elif selected_model.get('IMAGE_GENERATION_ENGINE') == 'automatic1111' or selected_model.get('IMAGE_GENERATION_ENGINE') == '':
             # Automatic1111 holds one checkpoint instance-wide, so set_image_model
             # persists the global default and switches the shared backend. Only an
             # admin may do that; a non-admin generates on the currently configured
@@ -805,20 +785,20 @@ async def image_generations(
                 'height': height,
             }
 
-            if image_config.IMAGE_STEPS is not None or form_data.steps is not None:
-                data['steps'] = form_data.steps if form_data.steps is not None else image_config.IMAGE_STEPS
+            if form_data.steps is not None:
+                data['steps'] = form_data.steps
 
             if form_data.negative_prompt is not None:
                 data['negative_prompt'] = form_data.negative_prompt
 
-            if image_config.AUTOMATIC1111_PARAMS:
-                data = {**data, **image_config.AUTOMATIC1111_PARAMS}
+            if form_data.AUTOMATIC1111_PARAMS:
+                data = {**data, **form_data.AUTOMATIC1111_PARAMS}
 
             session = await get_session()
             async with session.post(
-                url=f'{image_config.AUTOMATIC1111_BASE_URL}/sdapi/v1/txt2img',
+                url=f'{form_data.AUTOMATIC1111_BASE_URL}/sdapi/v1/txt2img',
                 json=data,
-                headers={'authorization': get_automatic1111_api_auth(image_config)},
+                headers={'authorization': get_automatic1111_api_auth(form_data)},
                 ssl=AIOHTTP_CLIENT_SESSION_SSL,
             ) as r:
                 res = await r.json(content_type=None)

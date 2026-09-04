@@ -8,10 +8,13 @@ IMPORTANT: DO NOT IMPORT THIS MODULE DIRECTLY IN OTHER PARTS OF THE CODEBASE.
 
 import asyncio
 import logging
+import json
 import time
-from typing import Literal, Optional
+from typing import Literal, Optional, List
 
-from fastapi import HTTPException, Request
+from open_webui.routers.images import get_config_values, ImageModelConfig, IMAGE_CONFIG_KEYS
+
+from fastapi import HTTPException, Request, Depends
 
 from open_webui.config import RAG_EMBEDDING_QUERY_PREFIX
 from open_webui.env import (
@@ -29,6 +32,7 @@ from open_webui.models.messages import Message, Messages
 from open_webui.models.notes import Notes
 from open_webui.models.users import UserModel
 from open_webui.retrieval.utils import get_content_from_url
+from open_webui.utils.auth import get_admin_user, get_verified_user
 from open_webui.retrieval.vector.async_client import ASYNC_VECTOR_DB_CLIENT
 from open_webui.routers.images import (
     CreateImageForm,
@@ -371,14 +375,12 @@ async def generate_image(
     __request__: Request = None,
     __user__: dict = None,
     __event_emitter__: callable = None,
+    __event_call__: callable = None,
     __chat_id__: str = None,
     __message_id__: str = None,
 ) -> str:
     """
-    Generate an image based on a text prompt.
-
-    :param prompt: A detailed description of the image to generate
-    :return: Confirmation that the image was generated, or an error message
+    Generate an image based on a text prompt using configured models and sizes.
     """
     if __request__ is None:
         return JSONCodec.dumps({'error': 'Request context not available'})
@@ -386,9 +388,133 @@ async def generate_image(
     try:
         user = UserModel(**__user__) if __user__ else None
 
+        image_config = await get_config_values(IMAGE_CONFIG_KEYS)
+        configured_models = image_config.get('IMAGE_GENERATION_MODELS', [])
+
+        selected_model = None
+        selected_resolution = "1024x1024"
+
+        model_options = []
+        model_config_by_name = {}  # Modellname -> ImageModelConfig
+
+        for model_cfg in configured_models:
+            # configured_models enthält ImageModelConfig-Instanzen (Pydantic),
+            # daher direkt über Attribute zugreifen
+            model_name = model_cfg.get('IMAGE_GENERATION_MODEL')
+            if not model_name:
+                continue
+
+            engine = model_cfg.get('IMAGE_GENERATION_ENGINE')
+
+            model_options.append({
+                'label': model_name,
+                'description': f"Engine: {engine}"
+            })
+
+            model_config_by_name[model_name] = model_cfg
+
+        # Standard-Fallback falls die Konfiguration komplett leer war
+        if not model_options:
+            model_options = [{'label': 'Default', 'description': 'Standard Modell'}]
+
+        if __event_call__ is not None:
+            # --- 1. Anfrage: nur Modell-Auswahl ---
+            model_questions = [
+                {
+                    'id': 'model',
+                    'header': 'Modell-Auswahl',
+                    'question': 'Welches Bildmodell soll für die Generierung verwendet werden?',
+                    'options': model_options,
+                    'allow_other': False,
+                }
+            ]
+
+            model_response_json = await ask_user(
+                questions=model_questions,
+                allow_other=False,
+                timeout_ms=120_000,
+                __event_call__=__event_call__,
+            )
+
+            model_response_data = json.loads(model_response_json) if isinstance(model_response_json, str) else model_response_json
+            model_raw_response = model_response_data.get('raw_response', model_response_data)
+            model_status = model_raw_response.get('status') or model_response_data.get('status')
+
+            if model_status == 'cancelled':
+                return JSONCodec.dumps({'status': 'cancelled', 'message': 'Bildgenerierung vom Nutzer abgebrochen.'})
+
+            if model_status not in ['answered', 'success']:
+                return JSONCodec.dumps({'status': 'cancelled', 'message': 'Keine gültige Modell-Antwort erhalten.'})
+
+            model_answers = model_raw_response.get('answers') or model_response_data.get('user_answers') or {}
+            raw_model = model_answers.get('model')
+
+            # Sichere Extraktion des Modells
+            if isinstance(raw_model, dict):
+                selected_model = raw_model.get('label') or raw_model.get('value')
+            else:
+                selected_model = raw_model
+
+            # --- Auflösungs-Optionen für das gewählte Modell ermitteln ---
+            selected_model_cfg = model_config_by_name.get(selected_model)
+
+            model_specific_sizes = []
+            if selected_model_cfg is not None:
+                # IMAGE_SIZE ist die primäre Quelle, sizes optionaler Fallback
+                model_specific_sizes = selected_model_cfg.get('IMAGE_SIZE') or []
+
+            if not model_specific_sizes:
+                model_specific_sizes = ["1024x1024"]
+
+            model_resolution_options = [
+                {'label': size, 'description': f'Auflösung {size}'}
+                for size in model_specific_sizes
+            ]
+
+            # --- 2. Anfrage: Auflösung basierend auf gewähltem Modell ---
+            resolution_questions = [
+                {
+                    'id': 'resolution',
+                    'header': 'Bildauflösung',
+                    'question': f'In welcher Auflösung soll das Bild mit "{selected_model}" erstellt werden?',
+                    'options': model_resolution_options,
+                    'allow_other': True,
+                }
+            ]
+
+            resolution_response_json = await ask_user(
+                questions=resolution_questions,
+                allow_other=True,
+                timeout_ms=120_000,
+                __event_call__=__event_call__,
+            )
+
+            resolution_response_data = json.loads(resolution_response_json) if isinstance(resolution_response_json, str) else resolution_response_json
+            resolution_raw_response = resolution_response_data.get('raw_response', resolution_response_data)
+            resolution_status = resolution_raw_response.get('status') or resolution_response_data.get('status')
+
+            if resolution_status in ['answered', 'success']:
+                resolution_answers = resolution_raw_response.get('answers') or resolution_response_data.get('user_answers') or {}
+                raw_resolution = resolution_answers.get('resolution')
+
+                # Sichere Extraktion der Auflösung
+                if isinstance(raw_resolution, dict):
+                    selected_resolution = raw_resolution.get('label') or raw_resolution.get('value')
+                else:
+                    selected_resolution = raw_resolution
+
+            elif resolution_status == 'cancelled':
+                return JSONCodec.dumps({'status': 'cancelled', 'message': 'Bildgenerierung vom Nutzer abgebrochen.'})
+
+        form_data = CreateImageForm(
+            prompt=prompt,
+            model=selected_model,
+            size=selected_resolution
+        )
+
         images = await image_generations(
             request=__request__,
-            form_data=CreateImageForm(prompt=prompt),
+            form_data=form_data,
             metadata=(
                 {'channel_id': __chat_id__.removeprefix('channel:'), 'message_id': __message_id__}
                 if isinstance(__chat_id__, str) and __chat_id__.startswith('channel:')
@@ -397,10 +523,8 @@ async def generate_image(
             user=user,
         )
 
-        # Prepare file entries for the images
         image_files = [{'type': 'image', **img} for img in images]
 
-        # Persist files to DB if chat context is available
         if is_saved_chat_id(__chat_id__) and __message_id__ and images:
             db_files = await Chats.add_message_files_by_id_and_message_id(
                 __chat_id__,
@@ -410,7 +534,6 @@ async def generate_image(
             if db_files is not None:
                 image_files = db_files
 
-        # Emit the images to the UI if event emitter is available
         if __event_emitter__ and image_files:
             await __event_emitter__(
                 {
@@ -420,21 +543,20 @@ async def generate_image(
                     },
                 }
             )
-            # Return a message indicating the image is already displayed
             return JSONCodec.dumps(
                 {
                     'status': 'success',
-                    'message': 'The image has been successfully generated and is already visible to the user in the chat. You do not need to display or embed the image again - just acknowledge that it has been created.',
+                    'message': 'The image has been successfully generated and is already visible to the user in the chat.',
                     'images': images,
                 },
                 ensure_ascii=False,
             )
 
         return JSONCodec.dumps({'status': 'success', 'images': images}, ensure_ascii=False)
+
     except Exception as e:
         log.exception(f'generate_image error: {e}')
         return JSONCodec.dumps({'error': str(e)})
-
 
 async def edit_image(
     prompt: str,
@@ -547,8 +669,8 @@ async def ask_user(
             seen_ids.add(question_id)
 
             options = question.get('options')
-            if not isinstance(options, list) or not 2 <= len(options) <= 3:
-                raise ValueError('Each question requires 2-3 options.')
+            if not isinstance(options, list) or not 1 <= len(options) <= 4:
+                raise ValueError('Each question requires 1-4 options.')
 
             normalized_options = []
             for option in options:
