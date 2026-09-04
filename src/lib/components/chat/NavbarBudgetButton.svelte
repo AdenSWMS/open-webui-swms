@@ -20,17 +20,17 @@
 
 	$: diff = spentPercent - timePercent;
 
-	$: barColorClass = () => {
-		if (diff > 15) return 'bg-red-500';
-		if (diff > 5) return 'bg-amber-500';
-		return 'bg-emerald-500';
-	};
+	$: barColorClass = diff > 15 
+		? 'bg-red-500' 
+		: diff > 5 
+			? 'bg-amber-500' 
+			: 'bg-emerald-500';
 
-	$: textColorClass = () => {
-		if (diff > 15) return 'text-red-500 dark:text-red-400';
-		if (diff > 5) return 'text-amber-600 dark:text-amber-400';
-		return 'text-emerald-600 dark:text-emerald-400';
-	};
+	$: textColorClass = diff > 15 
+		? 'text-red-500 dark:text-red-400' 
+		: diff > 5 
+			? 'text-amber-600 dark:text-amber-400' 
+			: 'text-emerald-600 dark:text-emerald-400';
 </script>
 
 <button
@@ -40,7 +40,7 @@
 	title="Klicken für detaillierte Budget-Übersicht"
 >
 	<div
-		class="absolute left-0 top-0 bottom-0 opacity-15 dark:opacity-20 transition-all duration-500 ease-out pointer-events-none {barColorClass()}"
+		class="absolute left-0 top-0 bottom-0 transition-all duration-500 ease-out pointer-events-none {barColorClass}"
 		style="width: {spentPercent}%;"
 	></div>
 
@@ -54,15 +54,13 @@
 				maximumFractionDigits: 4
 			})}
 		</span>
-		<span class="font-semibold {textColorClass()}">
+		<span class="font-semibold {textColorClass}">
 			({spentPercent}%)
 		</span>
 	</div>
 
-	<div class="absolute bottom-0 left-0 right-0 h-[2px] bg-gray-100 dark:bg-gray-700/50">
-		<div
-			class="h-full transition-all duration-500 ease-out {barColorClass()}"
-			style="width: {spentPercent}%;"
-		></div>
-	</div>
+	<div
+		class="h-full transition-all duration-500 ease-out {barColorClass}"
+		style="width: {spentPercent}%;"
+	></div>
 </button>

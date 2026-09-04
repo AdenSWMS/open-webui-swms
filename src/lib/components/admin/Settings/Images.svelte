@@ -164,7 +164,7 @@
 		});
 
 		if (res) {
-			config = res;
+			config = formatConfigParams(res);
 			backendConfig.set(await getBackendConfig());
 
 			return res;
@@ -182,6 +182,25 @@
 			}
 		} catch (e) {}
 		return false;
+	};
+	
+	const normalizeParamsToString = (params) => {
+		if (typeof params === 'object' && params !== null) {
+			return Object.keys(params).length > 0 ? JSON.stringify(params, null, 2) : '';
+		}
+		return params || '';
+	};
+
+	const formatConfigParams = (configData) => {
+		if (!configData || !Array.isArray(configData.IMAGE_GENERATION_MODELS)) return configData;
+		
+		configData.IMAGE_GENERATION_MODELS = configData.IMAGE_GENERATION_MODELS.map((model) => ({
+			...model,
+			AUTOMATIC1111_PARAMS: normalizeParamsToString(model.AUTOMATIC1111_PARAMS),
+			IMAGES_OPENAI_API_PARAMS: normalizeParamsToString(model.IMAGES_OPENAI_API_PARAMS)
+		}));
+
+		return configData;
 	};
 
 	const saveHandler = async () => {
@@ -303,8 +322,8 @@
 			});
 
 			if (res) {
-
-				config = res;
+				// HIER anwenden beim ersten Laden:
+				config = formatConfigParams(res);
 			}
 
 			if (!config) return;
