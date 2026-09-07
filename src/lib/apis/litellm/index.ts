@@ -96,3 +96,39 @@ export const getUserInfo = async (token: string) => {
 
 	return res;
 };
+
+export const getUserAnalytics = async (
+	token: string,
+	startDate: string,
+	endDate: string
+) => {
+	let error = null;
+
+	const queryParams = new URLSearchParams({
+		start_date: startDate,
+		end_date: endDate
+	});
+
+	const res = await fetch(`${WEBUI_API_BASE_URL}/litellm/user/analytics?${queryParams.toString()}`, {
+		method: 'GET',
+		headers: {
+			'Content-Type': 'application/json',
+			Authorization: `Bearer ${token}`
+		}
+	})
+		.then(async (res) => {
+			if (!res.ok) throw await res.json();
+			return res.json();
+		})
+		.catch((err) => {
+			console.error(err);
+			error = err.detail ?? err;
+			return error;
+		});
+
+	if (error) {
+		throw error;
+	}
+
+	return res;
+};

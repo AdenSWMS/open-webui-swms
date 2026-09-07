@@ -1,6 +1,7 @@
+from datetime import date
 import os
 import httpx
-from fastapi import APIRouter, HTTPException, Depends
+from fastapi import APIRouter, HTTPException, Depends, Query
 from pydantic import BaseModel
 import json
 from typing import List, Dict, Any, Optional
@@ -244,3 +245,153 @@ async def get_model_info(model_id: str) -> Optional[Dict[str, Any]]:
             raise HTTPException(
                 status_code=503, 
                 detail=f"LiteLLM Server nicht erreichbar: {exc}")
+
+#----------------------------------------------------------------
+# Budget Analytics Section
+#----------------------------------------------------------------
+
+class DailyUsageItem(BaseModel):
+    date: str
+    spend: float
+    tokens: int
+
+class ModelUsageItem(BaseModel):
+    model: str
+    spend: float
+    tokens: int
+    calls: int
+
+class ModelTokenDetail(BaseModel):
+    model: str
+    prompt_tokens: int
+    completion_tokens: int
+    total_tokens: int
+
+class DailyModelDataItem(BaseModel):
+    date: str
+    model: str
+    spend: float
+
+class AnalyticsResponse(BaseModel):
+    daily_usage: List[DailyUsageItem]
+    model_usage: List[ModelUsageItem]
+    model_token_details: List[ModelTokenDetail]
+    daily_model_data: List[DailyModelDataItem]
+
+@router.get("/user/analytics", response_model=AnalyticsResponse)
+async def get_user_analytics(
+    start_date: str = Query(..., description="Startdatum im Format YYYY-MM-DD"),
+    end_date: str = Query(..., description="Enddatum im Format YYYY-MM-DD"),
+    user = Depends(get_verified_user)
+):
+    if not LITELLM_MASTER_KEY:
+        raise HTTPException(
+            status_code=500, 
+            detail="LITELLM_MASTER_KEY ist im Open WebUI Backend nicht konfiguriert."
+        )
+
+    headers = {
+        "Authorization": f"Bearer {LITELLM_MASTER_KEY}",
+        "Content-Type": "application/json"
+    }
+
+    params = {
+        "user_id": user.email,
+        "start_date": start_date,
+        "end_date": end_date
+    }
+
+    async with httpx.AsyncClient() as client:
+        try:
+            response = await client.get(
+                f"{LITELLM_URL}/user/daily/activity", 
+                params=params, 
+                headers=headers,
+                timeout=10.0
+            )
+            
+            if response.status_code != 200:
+                raise HTTPException(
+                    status_code=response.status_code, 
+                    detail=f"LiteLLM Fehler: {response.text}"
+                )
+
+            raw_data = response.json()
+
+            results = raw_data.get("results", []) if isinstance(raw_data, dict) else raw_data
+
+            daily_map = {}
+            model_map = {}
+            token_map = {}
+            daily_model_data = []
+
+            for day in results:
+                if not isinstance(day, dict):
+                    continue
+
+                entry_date = day.get("date", "")
+                day_metrics = day.get("metrics", {})
+                
+                if entry_date:
+                    if entry_date not in daily_map:
+                        daily_map[entry_date] = {"spend": 0.0, "tokens": 0}
+                        
+                    daily_map[entry_date]["spend"] += float(day_metrics.get("spend", 0.0) or 0.0)
+                    daily_map[entry_date]["tokens"] += int(day_metrics.get("total_tokens", 0) or 0)
+
+                models_breakdown = day.get("breakdown", {}).get("models", {})
+                
+                for model_name, model_info in models_breakdown.items():
+                    if not isinstance(model_info, dict):
+                        continue
+                        
+                    m_metrics = model_info.get("metrics", {})
+                    
+                    spend = float(m_metrics.get("spend", 0.0) or 0.0)
+                    prompt_tokens = int(m_metrics.get("prompt_tokens", 0) or 0)
+                    completion_tokens = int(m_metrics.get("completion_tokens", 0) or 0)
+                    total_tokens = int(m_metrics.get("total_tokens", 0) or 0)
+                    calls = int(m_metrics.get("api_requests", 0) or 0)
+
+                    if model_name not in model_map:
+                        model_map[model_name] = {"spend": 0.0, "tokens": 0, "calls": 0}
+                    model_map[model_name]["spend"] += spend
+                    model_map[model_name]["tokens"] += total_tokens
+                    model_map[model_name]["calls"] += calls
+
+                    if model_name not in token_map:
+                        token_map[model_name] = {"prompt": 0, "completion": 0, "total": 0}
+                    token_map[model_name]["prompt"] += prompt_tokens
+                    token_map[model_name]["completion"] += completion_tokens
+                    token_map[model_name]["total"] += total_tokens
+
+                    daily_model_data.append(
+                        DailyModelDataItem(date=entry_date, model=model_name, spend=round(spend, 6))
+                    )
+                    
+            return AnalyticsResponse(
+                daily_usage=[
+                    DailyUsageItem(date=d, spend=round(v["spend"], 4), tokens=int(v["tokens"]))
+                    for d, v in daily_map.items()
+                ],
+                model_usage=[
+                    ModelUsageItem(model=m, spend=round(v["spend"], 4), tokens=int(v["tokens"]), calls=int(v["calls"]))
+                    for m, v in model_map.items()
+                ],
+                model_token_details=[
+                    ModelTokenDetail(
+                        model=m,
+                        prompt_tokens=v["prompt"],
+                        completion_tokens=v["completion"],
+                        total_tokens=v["total"]
+                    )
+                    for m, v in token_map.items()
+                ],
+                daily_model_data=daily_model_data
+            )
+
+        except httpx.RequestError as exc:
+            raise HTTPException(
+                status_code=503, 
+                detail=f"LiteLLM Server nicht erreichbar: {exc}"
+            )
