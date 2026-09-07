@@ -652,8 +652,8 @@ async def ask_user(
     :return: JSON with status and answers keyed by question id
     """
     try:
-        if not isinstance(questions, list) or not 1 <= len(questions) <= 3:
-            raise ValueError('ask_user requires 1-3 questions.')
+        if not isinstance(questions, list) or not 1 <= len(questions) <= 10:
+            raise ValueError('ask_user requires 1-10 questions.')
 
         normalized_questions = []
         seen_ids = set()
@@ -669,8 +669,8 @@ async def ask_user(
             seen_ids.add(question_id)
 
             options = question.get('options')
-            if not isinstance(options, list) or not 1 <= len(options) <= 4:
-                raise ValueError('Each question requires 1-4 options.')
+            if not isinstance(options, list) or not 1 <= len(options) <= 10:
+                raise ValueError('Each question requires 1-10 options.')
 
             normalized_options = []
             for option in options:

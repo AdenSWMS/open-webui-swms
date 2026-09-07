@@ -530,10 +530,13 @@
 
 	<div class="flex self-center flex-1 w-full min-w-0">
 		{#if unread}
-			<div class="shrink-0 self-center pr-2.5 flex transition-opacity duration-300">
+			<div class="shrink-0 self-center pr-2 flex transition-opacity duration-300">
 				<div class="size-1.5 bg-sky-500 rounded-full"></div>
 			</div>
 		{/if}
+		<div class="shrink-0 flex items-center justify-center mr-2">
+			<div class="size-1.5 rounded-full border-[1.5px] border-gray-400 dark:border-gray-700"></div>
+		</div>	
 		<div
 			dir="auto"
 			class="text-left self-center overflow-hidden w-full h-5 truncate {unread

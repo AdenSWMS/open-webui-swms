@@ -1012,7 +1012,7 @@
 <div class="relative w-full">
 	<button
 		bind:this={triggerElement}
-		class="focus-ring relative w-full {($settings?.highContrastMode ?? false)
+		class="focus-ring relative w-full rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 {($settings?.highContrastMode ?? false)
 			? ''
 			: 'outline-hidden focus:outline-hidden'}"
 		aria-label={selectedModel
@@ -1037,7 +1037,6 @@
 			{:else}
 				{placeholder}
 			{/if}
-			<ChevronDown className=" self-center ml-2 size-3" strokeWidth="2.5" />
 		</div>
 	</button>
 
