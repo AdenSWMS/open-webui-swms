@@ -395,3 +395,62 @@ async def get_user_analytics(
                 status_code=503, 
                 detail=f"LiteLLM Server nicht erreichbar: {exc}"
             )
+
+@router.get("/modelcost")
+async def get_model_cost_map(user = Depends(get_verified_user)):
+    if not LITELLM_MASTER_KEY:
+        raise HTTPException(
+            status_code=500, 
+            detail="LITELLM_MASTER_KEY ist im Open WebUI Backend nicht konfiguriert."
+        )
+
+    headers = {
+        "Authorization": f"Bearer {LITELLM_MASTER_KEY}",
+    }
+
+    async with httpx.AsyncClient() as client:
+        try:
+            response = await client.get(
+                f"{LITELLM_URL}/model/info", 
+                headers=headers,
+                timeout=10.0
+            )
+            
+            if response.status_code != 200:
+                raise HTTPException(
+                    status_code=response.status_code, 
+                    detail=f"LiteLLM Fehler: {response.text}"
+                )
+
+            data = response.json().get("data", [])
+
+            model_cost_map = []
+            for model in data:
+                model_name = model.get("model_name")
+                model_info = model.get("model_info", {})
+
+                input_cost = model_info.get("input_cost_per_token") or 0.0
+                output_cost = model_info.get("output_cost_per_token") or 0.0
+                cache_read_cost = model_info.get("cache_read_input_token_cost") or 0.0
+                cache_write_cost = model_info.get("cache_creation_input_token_cost") or 0.0
+
+                max_input = model_info.get("max_input_tokens") or model_info.get("max_tokens")
+                max_output = model_info.get("max_output_tokens") or model_info.get("max_tokens")
+
+                model_cost_map.append({
+                    "model": model_name,
+                    "input": f"${input_cost * 1_000_000:.2f}" if input_cost else "$0.00",
+                    "output": f"${output_cost * 1_000_000:.2f}" if output_cost else "$0.00",
+                    "cacheRead": f"${cache_read_cost * 1_000_000:.2f}" if cache_read_cost else "—",
+                    "cacheWrite": f"${cache_write_cost * 1_000_000:.2f}" if cache_write_cost else "—",
+                    "maxInput": f"{max_input:,}" if max_input else "—",
+                    "maxOutput": f"{max_output:,}" if max_output else "—"
+                })
+
+            return {"model_cost_map": model_cost_map}
+
+        except httpx.RequestError as exc:
+            raise HTTPException(
+                status_code=503, 
+                detail=f"LiteLLM Server nicht erreichbar: {exc}"
+            )

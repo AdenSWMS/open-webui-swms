@@ -14,9 +14,11 @@
 
 	$: totalModelSpend = modelUsage.reduce((sum, item) => sum + item.spend, 0);
 
+	$: sortedModelUsage = [...modelUsage].sort((a, b) => b.spend - a.spend);
+
 	$: donutSegments = (() => {
 		let accumulatedPercent = 0;
-		return modelUsage.map((m, idx) => {
+		return sortedModelUsage.map((m, idx) => {
 			const percent = totalModelSpend > 0 ? m.spend / totalModelSpend : 0;
 			const dasharray = `${percent * 100} ${100 - percent * 100}`;
 			const offset = 100 - accumulatedPercent * 100 + 25; 

@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import { getUserAnalytics } from '$lib/apis/litellm';
+	import { getUserAnalytics, getModelCostMap } from '$lib/apis/litellm';
 
 	import UsageTables from './UsagtTables.svelte';
 	import UsageTablesSkeleton from './Skeletons/TableSkeleton.svelte';
@@ -18,6 +18,8 @@
 	let modelUsage: any[] = [];
 	let modelTokenDetails: any[] = [];
 	let dailyModelData: any[] = [];
+
+	let modelCostMap: any[] = [];
 
 	function getDateRange(filter: string) {
 		const end = new Date();
@@ -41,6 +43,18 @@
 		};
 	}
 
+	async function fetchModelCostMap() {
+		try {
+			const token = localStorage.token;
+			const cost_data = await getModelCostMap(token);
+			
+			modelCostMap = cost_data?.model_cost_map || [];
+		} catch (err) {
+			console.error('Fehler beim Abrufen der Modellkostenkarte:', err);
+			modelCostMap = [];
+		}
+	}
+
 	async function fetchAnalytics() {
 	
 		if (selectedFilter === 'custom' && (!customStartDate || !customEndDate)) return;
@@ -51,6 +65,7 @@
 			const { startDate, endDate } = getDateRange(selectedFilter);
 
 			const data = await getUserAnalytics(token, startDate, endDate);
+			
 
 			dailyUsage = (data.daily_usage || []).slice().sort((a: any, b: any) => 
 				(a.date || '').localeCompare(b.date || '')
@@ -72,6 +87,10 @@
 	$: if (selectedFilter || customStartDate || customEndDate) {
 		fetchAnalytics();
 	}
+
+	onMount(() => {
+		fetchModelCostMap();
+	});
 </script>
 
 <div>
@@ -134,7 +153,7 @@
 		<UsageTablesSkeleton />
 		<UsageChartsSkeleton />
 	{:else}
-		<UsageTables {dailyUsage} {modelUsage} />
+		<UsageTables {dailyUsage} {modelUsage} {modelCostMap}/>
 
 		<UsageCharts {dailyModelData} {modelUsage} />
 
