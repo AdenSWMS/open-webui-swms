@@ -33,6 +33,49 @@
 
 	export let onClick: () => void = () => {};
 
+	export let modelCostMap: Array<any> = [];
+
+	
+	$: costData = modelCostMap?.find((c) => c.model === item.model.id || c.model === item.value);
+
+
+	$: costTier = (() => {
+		if (!costData || !costData.input) return 'FREE';
+		const numericInput = parseFloat(costData.input.replace('$', '')) || 0;
+		if (numericInput === 0) return 'FREE';
+		if (numericInput < 0.5) return '$';
+		if (numericInput < 3.0) return '$$';
+		return '$$$';
+	})();
+
+	$: costBadgeColor = (() => {
+		switch (costTier) {
+			case 'FREE':
+				return 'bg-green-500/10 text-green-600 dark:bg-green-500/20 dark:text-green-400 border-green-500/30';
+			case '$':
+				return 'bg-emerald-500/10 text-emerald-600 dark:bg-emerald-500/20 dark:text-emerald-400 border-emerald-500/30';
+			case '$$':
+				return 'bg-amber-500/10 text-amber-600 dark:bg-amber-500/20 dark:text-amber-400 border-amber-500/30';
+			case '$$$':
+				return 'bg-red-500/10 text-red-600 dark:bg-red-500/20 dark:text-red-400 border-red-500/30';
+			default:
+				return 'bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400';
+		}
+	})();
+
+	$: costTooltipText = (() => {
+		if (!costData) return `${item.label} (${item.value})`;
+
+		let text = `Input: ${costData.input} / 1M | Output: ${costData.output} / 1M`;
+		if (costData.cacheRead && costData.cacheRead !== '—') {
+			text += ` | Cache Read: ${costData.cacheRead}`;
+		}
+		if (costData.cacheWrite && costData.cacheWrite !== '—') {
+			text += ` | Cache Write: ${costData.cacheWrite}`;
+		}
+		return text;
+	})();
+
 	const copyLinkHandler = async (model) => {
 		const baseUrl = window.location.origin;
 		const res = await copyToClipboard(`${baseUrl}/?model=${encodeURIComponent(model.id)}`);
@@ -109,7 +152,7 @@
 			</div>
 
 			<div class="flex min-w-0 items-center">
-				<Tooltip content={`${item.label} (${item.value})`} placement="top-start">
+				<Tooltip content={costTooltipText} placement="top-start">
 					<div class="line-clamp-1">
 						{item.label}
 					</div>
@@ -276,6 +319,15 @@
 	</div>
 
 	<div class="ml-auto flex shrink-0 items-center gap-1.5 pl-2">
+		{#if costData}
+			<Tooltip placement="top">
+				<span
+					class="rounded border px-1.5 py-0.5 text-[0.625rem] font-semibold transition-colors {costBadgeColor}"
+				>
+					{costTier}
+				</span>
+			</Tooltip>
+		{/if}
 		{#if !selectionOnly && $user?.role === 'admin' && item.model.loaded}
 			<Tooltip
 				content={`${$i18n.t('Eject')}`}

@@ -14,6 +14,7 @@
 
 	import { deleteModel, getOllamaVersion, pullModel } from '$lib/apis/ollama';
 	import { getAllowedModelsOfProject } from '$lib/apis/projects';
+	import { getModelCostMap } from '$lib/apis/litellm';
 	import { unloadModel } from '$lib/apis';
 	import {
 		downloadProviderModel,
@@ -63,6 +64,8 @@
 	export let searchPlaceholder = $i18n.t('Search a model');
 	export let selectionOnly = false;
 	export let includeHidden = false;
+
+	let modelCostMap = [];
 
 	export let items: {
 		label: string;
@@ -841,7 +844,17 @@
 	};
 
 	onMount(() => {
-		if (items) {
+		getModelCostMap(localStorage.token)
+			.then((res) => {
+				if (res?.model_cost_map) {
+					modelCostMap = res.model_cost_map;
+				}
+			})
+			.catch((err) => {
+				console.error('Fehler beim Laden der Modellkosten:', err);
+			});
+		
+			if (items) {
 			tags = items
 				.filter((item) => includeHidden || !(item.model?.info?.meta?.hidden ?? false))
 				.flatMap((item) => item.model?.tags ?? [])
@@ -849,6 +862,8 @@
 			// Remove duplicates and sort
 			tags = Array.from(new Set(tags)).sort((a, b) => a.localeCompare(b));
 		}
+
+		
 
 		window.addEventListener('scroll', handleScroll, true);
 		window.visualViewport?.addEventListener('resize', scheduleSettledPositionUpdates);
@@ -1200,6 +1215,7 @@
 										{selectedModelIdx}
 										{item}
 										{index}
+										{modelCostMap}
 										value={primaryValue}
 										{pinModelHandler}
 										{unloadModelHandler}
