@@ -116,6 +116,13 @@
 		onClick();
 	}}
 >
+	<!-- 1. HÄKCHEN-CONTAINER GANZ LINKS (Platz wird immer reserviert) -->
+	<div class="flex w-4 shrink-0 items-center justify-center mr-1">
+		{#if isSelected}
+			<Check class="size-3" />
+		{/if}
+	</div>
+
 	<div class="flex flex-1 flex-col gap-1.5 overflow-hidden">
 		<!-- {#if (item?.model?.tags ?? []).length > 0}
 			<div
@@ -318,11 +325,12 @@
 		</div>
 	</div>
 
+	<!-- RECHTER CONTAINER (OHNE DAS HÄKCHEN) -->
 	<div class="ml-auto flex shrink-0 items-center gap-1.5 pl-2">
 		{#if costData}
-			<Tooltip placement="top">
+			<Tooltip placement="top" content="{$i18n.t('Cost Tier')}: {costTooltipText}">
 				<span
-					class="rounded border px-1.5 py-0.5 text-[0.625rem] font-semibold transition-colors {costBadgeColor}"
+					class="rounded w-10 border px-1.5 py-0.5 text-[0.625rem] text-center font-semibold transition-colors {costBadgeColor}"
 				>
 					{costTier}
 				</span>
@@ -369,12 +377,6 @@
 					<EllipsisHorizontal />
 				</button>
 			</ModelItemMenu>
-		{/if}
-
-		{#if isSelected}
-			<div>
-				<Check className="size-3" />
-			</div>
 		{/if}
 	</div>
 </button>
