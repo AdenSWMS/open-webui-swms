@@ -116,7 +116,6 @@
 		onClick();
 	}}
 >
-	<!-- 1. HÄKCHEN-CONTAINER GANZ LINKS (Platz wird immer reserviert) -->
 	<div class="flex w-4 shrink-0 items-center justify-center mr-1">
 		{#if isSelected}
 			<Check class="size-3" />
