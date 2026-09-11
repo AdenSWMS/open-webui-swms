@@ -6,11 +6,31 @@
 	export let show = false;
 
 	const downloads = [
-		{ label: 'Windows Version', os: 'Windows', url: 'https://opencode.ai/de/download/stable/windows-x64-nsis' },
-		{ label: 'macOS Silicon Version', os: 'macOS', url: 'https://opencode.ai/de/download/stable/darwin-aarch64-dmg' },
-		{ label: 'macOS Intel Version', os: 'macOS', url: 'https://opencode.ai/de/download/stable/darwin-x64-dmg' },
-		{ label: 'Linux DEB Version', os: 'Linux', url: 'https://opencode.ai/de/download/stable/linux-x64-deb' },
-		{ label: 'Linux RPM Version', os: 'Linux', url: 'https://opencode.ai/de/download/stable/linux-x64-rpm' }
+		{
+			label: 'Windows Version',
+			os: 'Windows',
+			url: 'https://opencode.ai/de/download/stable/windows-x64-nsis'
+		},
+		{
+			label: 'macOS Silicon Version',
+			os: 'macOS',
+			url: 'https://opencode.ai/de/download/stable/darwin-aarch64-dmg'
+		},
+		{
+			label: 'macOS Intel Version',
+			os: 'macOS',
+			url: 'https://opencode.ai/de/download/stable/darwin-x64-dmg'
+		},
+		{
+			label: 'Linux DEB Version',
+			os: 'Linux',
+			url: 'https://opencode.ai/de/download/stable/linux-x64-deb'
+		},
+		{
+			label: 'Linux RPM Version',
+			os: 'Linux',
+			url: 'https://opencode.ai/de/download/stable/linux-x64-rpm'
+		}
 	];
 
 	let apiKey: string | null = null;
@@ -28,16 +48,16 @@
 		response = null;
 		keyError = null;
 		generateLiteLLMApiKey(localStorage.token)
-		.then((key) => {
-			response = key;
-			apiKey = response.key;
-		})
-		.catch((err) => {
-			keyError = `Fehler beim Generieren des API-Keys: ${err}`;
-		})
-		.finally(() => {
-			isLoading = false;
-		});
+			.then((key) => {
+				response = key;
+				apiKey = response.key;
+			})
+			.catch((err) => {
+				keyError = `Fehler beim Generieren des API-Keys: ${err}`;
+			})
+			.finally(() => {
+				isLoading = false;
+			});
 	}
 
 	async function handleReGenerateKey() {
@@ -82,19 +102,17 @@
 		keyError = null;
 		copied = false;
 		showConfirmModal = false;
-		activeTab = 'windows'; 
+		activeTab = 'windows';
 	}
 </script>
 
 <Modal bind:show size="lg">
 	<div class="px-5 py-4">
 		<div class="flex justify-between items-center pb-3">
-			<div class="text-lg font-medium dark:text-gray-100">Download OpenCode & generiere API-Key</div>
-			<button
-				class="self-center"
-				on:click={() => (show = false)}
-				aria-label="Schließen"
-			>
+			<div class="text-lg font-medium dark:text-gray-100">
+				Download OpenCode & generiere API-Key
+			</div>
+			<button class="self-center" on:click={() => (show = false)} aria-label="Schließen">
 				<svg
 					xmlns="http://www.w3.org/2000/svg"
 					viewBox="0 0 20 20"
@@ -107,14 +125,10 @@
 				</svg>
 			</button>
 		</div>
-		<div class="mb-4 overflow-hidden rounded-xl bg-black aspect-video flex items-center justify-center">
-			<video 
-				src="./../../assets/opencode.mp4" 
-				autoplay 
-				loop 
-				muted 
-				playsinline
-			>
+		<div
+			class="mb-4 overflow-hidden rounded-xl bg-black aspect-video flex items-center justify-center"
+		>
+			<video src="./../../assets/opencode.mp4" autoplay loop muted playsinline>
 				<track kind="captions" />
 				Dein Browser unterstützt dieses Video-Format leider nicht.
 			</video>
@@ -126,91 +140,8 @@
 			OpenCode Dokumentation öffnen
 		</button>
 		<div class="text-md font-medium dark:text-gray-100 ml-2 mb-4">
-			OpenCode ist ein Open-Source-Agent, der dir hilft, Code in deinem Terminal, deiner IDE oder auf dem Desktop zu schreiben.
-		</div>
-		<div class="space-y-4">
-			<div class="flex items-start gap-3">
-				<span class="text-white-500 text-lg ml-5">*</span>
-				<div>
-					<h3 class="font-semibold text-gray-900 dark:text-white">LSP-fähig</h3>
-					<p class="text-sm text-gray-600 dark:text-gray-400">
-						Lädt automatisch die richtigen LSPs für das LLM.
-					</p>
-				</div>
-			</div>
-
-			<div class="flex items-start gap-3">
-				<span class="text-white-500 text-lg ml-5">*</span>
-				<div>
-					<h3 class="font-semibold text-gray-900 dark:text-white">Multi-Session</h3>
-					<p class="text-sm text-gray-600 dark:text-gray-400">
-						Starte mehrere Agenten parallel im selben Projekt.
-					</p>
-				</div>
-			</div>
-
-			<div class="flex items-start gap-3">
-				<span class="text-white-500 text-lg ml-5">*</span>
-				<div>
-					<h3 class="font-semibold text-gray-900 dark:text-white">Links teilen</h3>
-					<p class="text-sm text-gray-600 dark:text-gray-400">
-						Teile einen Link zu jeder Sitzung als Referenz oder zum Debuggen.
-					</p>
-				</div>
-			</div>
-
-			<div class="flex items-start gap-3">
-				<span class="text-white-500 text-lg ml-5">*</span>
-				<div>
-					<h3 class="font-semibold text-gray-900 dark:text-white">GitHub Copilot</h3>
-					<p class="text-sm text-gray-600 dark:text-gray-400">
-						Melde dich mit GitHub an, um deinen Copilot-Account zu nutzen.
-					</p>
-				</div>
-			</div>
-
-			<div class="flex items-start gap-3">
-				<span class="text-white-500 text-lg ml-5">*</span>
-				<div>
-					<h3 class="font-semibold text-gray-900 dark:text-white">ChatGPT Plus/Pro</h3>
-					<p class="text-sm text-gray-600 dark:text-gray-400">
-						Melde dich mit OpenAI an, um deinen ChatGPT Plus- oder Pro-Account zu nutzen.
-					</p>
-				</div>
-			</div>
-
-			<div class="flex items-start gap-3">
-				<span class="text-white-500 text-lg ml-5">*</span>
-				<div>
-					<h3 class="font-semibold text-gray-900 dark:text-white">Jedes Modell</h3>
-					<p class="text-sm text-gray-600 dark:text-gray-400">
-						75+ LLM-Anbieter durch Models.dev, einschließlich lokaler Modelle.
-					</p>
-				</div>
-			</div>
-
-			<div class="flex items-start gap-3">
-				<span class="text-white-500 text-lg ml-5">*</span>
-				<div>
-					<h3 class="font-semibold text-gray-900 dark:text-white">Jeder Editor</h3>
-					<p class="text-sm text-gray-600 dark:text-gray-400">
-						Verfügbar als Terminal-Interface, Desktop-App und IDE-Extension.
-					</p>
-				</div>
-			</div>
-		</div>
-		<div class="text-md font-medium dark:text-gray-100 ml-2 mt-4 mb-4">
-			Der Open-Source AI-Coding-Agent
-		</div>
-		<div class="space-y-4">
-			<div class="flex items-start gap-3">
-				<span class="text-white-500 text-lg ml-5">*</span>
-				<div>
-					<p class="text-sm text-gray-600 dark:text-gray-400 mb-10">
-						Mit über 160,000 GitHub-Stars, 900 Contributors und über 13,000 Commits wird OpenCode von über 7.5M Entwickler:innen jeden Monat genutzt und geschätzt.
-					</p>
-				</div>
-			</div>
+			OpenCode ist ein Open-Source-Agent, der dir hilft, Code in deinem Terminal, deiner IDE oder
+			auf dem Desktop zu schreiben.
 		</div>
 		<div>
 			<h2 class="font-semibold text-gray-900 dark:text-white ml-2 mb-2">Downloads</h2>
@@ -239,8 +170,17 @@
 				on:click={() => (showConfirmModal = true)}
 				disabled={isLoading}
 			>
-				<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" class="w-3.5 h-3.5">
-					<path fill-rule="evenodd" d="M13.836 2.477a.75.75 0 0 1 .75.75v3.182a.75.75 0 0 1-.75.75h-3.182a.75.75 0 0 1 0-1.5h1.37l-.84-.841a4.5 4.5 0 0 0-7.08.932.75.75 0 0 1-1.3-.75 6 6 0 0 1 9.44-1.242l.842.84V3.227a.75.75 0 0 1 .75-.75Zm-8.672 7.84a4.5 4.5 0 0 0 7.08-.931.75.75 0 0 1 1.3.75 6 6 0 0 1-9.44 1.241l-.842-.84v1.242a.75.75 0 0 1-1.5 0V8.396a.75.75 0 0 1 .75-.75h3.182a.75.75 0 0 1 0 1.5h-1.37l.84.841Z" clip-rule="evenodd" />
+				<svg
+					xmlns="http://www.w3.org/2000/svg"
+					viewBox="0 0 16 16"
+					fill="currentColor"
+					class="w-3.5 h-3.5"
+				>
+					<path
+						fill-rule="evenodd"
+						d="M13.836 2.477a.75.75 0 0 1 .75.75v3.182a.75.75 0 0 1-.75.75h-3.182a.75.75 0 0 1 0-1.5h1.37l-.84-.841a4.5 4.5 0 0 0-7.08.932.75.75 0 0 1-1.3-.75 6 6 0 0 1 9.44-1.242l.842.84V3.227a.75.75 0 0 1 .75-.75Zm-8.672 7.84a4.5 4.5 0 0 0 7.08-.931.75.75 0 0 1 1.3.75 6 6 0 0 1-9.44 1.241l-.842-.84v1.242a.75.75 0 0 1-1.5 0V8.396a.75.75 0 0 1 .75-.75h3.182a.75.75 0 0 1 0 1.5h-1.37l.84.841Z"
+						clip-rule="evenodd"
+					/>
 				</svg>
 				API-Key generieren
 			</button>
@@ -251,9 +191,7 @@
 		{/if}
 
 		{#if apiKey}
-			<div
-				class="flex items-center gap-2 mt-3 px-3 py-2 rounded-xl bg-gray-50 dark:bg-gray-850"
-			>
+			<div class="flex items-center gap-2 mt-3 px-3 py-2 rounded-xl bg-gray-50 dark:bg-gray-850">
 				<code class="flex-1 text-xs overflow-x-auto whitespace-nowrap dark:text-gray-100">
 					{apiKey}
 				</code>
@@ -270,137 +208,205 @@
 
 		<div class="text-sm text-gray-600 dark:text-gray-400 mt-5 mb-20">
 			<div class="flex flex-col items-start gap-2 mb-3">
-				
 				<div class="flex bg-gray-100 dark:bg-gray-850 p-1 rounded-lg">
 					<button
-						class="px-2.5 py-1 text-sm font-medium rounded-md transition {activeTab === 'windows' ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm' : 'text-gray-500 hover:text-gray-900 dark:hover:text-white'}"
+						class="px-2.5 py-1 text-sm font-medium rounded-md transition {activeTab === 'windows'
+							? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm'
+							: 'text-gray-500 hover:text-gray-900 dark:hover:text-white'}"
 						on:click={() => (activeTab = 'windows')}
 					>
 						Windows
 					</button>
 					<button
-						class="px-2.5 py-1 text-sm font-medium rounded-md transition {activeTab === 'unix' ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm' : 'text-gray-500 hover:text-gray-900 dark:hover:text-white'}"
+						class="px-2.5 py-1 text-sm font-medium rounded-md transition {activeTab === 'unix'
+							? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm'
+							: 'text-gray-500 hover:text-gray-900 dark:hover:text-white'}"
 						on:click={() => (activeTab = 'unix')}
 					>
 						macOS / Linux
 					</button>
 				</div>
 
-				<p class="font-medium text-gray-800 dark:text-gray-200 mt-1">
-					Anleitung zur Installation:
-				</p>
+				<p class="font-medium text-gray-800 dark:text-gray-200 mt-1">Anleitung zur Installation:</p>
 			</div>
 
 			{#if activeTab === 'windows'}
 				<ol class="list-decimal list-inside space-y-3 pl-1 mb-10">
 					<li>Installieren Sie zuerst OpenCode.</li>
-					<li>Wenn OpenCode schon installiert ist, und eine Config-Datei für OpenCode auf Ihrem Rechner vorhanden ist, dann nutzen Sie die Anleitung zum Updaten.</li>
 					<li>
-						<span>Damit die opencode.json-Dateien, für die Konfiguration von Opencode, korrekt zusammengeführt werden können, wird das Tool jq benötigt.</span>
-						<span>Installieren Sie jq, indem Sie den folgenden Befehl in einer Windows PowerShell mit den entsprechenden Berechtigungen ausführen:</span>
+						Wenn OpenCode schon installiert ist, und eine Config-Datei für OpenCode auf Ihrem
+						Rechner vorhanden ist, dann nutzen Sie die Anleitung zum Updaten.
+					</li>
+					<li>
+						<span
+							>Damit die opencode.json-Dateien, für die Konfiguration von Opencode, korrekt
+							zusammengeführt werden können, wird das Tool jq benötigt.</span
+						>
+						<span
+							>Installieren Sie jq, indem Sie den folgenden Befehl in einer Windows <strong
+								class="text-white">PowerShell</strong
+							> mit den entsprechenden Berechtigungen ausführen:</span
+						>
 						<div class="my-2">
-							<code class="block whitespace-pre-wrap bg-gray-100 dark:bg-gray-800 px-2 py-1.5 rounded font-mono text-[11px] text-gray-800 dark:text-gray-200 overflow-x-auto">
-							winget install jqlang.jq
+							<code
+								class="block whitespace-pre-wrap bg-gray-100 dark:bg-gray-800 px-2 py-1.5 rounded font-mono text-[11px] text-gray-800 dark:text-gray-200 overflow-x-auto"
+							>
+								winget install jqlang.jq
 							</code>
 						</div>
 					</li>
 					<li>
-						<span>Kopieren Sie den folgenden Befehl und führen Sie ihn in der Windows PowerShell aus:</span>
+						<span
+							>Kopieren Sie den folgenden Befehl und führen Sie ihn in der Windows <strong
+								class="text-white">PowerShell</strong
+							> aus:</span
+						>
 						<div class="my-2">
-							<code class="block whitespace-pre-wrap bg-gray-100 dark:bg-gray-800 px-2 py-1.5 rounded font-mono text-[11px] text-gray-800 dark:text-gray-200 overflow-x-auto">
-							mkdir "$HOME\.config\opencode" -Force | Out-Null
-iwr https://opencode.office.swms.de/opencode.json -OutFile "$HOME\.config\opencode\opencode.json"
+							<code
+								class="block whitespace-pre-wrap bg-gray-100 dark:bg-gray-800 px-2 py-1.5 rounded font-mono text-[11px] text-gray-800 dark:text-gray-200 overflow-x-auto"
+							>
+								mkdir "$HOME\.config\opencode" -Force | Out-Null iwr
+								https://opencode.office.swms.de/opencode.json -OutFile
+								"$HOME\.config\opencode\opencode.json"
 							</code>
 						</div>
 					</li>
 					<li>
-						<span>Im nächsten Schritt muss der API-Schlüssel in die Konfigurationsdatei eingetragen werden.
-Führen Sie dazu den folgenden Befehl aus. Sofern der zuvor generierte API-Schlüssel oberhalb noch sichtbar ist, wurde dieser bereits automatisch in den Befehl eingesetzt.
-Ist dieser nicht mehr zu sehen und im Befehl unterhalb findet sich "API Key hier", so generieren Sie einen neuen API-Schlüssel und fahren dann fort:</span><div class="my-2">
-							<code class="block whitespace-pre-wrap bg-gray-100 dark:bg-gray-800 px-2 py-1.5 rounded font-mono text-[11px] text-gray-800 dark:text-gray-200 overflow-x-auto">
-jq --arg key {apiKey || '"API Key hier"'} ".provider.swms.options.apiKey = `$key" "$HOME\.config\opencode\opencode.json" > "$HOME\.config\opencode\opencode.json.tmp"
-Move-Item "$HOME\.config\opencode\opencode.json.tmp" "$HOME\.config\opencode\opencode.json" -Force
+						<span
+							>Im nächsten Schritt muss der API-Schlüssel in die Konfigurationsdatei eingetragen
+							werden. Führen Sie dazu den folgenden Befehl aus. Sofern der zuvor generierte
+							API-Schlüssel oberhalb noch sichtbar ist, wurde dieser bereits automatisch in den
+							Befehl eingesetzt. Ist dieser nicht mehr zu sehen und im Befehl unterhalb findet sich
+							"API Key hier", so generieren Sie einen neuen API-Schlüssel und fahren dann fort:</span
+						>
+						<div class="my-2">
+							<code
+								class="block whitespace-pre-wrap bg-gray-100 dark:bg-gray-800 px-2 py-1.5 rounded font-mono text-[11px] text-gray-800 dark:text-gray-200 overflow-x-auto"
+							>
+								$content = jq --arg key {apiKey || '"API Key hier"'} '.provider.swms.options.apiKey =
+								$key' "$HOME\.config\opencode\opencode.json"; [System.IO.File]::WriteAllText("$HOME\.config\opencode\opencode.json",
+								$content, [System.Text.UTF8Encoding]::new($false))
 							</code>
 						</div>
 					</li>
 					<li>Starten Sie OpenCode neu und Sie sind fertig!</li>
 				</ol>
 
-				<p class="font-medium text-gray-800 dark:text-gray-200 mt-4 mb-2">
-					Anleitung zum Updaten:
-				</p>
+				<p class="font-medium text-gray-800 dark:text-gray-200 mt-4 mb-2">Anleitung zum Updaten:</p>
 				<ol class="list-decimal list-inside space-y-1 pl-1">
-					<li>Der API-Key, sofern Sie ihn nicht neu generieren möchten, bleibt in der Config erhalten.</li>
 					<li>
-						<span>Um die Config mit aktuellen Modellen und anderen Inhalten zu aktualisieren kopieren Sie diesen Befehl und geben Sie ihn in die Windows PowerShell ein:</span>
+						Der API-Key, sofern Sie ihn nicht neu generieren möchten, bleibt in der Config erhalten.
+					</li>
+					<li>
+						<span
+							>Um die Config mit aktuellen Modellen und anderen Inhalten zu aktualisieren kopieren
+							Sie diesen Befehl und geben Sie ihn in die Windows <strong class="text-white"
+								>PowerShell</strong
+							> ein:</span
+						>
 						<div class="my-2">
-							<code class="block whitespace-pre-wrap bg-gray-100 dark:bg-gray-800 px-2 py-1.5 rounded font-mono text-[11px] text-gray-800 dark:text-gray-200 overflow-x-auto">
-iwr https://opencode.office.swms.de/opencode.json -OutFile "$env:TEMP\opencode.remote.json"
-jq -s ".[1] * .[0]" "$HOME\.config\opencode\opencode.json" "$env:TEMP\opencode.remote.json" > "$HOME\.config\opencode\opencode.json.tmp"
-Move-Item "$HOME\.config\opencode\opencode.json.tmp" "$HOME\.config\opencode\opencode.json" -Force
+							<code
+								class="block whitespace-pre-wrap bg-gray-100 dark:bg-gray-800 px-2 py-1.5 rounded font-mono text-[11px] text-gray-800 dark:text-gray-200 overflow-x-auto"
+							>
+								iwr https://opencode.office.swms.de/opencode.json -OutFile
+								"$env:TEMP\opencode.remote.json" jq -s ".[1] * .[0]"
+								"$HOME\.config\opencode\opencode.json" "$env:TEMP\opencode.remote.json" >
+								"$HOME\.config\opencode\opencode.json.tmp" Move-Item
+								"$HOME\.config\opencode\opencode.json.tmp" "$HOME\.config\opencode\opencode.json"
+								-Force
 							</code>
 						</div>
 					</li>
 					<li>Starten Sie OpenCode neu und Sie sind fertig!</li>
 				</ol>
-
-
-
-
 			{:else if activeTab === 'unix'}
 				<ol class="list-decimal list-inside space-y-3 pl-1 mb-10">
 					<li>Installieren Sie zuerst OpenCode.</li>
-					<li>Wenn schon eine Config-Datei für OpenCode auf Ihrem Rechner vorhanden ist, dann nutzen Sie die Anleitung zum Updaten.</li>
+					<li>
+						Wenn schon eine Config-Datei für OpenCode auf Ihrem Rechner vorhanden ist, dann nutzen
+						Sie die Anleitung zum Updaten.
+					</li>
 					<li>
 						<span>Kopieren Sie diesen Befehl und geben Sie ihn in Ihr Terminal ein:</span>
 						<div class="my-2">
-							<code class="block whitespace-pre-wrap bg-gray-100 dark:bg-gray-800 px-2 py-1.5 rounded font-mono text-[11px] text-gray-800 dark:text-gray-200 overflow-x-auto">
-mkdir -p ~/.config/opencode
-curl -fsSL https://opencode.office.swms.de/opencode.json -o ~/.config/opencode/opencode.json
+							<code
+								class="block whitespace-pre-wrap bg-gray-100 dark:bg-gray-800 px-2 py-1.5 rounded font-mono text-[11px] text-gray-800 dark:text-gray-200 overflow-x-auto"
+							>
+								mkdir -p ~/.config/opencode curl -fsSL https://opencode.office.swms.de/opencode.json
+								-o ~/.config/opencode/opencode.json
 							</code>
 						</div>
 					</li>
 					<li>
-					<span>Im nächsten Schritt muss der API-Schlüssel in die Konfigurationsdatei eingetragen werden.
-Führen Sie dazu den folgenden Befehl aus. Sofern der zuvor generierte API-Schlüssel oberhalb noch sichtbar ist, wurde dieser bereits automatisch in den Befehl eingesetzt.
-Ist dieser nicht mehr zu sehen und im Befehl unterhalb findet sich "API Key hier", so generieren Sie einen neuen API-Schlüssel und fahren dann fort:</span>
+						<span
+							>Im nächsten Schritt muss der API-Schlüssel in die Konfigurationsdatei eingetragen
+							werden. Führen Sie dazu den folgenden Befehl aus. Sofern der zuvor generierte
+							API-Schlüssel oberhalb noch sichtbar ist, wurde dieser bereits automatisch in den
+							Befehl eingesetzt. Ist dieser nicht mehr zu sehen und im Befehl unterhalb findet sich
+							"API Key hier", so generieren Sie einen neuen API-Schlüssel und fahren dann fort:</span
+						>
 						<div class="my-2">
-							<code class="block whitespace-pre-wrap bg-gray-100 dark:bg-gray-800 px-2 py-1.5 rounded font-mono text-[11px] text-gray-800 dark:text-gray-200 overflow-x-auto">
-								jq --arg key {apiKey || '"API Key hier"'} '.provider.swms.options.apiKey = $key' ~/.config/opencode/opencode.json > ~/.config/opencode/opencode.json.tmp && mv ~/.config/opencode/opencode.json.tmp ~/.config/opencode/opencode.json
+							<code
+								class="block whitespace-pre-wrap bg-gray-100 dark:bg-gray-800 px-2 py-1.5 rounded font-mono text-[11px] text-gray-800 dark:text-gray-200 overflow-x-auto"
+							>
+								jq --arg key {apiKey || '"API Key hier"'} '.provider.swms.options.apiKey = $key' ~/.config/opencode/opencode.json
+								> ~/.config/opencode/opencode.json.tmp && mv ~/.config/opencode/opencode.json.tmp ~/.config/opencode/opencode.json
 							</code>
 						</div>
 					</li>
 					<li>Starten Sie OpenCode neu und Sie sind fertig!</li>
 				</ol>
 
-				<p class="font-medium text-gray-800 dark:text-gray-200 mt-4 mb-2">
-					Anleitung zum Updaten:
-				</p>
+				<p class="font-medium text-gray-800 dark:text-gray-200 mt-4 mb-2">Anleitung zum Updaten:</p>
 				<ol class="list-decimal list-inside space-y-1 pl-1">
-					<li>Wenn Sie OpenCode schon installiert haben und auch schon eine Config-Datei für OpenCode haben, dann nutzen Sie die Anleitung zum Updaten.</li>
-					<li>Der API-Key, sofern Sie ihn nicht neu generieren möchten, bleibt in der Config erhalten.</li>
 					<li>
-						<span>Um die Config mit aktuellen Modellen und anderen Inhalten zu aktualisieren kopieren Sie diesen Befehl und geben Sie ihn in das Terminal ein:</span>
+						Wenn Sie OpenCode schon installiert haben und auch schon eine Config-Datei für OpenCode
+						haben, dann nutzen Sie die Anleitung zum Updaten.
+					</li>
+					<li>
+						Der API-Key, sofern Sie ihn nicht neu generieren möchten, bleibt in der Config erhalten.
+					</li>
+					<li>
+						<span
+							>Um die Config mit aktuellen Modellen und anderen Inhalten zu aktualisieren kopieren
+							Sie diesen Befehl und geben Sie ihn in das Terminal ein:</span
+						>
 						<div class="my-2">
-							<code class="block whitespace-pre-wrap bg-gray-100 dark:bg-gray-800 px-2 py-1.5 rounded font-mono text-[11px] text-gray-800 dark:text-gray-200 overflow-x-auto">
-curl -fsSL https://opencode.office.swms.de/opencode.json -o /tmp/opencode.remote.json
-jq -s '.[1] * .[0]' ~/.config/opencode/opencode.json /tmp/opencode.remote.json > ~/.config/opencode/opencode.json.tmp && mv ~/.config/opencode/opencode.json.tmp ~/.config/opencode/opencode.json
+							<code
+								class="block whitespace-pre-wrap bg-gray-100 dark:bg-gray-800 px-2 py-1.5 rounded font-mono text-[11px] text-gray-800 dark:text-gray-200 overflow-x-auto"
+							>
+								curl -fsSL https://opencode.office.swms.de/opencode.json -o
+								/tmp/opencode.remote.json jq -s '.[1] * .[0]' ~/.config/opencode/opencode.json
+								/tmp/opencode.remote.json > ~/.config/opencode/opencode.json.tmp && mv
+								~/.config/opencode/opencode.json.tmp ~/.config/opencode/opencode.json
 							</code>
 						</div>
 					</li>
 					<li>Starten Sie OpenCode neu und Sie sind fertig!</li>
 				</ol>
 			{/if}
-		</div>		
-
+		</div>
 	</div>
 </Modal>
 
 <Modal bind:show={showConfirmModal} size="sm">
 	<div class="p-6 text-center">
-		<div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-amber-100 dark:bg-amber-900/30 mb-4 text-amber-600 dark:text-amber-400">
-			<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6">
-				<path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z" />
+		<div
+			class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-amber-100 dark:bg-amber-900/30 mb-4 text-amber-600 dark:text-amber-400"
+		>
+			<svg
+				xmlns="http://www.w3.org/2000/svg"
+				fill="none"
+				viewBox="0 0 24 24"
+				stroke-width="1.5"
+				stroke="currentColor"
+				class="w-6 h-6"
+			>
+				<path
+					stroke-linecap="round"
+					stroke-linejoin="round"
+					d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z"
+				/>
 			</svg>
 		</div>
 
@@ -409,7 +415,9 @@ jq -s '.[1] * .[0]' ~/.config/opencode/opencode.json /tmp/opencode.remote.json >
 		</h3>
 
 		<p class="text-sm text-gray-600 dark:text-gray-300 mb-6">
-			Der vorherige Key wird dadurch ungültig. Der neue API-Key wird <strong>nur einmal angezeigt</strong> und kann danach nicht mehr abgerufen werden.
+			Der vorherige Key wird dadurch ungültig. Der neue API-Key wird <strong
+				>nur einmal angezeigt</strong
+			> und kann danach nicht mehr abgerufen werden.
 		</p>
 
 		<div class="flex gap-3 justify-end">
