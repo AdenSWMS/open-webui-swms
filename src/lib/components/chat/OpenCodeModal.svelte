@@ -264,10 +264,10 @@
 						<div class="my-2">
 							<code
 								class="block whitespace-pre-wrap bg-gray-100 dark:bg-gray-800 px-2 py-1.5 rounded font-mono text-[11px] text-gray-800 dark:text-gray-200 overflow-x-auto"
-							>
-								mkdir "$HOME\.config\opencode" -Force | Out-Null iwr
-								https://opencode.office.swms.de/opencode.json -OutFile
-								"$HOME\.config\opencode\opencode.json"
+>
+mkdir "$HOME\.config\opencode" -Force | Out-Null iwr
+https://opencode.office.swms.de/opencode.json -OutFile
+"$HOME\.config\opencode\opencode.json"
 							</code>
 						</div>
 					</li>
@@ -283,9 +283,9 @@
 							<code
 								class="block whitespace-pre-wrap bg-gray-100 dark:bg-gray-800 px-2 py-1.5 rounded font-mono text-[11px] text-gray-800 dark:text-gray-200 overflow-x-auto"
 							>
-								$content = jq --arg key {apiKey || '"API Key hier"'} '.provider.swms.options.apiKey =
-								$key' "$HOME\.config\opencode\opencode.json"; [System.IO.File]::WriteAllText("$HOME\.config\opencode\opencode.json",
-								$content, [System.Text.UTF8Encoding]::new($false))
+$content = jq --arg key {apiKey || '"API Key hier"'} '.provider.swms.options.apiKey =
+$key' "$HOME\.config\opencode\opencode.json"; [System.IO.File]::WriteAllText("$HOME\.config\opencode\opencode.json",
+$content, [System.Text.UTF8Encoding]::new($false))
 							</code>
 						</div>
 					</li>
@@ -308,12 +308,10 @@
 							<code
 								class="block whitespace-pre-wrap bg-gray-100 dark:bg-gray-800 px-2 py-1.5 rounded font-mono text-[11px] text-gray-800 dark:text-gray-200 overflow-x-auto"
 							>
-								iwr https://opencode.office.swms.de/opencode.json -OutFile
-								"$env:TEMP\opencode.remote.json" jq -s ".[1] * .[0]"
-								"$HOME\.config\opencode\opencode.json" "$env:TEMP\opencode.remote.json" >
-								"$HOME\.config\opencode\opencode.json.tmp" Move-Item
-								"$HOME\.config\opencode\opencode.json.tmp" "$HOME\.config\opencode\opencode.json"
-								-Force
+iwr https://opencode.office.swms.de/opencode.json -OutFile "$env:TEMP\opencode.remote.json"
+$merged = jq -s ".[1] * .[0]" "$HOME\.config\opencode\opencode.json" "$env:TEMP\opencode.remote.json"
+[System.IO.File]::WriteAllText("$HOME\.config\opencode\opencode.json", $merged, [System.Text.UTF8Encoding]::new($false))
+Remove-Item "$env:TEMP\opencode.remote.json" -Force
 							</code>
 						</div>
 					</li>
