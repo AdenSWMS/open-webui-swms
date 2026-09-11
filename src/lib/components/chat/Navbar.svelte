@@ -12,7 +12,8 @@
 		showControls,
 		showSidebar,
 		temporaryChatEnabled,
-		user
+		user,
+		budgetRefreshTrigger
 	} from '$lib/stores';
 
 	import { slide } from 'svelte/transition';
@@ -101,15 +102,18 @@
 		await loadUserData();
 	}
 
-	onMount(async () => {
-		try {
-			const token = localStorage.getItem('token') || '';
-			if (token) {
-				userData = await getUserInfo(token);
+	onMount(() => {
+		const unsubscribe = budgetRefreshTrigger.subscribe(() => {
+			if (!localStorage.getItem('token')) {
+				return;
 			}
-		} catch (err) {
-			console.error('Fehler beim Abrufen der Nutzerdaten für Navbar:', err);
-		}
+
+			loadUserData().catch((err) => {
+				console.error('Fehler beim Abrufen der Nutzerdaten für Navbar:', err);
+			});
+		});
+
+		return unsubscribe;
 	});
 </script>
 
@@ -215,10 +219,7 @@
 				<div class="lg:mr-1 flex-1 flex justify-center items-center gap-2 self-center">
 					<div class="w-full max-w-2xl flex items-center justify-center">
 						{#if userData}
-							<NavbarBudgetButton
-								{userData}
-								onClick={openBudgetModal}
-							/>
+							<NavbarBudgetButton {userData} onClick={openBudgetModal} />
 						{:else if error}
 							<div
 								class="w-full text-center px-3 py-1.5 text-xs text-red-500 bg-red-100 dark:bg-red-900/20 rounded-lg border border-red-200 dark:border-red-800/30"

@@ -32,6 +32,7 @@ export const socket: Writable<null | Socket> = writable(null);
 export const socketConnected: Writable<boolean> = writable(true);
 export const activeUserIds: Writable<null | string[]> = writable(null);
 export const USAGE_POOL: Writable<null | string[]> = writable(null);
+export const budgetRefreshTrigger = writable(0);
 
 export const theme = writable('system');
 
@@ -218,8 +219,8 @@ type OllamaModelDetails = {
 };
 
 export type Project = {
-  id: string;
-  name: string;
+	id: string;
+	name: string;
 };
 
 type Settings = {

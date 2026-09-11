@@ -21,7 +21,8 @@
 		settings,
 		temporaryChatEnabled,
 		TTSWorker,
-		user
+		user,
+		budgetRefreshTrigger
 	} from '$lib/stores';
 	import { synthesizeOpenAISpeech } from '$lib/apis/audio';
 	import { imageGenerations } from '$lib/apis/images';
@@ -123,9 +124,18 @@
 
 	let messageSource = history.messages[messageId];
 	let message: MessageType = structuredClone(messageSource);
+	let budgetRefreshTimeout: ReturnType<typeof setTimeout> | null = null;
 	$: if (history.messages) {
 		const source = history.messages[messageId];
 		if (source) {
+			const responseFinished = source.done && !message.done;
+			if (responseFinished) {
+				budgetRefreshTimeout = setTimeout(() => {
+					budgetRefreshTrigger.update((value) => value + 1);
+					budgetRefreshTimeout = null;
+				}, 4000);
+			}
+
 			// Fast path for the fields that change most often while streaming.
 			// Responses streams update output even when legacy content is unchanged.
 			if (source !== messageSource) {
@@ -449,7 +459,6 @@
 		await tick();
 	};
 
-
 	$: tokenStats = (() => {
 		if (!message) return null;
 		const u = (message as any)?.usage;
@@ -458,17 +467,16 @@
 		const input_tokens = u.input ?? u.input_tokens ?? 0;
 		const output_tokens = u.output ?? u.output_tokens ?? 0;
 		const reasoning_tokens = u.completion_tokens_details?.reasoning_tokens ?? 0;
-		const total_tokens = u.total ?? u.total_tokens ?? (input_tokens + output_tokens);
+		const total_tokens = u.total ?? u.total_tokens ?? input_tokens + output_tokens;
 		const cached = u.cached ?? null;
 
 		const hasCost = u.cost !== undefined && u.cost !== null;
-		const cost = hasCost ? `${u.cost.toFixed(8)}` : "Kostenlos";
+		const cost = hasCost ? `${u.cost.toFixed(8)}` : 'Kostenlos';
 
 		if (total_tokens === 0 && input_tokens === 0 && output_tokens === 0) return null;
 
 		return { input_tokens, output_tokens, total_tokens, reasoning_tokens, cached, cost };
 	})();
-
 
 	let feedbackLoading = false;
 
@@ -658,6 +666,10 @@
 	});
 
 	onDestroy(() => {
+		if (budgetRefreshTimeout) {
+			clearTimeout(budgetRefreshTimeout);
+		}
+
 		if (buttonsContainerElement) {
 			buttonsContainerElement.removeEventListener('wheel', buttonsWheelHandler);
 		}
@@ -692,59 +704,59 @@
 
 		<div class="flex-auto w-0 pl-1 relative">
 			{#if !compactPreview}
-			<Name>
-				<Tooltip content={model?.name ?? message.model} placement="top-start">
-					<span id="response-message-model-name" class="line-clamp-1 text-black dark:text-white">
-						{model?.name ?? message.model}
-					</span>
-				</Tooltip>
-			</Name>
-
-			{#if tokenStats}
-				<div 
-					class="flex items-center gap-1.5 text-sm text-gray-500 dark:text-gray-500 select-none mt-1"
-					title="Token-Verbrauch"
-				>
-					<span title="Prompt / Input Tokens" class="flex items-center gap-1">
-						<span class="text-gray-500 dark:text-gray-500">⬆︎ </span>
-						<span>{tokenStats.input_tokens ?? 0}</span>
-					</span>
-
-					{#if tokenStats.cached ?? tokenStats.cached}
-						<span title="Aus dem Cache geladen" class="text-gray-500 dark:text-gray-500">
-							(⚡{tokenStats.cached ?? tokenStats.cached})
+				<Name>
+					<Tooltip content={model?.name ?? message.model} placement="top-start">
+						<span id="response-message-model-name" class="line-clamp-1 text-black dark:text-white">
+							{model?.name ?? message.model}
 						</span>
-					{/if}
+					</Tooltip>
+				</Name>
 
-					<span class="text-gray-300 dark:text-gray-600">•</span>
-
-					<span title="Completion / Output Tokens" class="flex items-center gap-1">
-						<span class="text-gray-500 dark:text-gray-500">⬇︎ </span>
-						<span>{tokenStats.output_tokens ?? 0}</span>
-					</span>
-
-					<span class="text-gray-300 dark:text-gray-600">•</span>
-
-					{#if tokenStats.reasoning_tokens}
-						<span title="Reasoning / Denk-Tokens" class="text-gray-500 dark:text-gray-500">
-							🧠 {tokenStats.reasoning_tokens}
+				{#if tokenStats}
+					<div
+						class="flex items-center gap-1.5 text-sm text-gray-500 dark:text-gray-500 select-none mt-1"
+						title="Token-Verbrauch"
+					>
+						<span title="Prompt / Input Tokens" class="flex items-center gap-1">
+							<span class="text-gray-500 dark:text-gray-500">⬆︎ </span>
+							<span>{tokenStats.input_tokens ?? 0}</span>
 						</span>
+
+						{#if tokenStats.cached ?? tokenStats.cached}
+							<span title="Aus dem Cache geladen" class="text-gray-500 dark:text-gray-500">
+								(⚡{tokenStats.cached ?? tokenStats.cached})
+							</span>
+						{/if}
+
 						<span class="text-gray-300 dark:text-gray-600">•</span>
-					{/if}
 
-					<span title="Gesamte Tokens" class="flex items-center gap-1">
-						<span class="text-gray-500 dark:text-gray-500">Σ</span>
-						<span class="font-medium">{tokenStats.total_tokens ?? 0}</span>
-					</span>
-					
-					<span class="text-gray-300 dark:text-gray-600">•</span>
+						<span title="Completion / Output Tokens" class="flex items-center gap-1">
+							<span class="text-gray-500 dark:text-gray-500">⬇︎ </span>
+							<span>{tokenStats.output_tokens ?? 0}</span>
+						</span>
 
-					<span title="Kosten der Anfrage" class="text-gray-500 dark:text-gray-500">
+						<span class="text-gray-300 dark:text-gray-600">•</span>
+
+						{#if tokenStats.reasoning_tokens}
+							<span title="Reasoning / Denk-Tokens" class="text-gray-500 dark:text-gray-500">
+								🧠 {tokenStats.reasoning_tokens}
+							</span>
+							<span class="text-gray-300 dark:text-gray-600">•</span>
+						{/if}
+
+						<span title="Gesamte Tokens" class="flex items-center gap-1">
+							<span class="text-gray-500 dark:text-gray-500">Σ</span>
+							<span class="font-medium">{tokenStats.total_tokens ?? 0}</span>
+						</span>
+
+						<span class="text-gray-300 dark:text-gray-600">•</span>
+
+						<span title="Kosten der Anfrage" class="text-gray-500 dark:text-gray-500">
 							$ {tokenStats.cost}
 						</span>
-				</div>
+					</div>
+				{/if}
 			{/if}
-		{/if}
 			<div>
 				<div class="chat-{message.role} w-full min-w-full">
 					<div>

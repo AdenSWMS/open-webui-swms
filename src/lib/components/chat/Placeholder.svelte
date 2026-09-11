@@ -91,18 +91,32 @@
 
 		// Wochenende
 		if (day === 0 || day === 6) {
-			return ['Wochenend-Gedanken', 'Sonntagsplauderei', 'Entspannungsgespräch', 'Kaffeeschnackzeit'];
+			return ['Wochenend-Gedanken', 'Sonntagsplauderei', 'Entspannungsgespräch', 'Kaffeeschnackzeit', 'Samstagsmodus: AN!',
+			'Ausgeschalfen, {name}?', 'Füße hoch, {name}?', 'Wochenend-Vibes!', 'Couch-Plauderei!', 'Wochenend-Flow!', 'Seelenbaumeln, {name}?',
+			'Offline Modus fast aktiv!', 'Kaffee, Kuchen und Gedanken!', 'Das Wochenende gehört dir, {name}!','Ganz ohne Feierabendstress, {name}?',
+			'Zeit für dich, {name}!', 'Wochenend-Reflexionen', 'Chillige Plauderei', 'Wochenend-Flow!', 'Kaffeeklatsch-Zeit!', 'Entspanntes Brainstorming',
+			'Kaffee und Gedanken!', 'Sonntagsruhe, {name}?', 'Meetingsfreier Tag!'];
 		}
 		// Nachts (0 - 5 Uhr)
-		if (hour < 6) return ['Sonnenaufgangsgespräche!', 'Vor dem ersten Kaffee?', 'Schlummerlose Gedanken, {name}?'];
+		if (hour < 6) return ['Sonnenaufgangsgespräche!', 'Vor dem ersten Kaffee?', 'Schlummerlose Gedanken, {name}?', 'Ausgeschlafen oder noch wach, {name}?',
+			'Eulen-Klub!', 'Frühschichtgedanken!', 'Gedanken zur Geisterstunde!', 'Wenn die Welt schläft...', 'Nachtgedanken, {name}?', 'Warum schläfst du nicht, {name}?',
+			'Nachtcafe'];
 		// Morgens (6 - 10 Uhr)
-		if (hour < 11) return ['Morgenkaffee-Gespräche', 'Frühaufsteher, {name}?', 'Guten-Morgen-Runde', 'Was gibt\'s Neues, {name}?'];
+		if (hour < 11) return ['Morgenkaffee-Gespräche', 'Frühaufsteher, {name}?', 'Guten-Morgen-Runde', 'Was gibt\'s Neues, {name}?', 'Erster Kaffee, {name}?',
+			'Frisch in den Tag!', 'Morgen-Brainstorming!', 'Startklar für heute, {name}?', 'Morgen-Motivation!', 'Kein Meeting, {name}?'];
 		// Mittags (11 - 13 Uhr)
-		if (hour < 14) return ['Mittagspause-Plauderei', 'Kurzer Gedankenaustausch', 'Was gibt\'s Neues, {name}?'];
+		if (hour < 14) return ['Mittagspause-Plauderei', 'Kurzer Gedankenaustausch', 'Was gibt\'s Neues, {name}?', 'Halbzeit!', 'Magenknurren, {name}?', 'Lunch & Chat!',
+			'Kopf frei für die Mittagspause!', 'Kurze Pause, {name}?', 'Mittagsgedanken!', 'Mittagspausen-Flow!'];
 		// Nachmittags (14 - 17 Uhr)
-		if (hour < 18) return ['Nachmittagsgespräche', 'Kopfkino-Session', 'Noch was kurz vor Feierabend, {name}?', 'Was gibt\'s Neues, {name}?'];
+		if (hour < 18) return ['Nachmittagsgespräche', 'Kopfkino-Session', 'Noch was kurz vor Feierabend, {name}?', 'Was gibt\'s Neues, {name}?', 'Countdown zum Feierabend, {name}?',
+			'Noch ein kleiner Impuls?', 'Nachmittags-Flow!', 'Kaffeepause, {name}?', 'Gedanken zum Feierabend!', 'Noch einmal durchziehen', 
+			'Kreativ am Nachmittag!', 'Letzte Kraftreserven!'
+		];
 		// Abends (18 - 23 Uhr)
-		return ['Mondscheingespräche!', 'Noch kein Feierabend, {name}?', 'Abendgedanken, {name}?', 'Sonnenuntergangsplauderei!', 'Was gibt\'s Neues, {name}?'];
+		return ['Mondscheingespräche!', 'Noch kein Feierabend, {name}?', 'Abendgedanken, {name}?', 'Sonnenuntergangsplauderei!', 'Was gibt\'s Neues, {name}?',
+			'Abend Routine!', 'Entspannund am Abend', 'Abend-Flow!', 'Kopfkino am Abend!', 'Noch ein kleiner Gedankenaustausch, {name}?', 'Abendliche Inspiration!', 'Letzte Ideen vor dem Schlafengehen!',
+			'Tagesrückblick, {name}?', 'Feierabendmodus: AN!', 'Später chat, {name}?', 'Noch was wichtiges, {name}?'
+		];
 	}
 
 	let randomFunTitle = '';
