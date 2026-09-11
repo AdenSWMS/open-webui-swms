@@ -85,6 +85,35 @@
 		selectedModelIdx = models.length - 1;
 	}
 
+	function getTimeBasedTitles(): string[] {
+		const hour = new Date().getHours();
+		const day = new Date().getDay();
+
+		// Wochenende
+		if (day === 0 || day === 6) {
+			return ['Wochenend-Gedanken', 'Sonntagsplauderei', 'Entspannungsgespräch', 'Kaffeeschnackzeit'];
+		}
+		// Nachts (0 - 5 Uhr)
+		if (hour < 6) return ['Sonnenaufgangsgespräche!', 'Vor dem ersten Kaffee?', 'Schlummerlose Gedanken, {name}?'];
+		// Morgens (6 - 10 Uhr)
+		if (hour < 11) return ['Morgenkaffee-Gespräche', 'Frühaufsteher, {name}?', 'Guten-Morgen-Runde', 'Was gibt\'s Neues, {name}?'];
+		// Mittags (11 - 13 Uhr)
+		if (hour < 14) return ['Mittagspause-Plauderei', 'Kurzer Gedankenaustausch', 'Was gibt\'s Neues, {name}?'];
+		// Nachmittags (14 - 17 Uhr)
+		if (hour < 18) return ['Nachmittagsgespräche', 'Kopfkino-Session', 'Noch was kurz vor Feierabend, {name}?', 'Was gibt\'s Neues, {name}?'];
+		// Abends (18 - 23 Uhr)
+		return ['Mondscheingespräche!', 'Noch kein Feierabend, {name}?', 'Abendgedanken, {name}?', 'Sonnenuntergangsplauderei!', 'Was gibt\'s Neues, {name}?'];
+	}
+
+	let randomFunTitle = '';
+
+	onMount(() => {
+		const titles = getTimeBasedTitles();
+		const randomIndex = Math.floor(Math.random() * titles.length);
+		
+		randomFunTitle = titles[randomIndex].replace('{name}', $user?.name ?? '');
+	});
+
 	$: models = selectedModels.map((id) => $_models.find((m) => m.id === id));
 
 	// True when viewing a shared folder the current user doesn't own AND lacks write access
@@ -161,22 +190,12 @@
 					</div>
 
 					<div
-						class=" text-2xl @sm:text-2xl line-clamp-1 flex items-center"
+						class="text-3xl @sm:text-4xl line-clamp-1 flex items-center"
 						in:fade={{ duration: 100 }}
 					>
-						{#if models[selectedModelIdx]?.name}
-							<Tooltip
-								content={models[selectedModelIdx]?.name}
-								placement="top"
-								className=" flex items-center "
-							>
-								<span class="line-clamp-1">
-									{models[selectedModelIdx]?.name}
-								</span>
-							</Tooltip>
-						{:else}
-							{$i18n.t('Hello, {{name}}', { name: $user?.name })}
-						{/if}
+						<span class="line-clamp-1">
+							{randomFunTitle || $i18n.t('Hello, {{name}}', { name: $user?.name })}
+						</span>
 					</div>
 				</div>
 
