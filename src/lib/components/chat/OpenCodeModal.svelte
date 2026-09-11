@@ -266,8 +266,7 @@
 								class="block whitespace-pre-wrap bg-gray-100 dark:bg-gray-800 px-2 py-1.5 rounded font-mono text-[11px] text-gray-800 dark:text-gray-200 overflow-x-auto"
 >
 mkdir "$HOME\.config\opencode" -Force | Out-Null 
-iwr https://opencode.office.swms.de/opencode.json -OutFile
-"$HOME\.config\opencode\opencode.json"
+iwr https://opencode.office.swms.de/opencode.json -OutFile "$HOME\.config\opencode\opencode.json"
 							</code>
 						</div>
 					</li>
@@ -309,8 +308,9 @@ $content, [System.Text.UTF8Encoding]::new($false))
 								class="block whitespace-pre-wrap bg-gray-100 dark:bg-gray-800 px-2 py-1.5 rounded font-mono text-[11px] text-gray-800 dark:text-gray-200 overflow-x-auto"
 							>
 iwr https://opencode.office.swms.de/opencode.json -OutFile "$env:TEMP\opencode.remote.json"
-$merged = jq -s ".[1] * .[0]" "$HOME\.config\opencode\opencode.json" "$env:TEMP\opencode.remote.json"
-[System.IO.File]::WriteAllText("$HOME\.config\opencode\opencode.json", $merged, [System.Text.UTF8Encoding]::new($false))
+$local = Get-Content "$HOME\.config\opencode\opencode.json" -Raw | ConvertFrom-Json$remote = Get-Content "$env:TEMP\opencode.remote.json" -Raw | ConvertFrom-Json
+$local.provider.swms.models = $remote.provider.swms.models
+$local | ConvertTo-Json -Depth 100 | Set-Content "$HOME\.config\opencode\opencode.json" -Encoding utf8
 Remove-Item "$env:TEMP\opencode.remote.json" -Force
 							</code>
 						</div>

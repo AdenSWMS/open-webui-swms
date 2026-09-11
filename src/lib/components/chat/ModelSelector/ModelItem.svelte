@@ -324,7 +324,6 @@
 		</div>
 	</div>
 
-	<!-- RECHTER CONTAINER (OHNE DAS HÄKCHEN) -->
 	<div class="ml-auto flex shrink-0 items-center gap-1.5 pl-2">
 		{#if costData}
 			<Tooltip placement="top" content="{$i18n.t('Cost Tier')}: {costTooltipText}">

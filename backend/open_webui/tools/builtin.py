@@ -395,11 +395,10 @@ async def generate_image(
         selected_resolution = "1024x1024"
 
         model_options = []
-        model_config_by_name = {}  # Modellname -> ImageModelConfig
+        model_config_by_name = {} 
 
         for model_cfg in configured_models:
-            # configured_models enthält ImageModelConfig-Instanzen (Pydantic),
-            # daher direkt über Attribute zugreifen
+
             model_name = model_cfg.get('IMAGE_GENERATION_MODEL')
             if not model_name:
                 continue
@@ -413,12 +412,10 @@ async def generate_image(
 
             model_config_by_name[model_name] = model_cfg
 
-        # Standard-Fallback falls die Konfiguration komplett leer war
         if not model_options:
             model_options = [{'label': 'Default', 'description': 'Standard Modell'}]
 
         if __event_call__ is not None:
-            # --- 1. Anfrage: nur Modell-Auswahl ---
             model_questions = [
                 {
                     'id': 'model',
@@ -558,12 +555,14 @@ async def generate_image(
         log.exception(f'generate_image error: {e}')
         return JSONCodec.dumps({'error': str(e)})
 
+
 async def edit_image(
     prompt: str,
     image_urls: list[str],
     __request__: Request = None,
     __user__: dict = None,
     __event_emitter__: callable = None,
+    __event_call__: callable = None,
     __chat_id__: str = None,
     __message_id__: str = None,
 ) -> str:
@@ -581,9 +580,126 @@ async def edit_image(
     try:
         user = UserModel(**__user__) if __user__ else None
 
+        image_config = await get_config_values(IMAGE_CONFIG_KEYS)
+        configured_models = image_config.get('IMAGE_GENERATION_MODELS', []) 
+        selected_model = None
+        model_options = []
+        model_config_by_name = {} 
+
+        for model_cfg in configured_models:
+
+            model_name = model_cfg.get('IMAGE_GENERATION_MODEL')
+            if not model_name:
+                continue
+
+            engine = model_cfg.get('IMAGE_GENERATION_ENGINE')
+
+            model_options.append({
+                'label': model_name,
+                'description': f"Engine: {engine}"
+            })
+
+            model_config_by_name[model_name] = model_cfg
+
+        if not model_options:
+            model_options = [{'label': 'Default', 'description': 'Standard Modell'}]
+
+        if __event_call__ is not None:
+            model_questions = [
+                {
+                    'id': 'model',
+                    'header': 'Modell-Auswahl',
+                    'question': 'Welches Bildmodell soll für die Generierung verwendet werden?',
+                    'options': model_options,
+                    'allow_other': False,
+                }
+            ]
+
+            model_response_json = await ask_user(
+                questions=model_questions,
+                allow_other=False,
+                timeout_ms=120_000,
+                __event_call__=__event_call__,
+            )
+
+            model_response_data = json.loads(model_response_json) if isinstance(model_response_json, str) else model_response_json
+            model_raw_response = model_response_data.get('raw_response', model_response_data)
+            model_status = model_raw_response.get('status') or model_response_data.get('status')
+
+            if model_status == 'cancelled':
+                return JSONCodec.dumps({'status': 'cancelled', 'message': 'Bildgenerierung vom Nutzer abgebrochen.'})
+
+            if model_status not in ['answered', 'success']:
+                return JSONCodec.dumps({'status': 'cancelled', 'message': 'Keine gültige Modell-Antwort erhalten.'})
+
+            model_answers = model_raw_response.get('answers') or model_response_data.get('user_answers') or {}
+            raw_model = model_answers.get('model')
+
+            if isinstance(raw_model, dict):
+                selected_model = raw_model.get('label') or raw_model.get('value')
+            else:
+                selected_model = raw_model
+
+            selected_model_cfg = model_config_by_name.get(selected_model)
+
+            model_specific_sizes = []
+            if selected_model_cfg is not None:
+                model_specific_sizes = selected_model_cfg.get('IMAGE_SIZE') or []
+
+            if not model_specific_sizes:
+                model_specific_sizes = ["1024x1024"]
+
+            model_resolution_options = [
+                {'label': size, 'description': f'Auflösung {size}'}
+                for size in model_specific_sizes
+            ]
+
+            resolution_questions = [
+                {
+                    'id': 'resolution',
+                    'header': 'Bildauflösung',
+                    'question': f'In welcher Auflösung soll das Bild mit "{selected_model}" erstellt werden?',
+                    'options': model_resolution_options,
+                    'allow_other': True,
+                }
+            ]
+
+            resolution_response_json = await ask_user(
+                questions=resolution_questions,
+                allow_other=True,
+                timeout_ms=120_000,
+                __event_call__=__event_call__,
+            )
+
+            resolution_response_data = json.loads(resolution_response_json) if isinstance(resolution_response_json, str) else resolution_response_json
+            resolution_raw_response = resolution_response_data.get('raw_response', resolution_response_data)
+            resolution_status = resolution_raw_response.get('status') or resolution_response_data.get('status')
+
+            if resolution_status in ['answered', 'success']:
+                resolution_answers = resolution_raw_response.get('answers') or resolution_response_data.get('user_answers') or {}
+                raw_resolution = resolution_answers.get('resolution')
+
+                # Sichere Extraktion der Auflösung
+                if isinstance(raw_resolution, dict):
+                    selected_resolution = raw_resolution.get('label') or raw_resolution.get('value')
+                else:
+                    selected_resolution = raw_resolution
+
+            elif resolution_status == 'cancelled':
+                return JSONCodec.dumps({'status': 'cancelled', 'message': 'Bildgenerierung vom Nutzer abgebrochen.'})
+
+
+        form_data = EditImageForm(
+            prompt=prompt,
+            image=image_urls,
+            model=selected_model,
+            size=selected_resolution
+        )
+
+
         images = await image_edits(
             request=__request__,
-            form_data=EditImageForm(prompt=prompt, image=image_urls),
+            form_data=form_data,
             metadata=(
                 {'channel_id': __chat_id__.removeprefix('channel:'), 'message_id': __message_id__}
                 if isinstance(__chat_id__, str) and __chat_id__.startswith('channel:')
