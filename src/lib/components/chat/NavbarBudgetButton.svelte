@@ -50,7 +50,7 @@
 				maximumFractionDigits: 4
 			})}
 		</span>
-		<span class="font-bold">
+		<span class="font-bold text-gray-900 dark:text-white">
 			({spentPercent}%)
 		</span>
 	</div>
