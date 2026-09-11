@@ -89,33 +89,88 @@
 		const hour = new Date().getHours();
 		const day = new Date().getDay();
 
-		// Wochenende
-		if (day === 0 || day === 6) {
-			return ['Wochenend-Gedanken', 'Sonntagsplauderei', 'Entspannungsgespräch', 'Kaffeeschnackzeit', 'Samstagsmodus: AN!',
-			'Ausgeschalfen, {name}?', 'Füße hoch, {name}?', 'Wochenend-Vibes!', 'Couch-Plauderei!', 'Wochenend-Flow!', 'Seelenbaumeln, {name}?',
-			'Offline Modus fast aktiv!', 'Kaffee, Kuchen und Gedanken!', 'Das Wochenende gehört dir, {name}!','Ganz ohne Feierabendstress, {name}?',
-			'Zeit für dich, {name}!', 'Wochenend-Reflexionen', 'Chillige Plauderei', 'Wochenend-Flow!', 'Kaffeeklatsch-Zeit!', 'Entspanntes Brainstorming',
-			'Kaffee und Gedanken!', 'Sonntagsruhe, {name}?', 'Meetingsfreier Tag!'];
-		}
 		// Nachts (0 - 5 Uhr)
-		if (hour < 6) return ['Sonnenaufgangsgespräche!', 'Vor dem ersten Kaffee?', 'Schlummerlose Gedanken, {name}?', 'Ausgeschlafen oder noch wach, {name}?',
-			'Eulen-Klub!', 'Frühschichtgedanken!', 'Gedanken zur Geisterstunde!', 'Wenn die Welt schläft...', 'Nachtgedanken, {name}?', 'Warum schläfst du nicht, {name}?',
-			'Nachtcafe'];
+		if (hour < 6)
+			return [
+				'Sonnenaufgangsgespräche!',
+				'Vor dem ersten Kaffee?',
+				'Schlummerlos, {name}?',
+				'Schlaflos, {name}?',
+				'Ausgeschlafen, {name}?',
+				'Eulen-Klub!',
+				'Frühschichtgedanken!',
+				'Gedanken zur Geisterstunde!',
+				'Wenn die Welt schläft...',
+				'Nachtgedanken, {name}?',
+				'Warum schläfst du nicht, {name}?',
+				'Nachtcafe',
+				'Worum geht, {name}?'
+			];
 		// Morgens (6 - 10 Uhr)
-		if (hour < 11) return ['Morgenkaffee-Gespräche', 'Frühaufsteher, {name}?', 'Guten-Morgen-Runde', 'Was gibt\'s Neues, {name}?', 'Erster Kaffee, {name}?',
-			'Frisch in den Tag!', 'Morgen-Brainstorming!', 'Startklar für heute, {name}?', 'Morgen-Motivation!', 'Kein Meeting, {name}?'];
+		if (hour < 11)
+			return [
+				'Morgenkaffee-Gespräche',
+				'Frühaufsteher, {name}?',
+				'Guten-Morgen-Runde',
+				"Was gibt's Neues, {name}?",
+				'Erster Kaffee, {name}?',
+				'Frisch in den Tag!',
+				'Morgen-Brainstorming!',
+				'Startklar für heute, {name}?',
+				'Morgen-Motivation!',
+				'Kein Meeting, {name}?',
+				'Worum geht, {name}?'
+			];
 		// Mittags (11 - 13 Uhr)
-		if (hour < 14) return ['Mittagspause-Plauderei', 'Kurzer Gedankenaustausch', 'Was gibt\'s Neues, {name}?', 'Halbzeit!', 'Magenknurren, {name}?', 'Lunch & Chat!',
-			'Kopf frei für die Mittagspause!', 'Kurze Pause, {name}?', 'Mittagsgedanken!', 'Mittagspausen-Flow!'];
+		if (hour < 14)
+			return [
+				'Mittagspause-Plauderei',
+				'Kurzer Gedankenaustausch',
+				"Was gibt's Neues, {name}?",
+				'Halbzeit!',
+				'Magenknurren, {name}?',
+				'Lunch & Chat!',
+				'Kopf frei für die Mittagspause!',
+				'Kurze Pause, {name}?',
+				'Mittagsgedanken!',
+				'Mittagspausen-Flow!',
+				'Worum geht, {name}?'
+			];
 		// Nachmittags (14 - 17 Uhr)
-		if (hour < 18) return ['Nachmittagsgespräche', 'Kopfkino-Session', 'Noch was kurz vor Feierabend, {name}?', 'Was gibt\'s Neues, {name}?', 'Countdown zum Feierabend, {name}?',
-			'Noch ein kleiner Impuls?', 'Nachmittags-Flow!', 'Kaffeepause, {name}?', 'Gedanken zum Feierabend!', 'Noch einmal durchziehen', 
-			'Kreativ am Nachmittag!', 'Letzte Kraftreserven!'
-		];
+		if (hour < 18)
+			return [
+				'Nachmittagsgespräche',
+				'Kopfkino-Session',
+				'Ist noch was, {name}?',
+				"Was gibt's Neues, {name}?",
+				'Bald Feierabend, {name}?',
+				'Noch ein kleiner Impuls?',
+				'Nachmittags-Flow!',
+				'Kaffeepause, {name}?',
+				'Gedanken zum Feierabend!',
+				'Noch einmal durchziehen',
+				'Kreativ am Nachmittag!',
+				'Letzte Kraftreserven!',
+				'Worum geht, {name}?'
+			];
 		// Abends (18 - 23 Uhr)
-		return ['Mondscheingespräche!', 'Noch kein Feierabend, {name}?', 'Abendgedanken, {name}?', 'Sonnenuntergangsplauderei!', 'Was gibt\'s Neues, {name}?',
-			'Abend Routine!', 'Entspannund am Abend', 'Abend-Flow!', 'Kopfkino am Abend!', 'Noch ein kleiner Gedankenaustausch, {name}?', 'Abendliche Inspiration!', 'Letzte Ideen vor dem Schlafengehen!',
-			'Tagesrückblick, {name}?', 'Feierabendmodus: AN!', 'Später chat, {name}?', 'Noch was wichtiges, {name}?'
+		return [
+			'Mondscheingespräche!',
+			'Noch kein Feierabend, {name}?',
+			'Abendgedanken, {name}?',
+			'Sonnenuntergangsplauderei!',
+			"Was gibt's Neues, {name}?",
+			'Abend Routine!',
+			'Entspannund am Abend',
+			'Abend-Flow!',
+			'Kopfkino am Abend!',
+			'Abendliche Inspiration!',
+			'Letzte Ideen vor dem Schlafen!',
+			'Tagesrückblick, {name}?',
+			'Feierabendmodus: AN!',
+			'Später chat, {name}?',
+			'Noch was wichtiges, {name}?',
+			'Worum geht, {name}?'
 		];
 	}
 
@@ -124,7 +179,7 @@
 	onMount(() => {
 		const titles = getTimeBasedTitles();
 		const randomIndex = Math.floor(Math.random() * titles.length);
-		
+
 		randomFunTitle = titles[randomIndex].replace('{name}', $user?.name ?? '');
 	});
 
@@ -152,114 +207,94 @@
 
 	<div class="w-full text-3xl text-gray-800 dark:text-gray-100 text-center flex items-center gap-4">
 		<div class="w-full flex flex-col justify-center items-center">
-			{#if $selectedFolder}
-				<FolderTitle
-					folder={$selectedFolder}
-					readOnly={folderReadOnly}
-					onUpdate={async () => {
-						await Promise.all([refreshChatList(localStorage.token), refreshFolderChatLists(null)]);
-					}}
-					onDelete={async () => {
-						await Promise.all([refreshChatList(localStorage.token), refreshFolderChatLists(null)]);
-
-						selectedFolder.set(null);
-					}}
-				/>
-			{:else}
-				<div class="flex flex-row justify-center gap-2.5 @sm:gap-3 w-fit px-5 max-w-xl">
-					<div class="flex shrink-0 justify-center">
-						<div class="flex -space-x-4 mb-0.5" in:fade={{ duration: 100 }}>
-							{#each models as model, modelIdx}
-								<Tooltip
-									content={(models[modelIdx]?.info?.meta?.tags ?? [])
-										.map((tag) => tag.name.toUpperCase())
-										.join(', ')}
-									placement="top"
+			<div class="flex flex-row justify-center items-center gap-3 w-fit px-5">
+				<div class="flex shrink-0 justify-center">
+					<div class="flex -space-x-4" in:fade={{ duration: 100 }}>
+						{#each models as model, modelIdx}
+							<Tooltip
+								content={(models[modelIdx]?.info?.meta?.tags ?? [])
+									.map((tag) => tag.name.toUpperCase())
+									.join(', ')}
+								placement="top"
+							>
+								<button
+									aria-hidden={models.length <= 1}
+									aria-label={$i18n.t('Get information on {{name}} in the UI', {
+										name: models[modelIdx]?.name
+									})}
+									on:click={() => {
+										selectedModelIdx = modelIdx;
+									}}
 								>
-									<button
-										aria-hidden={models.length <= 1}
-										aria-label={$i18n.t('Get information on {{name}} in the UI', {
-											name: models[modelIdx]?.name
-										})}
-										on:click={() => {
-											selectedModelIdx = modelIdx;
+									<!-- LOGO GROESSE ANPASSEN (size-11 statt size-9) -->
+									<img
+										src={`${WEBUI_API_BASE_URL}/models/model/profile/image?id=${model?.id}&lang=${$i18n.language}`}
+										class="size-10 @sm:size-11 rounded-2xl"
+										aria-hidden="true"
+										draggable="false"
+										on:error={(e) => {
+											e.currentTarget.src = '/favicon.png';
 										}}
-									>
-										<img
-											src={`${WEBUI_API_BASE_URL}/models/model/profile/image?id=${model?.id}&lang=${$i18n.language}`}
-											class=" size-9 @sm:size-10 rounded-2xl"
-											aria-hidden="true"
-											draggable="false"
-											on:error={(e) => {
-												// LICENSE covers this Open WebUI fallback logo.
-												// Do not alter, remove, obscure, or replace it except as LICENSE permits:
-												// https://docs.openwebui.com/license.
-												e.currentTarget.src = '/favicon.png';
-											}}
-										/>
-									</button>
-								</Tooltip>
-							{/each}
-						</div>
-					</div>
-
-					<div
-						class="text-3xl @sm:text-4xl line-clamp-1 flex items-center"
-						in:fade={{ duration: 100 }}
-					>
-						<span class="line-clamp-1">
-							{randomFunTitle || $i18n.t('Hello, {{name}}', { name: $user?.name })}
-						</span>
+									/>
+								</button>
+							</Tooltip>
+						{/each}
 					</div>
 				</div>
 
-				<div class="flex mt-1 mb-2">
-					<div in:fade={{ duration: 100, delay: 50 }}>
-						{#if models[selectedModelIdx]?.info?.meta?.description ?? null}
-							<Tooltip
-								className=" w-fit"
-								content={DOMPurify.sanitize(
+				<div in:fade={{ duration: 100 }}>
+					<span class="custom-title text-3xl @sm:text-4xl font-medium tracking-tight text-center">
+						{randomFunTitle || $i18n.t('Hello, {{name}}', { name: $user?.name })}
+					</span>
+				</div>
+			</div>
+
+			<div class="flex mt-1 mb-2">
+				<div in:fade={{ duration: 100, delay: 50 }}>
+					{#if models[selectedModelIdx]?.info?.meta?.description ?? null}
+						<Tooltip
+							className=" w-fit"
+							content={DOMPurify.sanitize(
+								marked.parse(
+									sanitizeResponseContent(
+										models[selectedModelIdx]?.info?.meta?.description ?? ''
+									).replaceAll('\n', '<br>')
+								)
+							)}
+							placement="top"
+						>
+							<div
+								class="mt-0.5 px-2 text-sm font-normal text-gray-500 dark:text-gray-400 line-clamp-2 max-w-xl markdown"
+							>
+								{@html DOMPurify.sanitize(
 									marked.parse(
 										sanitizeResponseContent(
 											models[selectedModelIdx]?.info?.meta?.description ?? ''
 										).replaceAll('\n', '<br>')
 									)
 								)}
-								placement="top"
-							>
-								<div
-									class="mt-0.5 px-2 text-sm font-normal text-gray-500 dark:text-gray-400 line-clamp-2 max-w-xl markdown"
-								>
-									{@html DOMPurify.sanitize(
-										marked.parse(
-											sanitizeResponseContent(
-												models[selectedModelIdx]?.info?.meta?.description ?? ''
-											).replaceAll('\n', '<br>')
-										)
-									)}
-								</div>
-							</Tooltip>
+							</div>
+						</Tooltip>
 
-							{#if models[selectedModelIdx]?.info?.meta?.user}
-								<div class="mt-0.5 text-sm font-normal text-gray-400 dark:text-gray-500">
-									By
-									{#if models[selectedModelIdx]?.info?.meta?.user.community}
-										<a
-											href="https://openwebui.com/m/{models[selectedModelIdx]?.info?.meta?.user
-												.username}"
-											>{models[selectedModelIdx]?.info?.meta?.user.name
-												? models[selectedModelIdx]?.info?.meta?.user.name
-												: `@${models[selectedModelIdx]?.info?.meta?.user.username}`}</a
-										>
-									{:else}
-										{models[selectedModelIdx]?.info?.meta?.user.name}
-									{/if}
-								</div>
-							{/if}
+						{#if models[selectedModelIdx]?.info?.meta?.user}
+							<div class="mt-0.5 text-sm font-normal text-gray-400 dark:text-gray-500">
+								By
+								{#if models[selectedModelIdx]?.info?.meta?.user.community}
+									<a
+										href="https://openwebui.com/m/{models[selectedModelIdx]?.info?.meta?.user
+											.username}"
+										>{models[selectedModelIdx]?.info?.meta?.user.name
+											? models[selectedModelIdx]?.info?.meta?.user.name
+											: `@${models[selectedModelIdx]?.info?.meta?.user.username}`}</a
+									>
+								{:else}
+									{models[selectedModelIdx]?.info?.meta?.user.name}
+								{/if}
+							</div>
 						{/if}
-					</div>
+					{/if}
 				</div>
-			{/if}
+			</div>
 
 			<div class="text-base font-normal @md:max-w-3xl w-full py-3 {atSelectedModel ? 'mt-2' : ''}">
 				{#if !($selectedFolder && folderReadOnly)}
@@ -324,3 +359,13 @@
 		</div>
 	{/if}
 </div>
+
+<style>
+	/* Google Font direkt importieren */
+	@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@600;700&display=swap');
+
+	.custom-title {
+		font-family: 'Plus Jakarta Sans', sans-serif;
+		letter-spacing: -0.02em; /* Macht fette UI-Überschriften viel moderner */
+	}
+</style>
