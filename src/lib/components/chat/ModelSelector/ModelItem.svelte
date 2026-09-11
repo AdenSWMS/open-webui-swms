@@ -35,16 +35,19 @@
 
 	export let modelCostMap: Array<any> = [];
 
-	
 	$: costData = modelCostMap?.find((c) => c.model === item.model.id || c.model === item.value);
 
+	$: maxInputCost = (modelCostMap ?? []).reduce((max, cost) => {
+		const inputCost = parseFloat(String(cost.input ?? '').replace('$', '')) || 0;
+		return Math.max(max, inputCost);
+	}, 0);
 
 	$: costTier = (() => {
 		if (!costData || !costData.input) return 'FREE';
 		const numericInput = parseFloat(costData.input.replace('$', '')) || 0;
 		if (numericInput === 0) return 'FREE';
-		if (numericInput < 0.5) return '$';
-		if (numericInput < 3.0) return '$$';
+		if (maxInputCost > 0 && numericInput <= maxInputCost * 0.2) return '$';
+		if (maxInputCost > 0 && numericInput <= maxInputCost * 0.5) return '$$';
 		return '$$$';
 	})();
 
