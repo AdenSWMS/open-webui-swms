@@ -175,6 +175,7 @@
 	}
 
 	let randomFunTitle = '';
+	let randomFunTitleEnabled = false;
 
 	onMount(() => {
 		const titles = getTimeBasedTitles();
@@ -205,96 +206,173 @@
 		</Tooltip>
 	{/if}
 
-	<div class="w-full text-3xl text-gray-800 dark:text-gray-100 text-center flex items-center gap-4">
+	<div class="w-full text-3xl text-gray-800 dark:text-gray-100 text-center flex items-center gap-4">		
 		<div class="w-full flex flex-col justify-center items-center">
-			<div class="flex flex-row justify-center items-center gap-3 w-fit px-5">
-				<div class="flex shrink-0 justify-center">
-					<div class="flex -space-x-4" in:fade={{ duration: 100 }}>
-						{#each models as model, modelIdx}
-							<Tooltip
-								content={(models[modelIdx]?.info?.meta?.tags ?? [])
-									.map((tag) => tag.name.toUpperCase())
-									.join(', ')}
-								placement="top"
-							>
-								<button
-									aria-hidden={models.length <= 1}
-									aria-label={$i18n.t('Get information on {{name}} in the UI', {
-										name: models[modelIdx]?.name
-									})}
-									on:click={() => {
-										selectedModelIdx = modelIdx;
-									}}
+			
+			<!-- PRIO 1: Wenn randomFunTitleEnabled an ist, nur den Funny Title anzeigen -->
+			{#if randomFunTitleEnabled}
+				<div class="flex flex-row justify-center items-center gap-3 w-fit px-5">
+					<div class="flex shrink-0 justify-center">
+						<div class="flex -space-x-4" in:fade={{ duration: 100 }}>
+							{#each models as model, modelIdx}
+								<Tooltip
+									content={(models[modelIdx]?.info?.meta?.tags ?? [])
+										.map((tag) => tag.name.toUpperCase())
+										.join(', ')}
+									placement="top"
 								>
-									<!-- LOGO GROESSE ANPASSEN (size-11 statt size-9) -->
-									<img
-										src={`${WEBUI_API_BASE_URL}/models/model/profile/image?id=${model?.id}&lang=${$i18n.language}`}
-										class="size-10 @sm:size-11 rounded-2xl"
-										aria-hidden="true"
-										draggable="false"
-										on:error={(e) => {
-											e.currentTarget.src = '/favicon.png';
+									<button
+										aria-hidden={models.length <= 1}
+										aria-label={$i18n.t('Get information on {{name}} in the UI', {
+											name: models[modelIdx]?.name
+										})}
+										on:click={() => {
+											selectedModelIdx = modelIdx;
 										}}
-									/>
-								</button>
-							</Tooltip>
-						{/each}
+									>
+										<img
+											src={`${WEBUI_API_BASE_URL}/models/model/profile/image?id=${model?.id}&lang=${$i18n.language}`}
+											class="size-10 @sm:size-11 rounded-2xl"
+											aria-hidden="true"
+											draggable="false"
+											on:error={(e) => {
+												e.currentTarget.src = '/favicon.png';
+											}}
+										/>
+									</button>
+								</Tooltip>
+							{/each}
+						</div>
+					</div>
+
+					<div in:fade={{ duration: 100 }}>
+						<span class="custom-title text-3xl @sm:text-4xl font-medium tracking-tight text-center">
+							{randomFunTitle || $i18n.t('Hello, {{name}}', { name: $user?.name })}
+						</span>
 					</div>
 				</div>
 
-				<div in:fade={{ duration: 100 }}>
-					<span class="custom-title text-3xl @sm:text-4xl font-medium tracking-tight text-center">
-						{randomFunTitle || $i18n.t('Hello, {{name}}', { name: $user?.name })}
-					</span>
-				</div>
-			</div>
+			<!-- PRIO 2: Wenn ein Ordner ausgewählt ist -->
+			{:else if $selectedFolder}
+				<FolderTitle
+					folder={$selectedFolder}
+					readOnly={folderReadOnly}
+					onUpdate={async () => {
+						await Promise.all([refreshChatList(localStorage.token), refreshFolderChatLists(null)]);
+					}}
+					onDelete={async () => {
+						await Promise.all([refreshChatList(localStorage.token), refreshFolderChatLists(null)]);
 
-			<div class="flex mt-1 mb-5">
-				<div in:fade={{ duration: 100, delay: 50 }}>
-					{#if models[selectedModelIdx]?.info?.meta?.description ?? null}
-						<Tooltip
-							className=" w-fit"
-							content={DOMPurify.sanitize(
-								marked.parse(
-									sanitizeResponseContent(
-										models[selectedModelIdx]?.info?.meta?.description ?? ''
-									).replaceAll('\n', '<br>')
-								)
-							)}
-							placement="top"
-						>
-							<div
-								class="mt-0.5 px-2 text-sm font-normal text-gray-500 dark:text-gray-400 line-clamp-2 max-w-xl markdown"
+						selectedFolder.set(null);
+					}}
+				/>
+
+			<!-- PRIO 3: Standard Modell-Ansicht -->
+			{:else}
+				<div class="flex flex-row justify-center gap-2.5 @sm:gap-3 w-fit px-5 max-w-xl">
+					<div class="flex shrink-0 justify-center">
+						<div class="flex -space-x-4 mb-0.5" in:fade={{ duration: 100 }}>
+							{#each models as model, modelIdx}
+								<Tooltip
+									content={(models[modelIdx]?.info?.meta?.tags ?? [])
+										.map((tag) => tag.name.toUpperCase())
+										.join(', ')}
+									placement="top"
+								>
+									<button
+										aria-hidden={models.length <= 1}
+										aria-label={$i18n.t('Get information on {{name}} in the UI', {
+											name: models[modelIdx]?.name
+										})}
+										on:click={() => {
+											selectedModelIdx = modelIdx;
+										}}
+									>
+										<img
+											src={`${WEBUI_API_BASE_URL}/models/model/profile/image?id=${model?.id}&lang=${$i18n.language}`}
+											class=" size-9 @sm:size-10 rounded-full border-[1px] border-gray-100 dark:border-none"
+											aria-hidden="true"
+											draggable="false"
+											on:error={(e) => {
+												e.currentTarget.src = '/favicon.png';
+											}}
+										/>
+									</button>
+								</Tooltip>
+							{/each}
+						</div>
+					</div>
+
+					<div
+						class="text-3xl @sm:text-3xl line-clamp-1 flex items-center"
+						in:fade={{ duration: 100 }}
+					>
+						{#if models[selectedModelIdx]?.name}
+							<Tooltip
+								content={models[selectedModelIdx]?.name}
+								placement="top"
+								className=" flex items-center "
 							>
-								{@html DOMPurify.sanitize(
+								<!-- Hier custom-title hinzugefügt für dieselbe Schriftart -->
+								<span class="custom-title line-clamp-1">
+									{models[selectedModelIdx]?.name}
+								</span>
+							</Tooltip>
+						{:else}
+							<span class="custom-title">
+								{$i18n.t('Hello, {{name}}', { name: $user?.name })}
+							</span>
+						{/if}
+					</div>
+				</div>
+
+				<div class="flex mt-1 mb-4">
+					<div in:fade={{ duration: 100, delay: 50 }}>
+						{#if models[selectedModelIdx]?.info?.meta?.description ?? null}
+							<Tooltip
+								className=" w-fit"
+								content={DOMPurify.sanitize(
 									marked.parse(
 										sanitizeResponseContent(
 											models[selectedModelIdx]?.info?.meta?.description ?? ''
 										).replaceAll('\n', '<br>')
 									)
 								)}
-							</div>
-						</Tooltip>
+								placement="top"
+							>
+								<div
+									class="mt-0.5 px-2 text-sm font-normal text-gray-500 dark:text-gray-400 line-clamp-2 max-w-xl markdown"
+								>
+									{@html DOMPurify.sanitize(
+										marked.parse(
+											sanitizeResponseContent(
+												models[selectedModelIdx]?.info?.meta?.description ?? ''
+											).replaceAll('\n', '<br>')
+										)
+									)}
+								</div>
+							</Tooltip>
 
-						{#if models[selectedModelIdx]?.info?.meta?.user}
-							<div class="mt-0.5 text-sm font-normal text-gray-400 dark:text-gray-500">
-								By
-								{#if models[selectedModelIdx]?.info?.meta?.user.community}
-									<a
-										href="https://openwebui.com/m/{models[selectedModelIdx]?.info?.meta?.user
-											.username}"
-										>{models[selectedModelIdx]?.info?.meta?.user.name
-											? models[selectedModelIdx]?.info?.meta?.user.name
-											: `@${models[selectedModelIdx]?.info?.meta?.user.username}`}</a
-									>
-								{:else}
-									{models[selectedModelIdx]?.info?.meta?.user.name}
-								{/if}
-							</div>
+							{#if models[selectedModelIdx]?.info?.meta?.user}
+								<div class="mt-0.5 text-sm font-normal text-gray-400 dark:text-gray-500">
+									By
+									{#if models[selectedModelIdx]?.info?.meta?.user.community}
+										<a
+											href="https://openwebui.com/m/{models[selectedModelIdx]?.info?.meta?.user
+												.username}"
+											>{models[selectedModelIdx]?.info?.meta?.user.name
+												? models[selectedModelIdx]?.info?.meta?.user.name
+												: `@${models[selectedModelIdx]?.info?.meta?.user.username}`}</a
+										>
+									{:else}
+										{models[selectedModelIdx]?.info?.meta?.user.name}
+									{/if}
+								</div>
+							{/if}
 						{/if}
-					{/if}
+					</div>
 				</div>
-			</div>
+			{/if}
 
 			<div class="text-base font-normal @md:max-w-3xl w-full py-3 {atSelectedModel ? 'mt-2' : ''}">
 				{#if !($selectedFolder && folderReadOnly)}
@@ -340,7 +418,7 @@
 		</div>
 	</div>
 
-	{#if $selectedFolder}
+	{#if $selectedFolder && !randomFunTitleEnabled}
 		<div class="mx-auto px-4 md:max-w-3xl md:px-6 min-h-62" in:fade={{ duration: 200, delay: 200 }}>
 			<FolderPlaceholder folder={$selectedFolder} />
 		</div>
