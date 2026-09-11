@@ -265,8 +265,8 @@
 							<code
 								class="block whitespace-pre-wrap bg-gray-100 dark:bg-gray-800 px-2 py-1.5 rounded font-mono text-[11px] text-gray-800 dark:text-gray-200 overflow-x-auto"
 >
-mkdir "$HOME\.config\opencode" -Force | Out-Null iwr
-https://opencode.office.swms.de/opencode.json -OutFile
+mkdir "$HOME\.config\opencode" -Force | Out-Null 
+iwr https://opencode.office.swms.de/opencode.json -OutFile
 "$HOME\.config\opencode\opencode.json"
 							</code>
 						</div>
