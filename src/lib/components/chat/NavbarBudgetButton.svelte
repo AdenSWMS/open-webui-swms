@@ -30,28 +30,25 @@
 <button
 	type="button"
 	on:click={onClick}
-	class="w-full relative overflow-hidden group inline-flex items-center justify-center gap-2 px-3 py-1.5 text-xs font-medium bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm hover:bg-gray-50 dark:hover:bg-gray-700 transition cursor-pointer text-center"
-	title="Klicken für detaillierte Budget-Übersicht"
+	class="w-full relative overflow-hidden group inline-flex items-center justify-center px-2 py-1.5 text-xs font-medium bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm hover:bg-gray-50 dark:hover:bg-gray-700 transition cursor-pointer text-center select-none"
+	title="Budget: ${spend.toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} / ${maxBudget.toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ({spentPercent}%)"
 >
-	<!-- Fortschrittsbalken als absoluter Hintergrund -->
+	<!-- Dynamischer Fortschrittsbalken -->
 	<div
-		class="absolute left-0 top-0 bottom-0 transition-all duration-500 ease-out pointer-events-none {barColorClass}"
+		class="absolute left-0 top-0 bottom-0 opacity-25 dark:opacity-40 transition-all duration-500 ease-out pointer-events-none {barColorClass}"
 		style="width: {spentPercent}%;"
 	></div>
 
-	<!-- Zentrierter Text (immer gut lesbar über z-10) -->
-	<div class="relative z-10 flex w-full items-center justify-center gap-1.5 text-center text-gray-900 dark:text-white drop-shadow-sm">
-		<span>
-			Budget: ${spend.toLocaleString('de-DE', {
-				minimumFractionDigits: 2,
-				maximumFractionDigits: 4
-			})} von ${maxBudget.toLocaleString('de-DE', {
-				minimumFractionDigits: 2,
-				maximumFractionDigits: 4
-			})}
+	<!-- Inhalt -->
+	<div class="relative z-10 flex w-full items-center justify-center gap-1 text-center text-gray-900 dark:text-white whitespace-nowrap">
+		<!-- Ausführlicher Text (Standardmäßig ausgeblendet, erscheint ab sm/Desktop) -->
+		<span class="hidden sm:inline text-gray-600 dark:text-gray-300">
+			Budget: ${spend.toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} / ${maxBudget.toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
 		</span>
-		<span class="font-bold text-gray-900 dark:text-white">
-			({spentPercent}%)
+
+		<!-- Prozentanzeige (Auf Mobile einzig sichtbar) -->
+		<span class="font-bold">
+			{spentPercent}% Budget
 		</span>
 	</div>
 </button>
