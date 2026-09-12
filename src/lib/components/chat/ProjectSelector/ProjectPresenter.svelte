@@ -3,23 +3,18 @@
 	import { projects, selectedProject, settings } from '$lib/stores';
 	import equal from 'fast-deep-equal';
 
-	import Folder from '$lib/components/icons/Folder.svelte';
 	import ProjectPresenter from './ProjectPresenter.svelte';
 
 	const i18n = getContext('i18n');
 
-	// Liste der ausgewählten Projekt-IDs (editierbar), z.B. ['', ''] für zwei Slots
 	export let selectedProjects = [''];
 
-	// Wenn true: editierbare Liste (Datei 2). Wenn false: kompaktes Badge (Datei 1).
 	export let editable = false;
 
-	// Nur relevant im Badge-Modus (editable = false)
 	export let placeholder = $i18n.t('Kein Projekt');
 	export let className = '';
 	export let labelClassName = 'text-sm font-medium';
 
-	// Reaktive Bereinigung: entfernte/ungültige Projekt-IDs zurücksetzen
 	$: if (selectedProjects.length > 0 && $projects.length > 0) {
 		const _selectedProjects = selectedProjects.map((project) =>
 			$projects.map((p) => p.id).includes(project) ? project : ''
@@ -54,12 +49,22 @@
 {:else}
 	<div class="inline-flex items-center gap-2 select-none {className}">
 		<div
-			class="flex items-center gap-1.5 px-2.5 py-1 rounded-lg border border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-900/50 text-gray-700 dark:text-gray-300 truncate {($settings?.highContrastMode ?? false)
+			class="flex items-center gap-1.5 px-2.5 py-1 rounded-lg border border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-900/50 text-gray-700 dark:text-gray-300 truncate {($settings?.highContrastMode ??
+			false)
 				? 'border-gray-400 dark:border-gray-600'
 				: ''}"
 			title={$selectedProject?.label ?? placeholder}
 		>
-			<Folder className="size-3.5 text-gray-500 dark:text-gray-400 shrink-0" />
+			<svg
+				xmlns="http://www.w3.org/2000/svg"
+				viewBox="0 0 16 16"
+				fill="currentColor"
+				class="size-3.5 text-gray-500 dark:text-gray-400 shrink-0"
+			>
+				<path
+					d="M2 2a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V2zm2 1a1 1 0 1 0 0 2 1 1 0 0 0 0-2zm3 0a1 1 0 1 0 0 2 1 1 0 0 0 0-2zm3 0a1 1 0 1 0 0 2 1 1 0 0 0 0-2zM3 7a1 1 0 0 0 0 2h10a1 1 0 0 0 0-2H3z"
+				/>
+			</svg>
 			<span class="truncate {labelClassName}">
 				{#if $selectedProject}
 					{$selectedProject.name}
