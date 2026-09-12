@@ -67,6 +67,7 @@ IMAGE_FILE_EXTENSIONS = {
 
 IMAGE_CONFIG_KEYS = {
     'ENABLE_IMAGE_GENERATION': 'image_generation.enable',
+    'ENABLE_IMAGE_EDIT': 'images.edit.enable',
     'ENABLE_IMAGE_PROMPT_GENERATION': 'image_generation.prompt.enable',
     'IMAGE_GENERATION_MODELS': 'image_generation.models',
     'USER_PERMISSIONS': 'user.permissions',
@@ -229,6 +230,7 @@ class ImageModelConfig(BaseModel):
 
 class ImagesConfig(BaseModel):
     ENABLE_IMAGE_GENERATION: bool
+    ENABLE_IMAGE_EDIT: bool
     ENABLE_IMAGE_PROMPT_GENERATION: bool
 
     IMAGE_GENERATION_MODELS: List[ImageModelConfig] = Field(default_factory=list)
@@ -964,13 +966,14 @@ async def image_edits(
             detail=ERROR_MESSAGES.DEFAULT(e, 'Error loading image'),
         )
 
+    print(f"Selected model: {model}")
+
     try:
         engine = selected_model.get('IMAGE_GENERATION_ENGINE')
 
         if engine == 'openai':
             headers = {
                 'Authorization': f'Bearer {selected_model.get("IMAGES_OPENAI_API_KEY")}',
-                'Content-Type': 'application/json',
             }
 
             if ENABLE_FORWARD_USER_INFO_HEADERS:
@@ -983,7 +986,7 @@ async def image_edits(
             data = {
                 'model': model,
                 'prompt': form_data.prompt,
-                'n': form_data.n,
+                'n': int(form_data.n) if form_data.n is not None else 1,
                 **(
                     {'size': form_data.size}
                     if (form_data.size)
@@ -1004,10 +1007,11 @@ async def image_edits(
                     image = normalize_openai_edit_image_data_url(image)
                 files = [get_image_file_item(image)]
             elif isinstance(form_data.image, list):
+                image_field_name = 'image' if len(form_data.image) == 1 else 'image[]'
                 for img in form_data.image:
                     if ENABLE_OPENAI_IMAGE_EDIT_NORMALIZATION:
                         img = normalize_openai_edit_image_data_url(img)
-                    files.append(get_image_file_item(img, 'image[]'))
+                    files.append(get_image_file_item(img, image_field_name))
 
             form = aiohttp.FormData()
             for key, value in data.items():
@@ -1022,8 +1026,6 @@ async def image_edits(
                     filename=filename,
                     content_type=content_type_val,
                 )
-
-            return None
 
             session = await get_session()
             async with session.post(
