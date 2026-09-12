@@ -1,17 +1,5 @@
 @reference "./tailwind.css";
 
-@font-face {
-	font-family: 'Inter';
-	src: url('/assets/fonts/Inter-Variable.ttf');
-	font-display: swap;
-}
-
-@font-face {
-	font-family: 'Vazirmatn';
-	src: url('/assets/fonts/Vazirmatn-Variable.ttf');
-	font-display: swap;
-}
-
 /* --app-text-scale is updated via the UI Scale slider (Interface.svelte) */
 :root {
 	--app-text-scale: 1;

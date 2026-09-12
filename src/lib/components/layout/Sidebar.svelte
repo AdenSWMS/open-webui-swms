@@ -938,7 +938,7 @@
 
 	{#if !$mobile && !$showSidebar}
 		<div
-			class="w-[calc(42px*var(--app-text-scale,1))] shrink-0 py-[calc(0.25rem*var(--app-text-scale,1))] px-[calc(0.25rem*var(--app-text-scale,1))] flex flex-col justify-between text-gray-700 dark:text-gray-300 hover:bg-gray-50/30 dark:hover:bg-gray-800/30 h-full z-10 transition-all border-e-[0.5px] border-gray-50 dark:border-gray-850/30"
+			class="w-[calc(42px*var(--app-text-scale,1))] shrink-0 py-[calc(0.25rem*var(--app-text-scale,1))] px-[calc(0.25rem*var(--app-text-scale,1))] flex flex-col justify-between text-gray-700 dark:text-gray-300 hover:bg-gray-50/30 dark:hover:bg-gray-800/30 h-full z-10 transition-all border-r border-gray-200 dark:border-gray-800"
 			id="sidebar"
 			role="navigation"
 			aria-label={$i18n.t('Chat history')}
@@ -1138,7 +1138,7 @@
 			data-state={$showSidebar}
 		>
 			<div
-				class=" my-auto flex flex-col justify-between h-screen max-h-[100dvh] w-[var(--sidebar-width)] overflow-x-hidden scrollbar-hidden z-50 border-e border-gray-50 dark:border-gray-850/30"
+				class=" my-auto flex flex-col justify-between h-screen max-h-[100dvh] w-[var(--sidebar-width)] overflow-x-hidden scrollbar-hidden z-50 border-r border-gray-200 dark:border-gray-800"
 			>
 				<div
 					class="sidebar px-1 pt-1.5 pb-1 flex justify-between space-x-1 text-gray-600 dark:text-gray-400 sticky top-0 z-10 -mb-2"
@@ -1693,7 +1693,9 @@
 					</SidebarSection>
 				</div>
 
-				<div class="px-1 pt-1 pb-1.5 sticky bottom-0 z-10 -mt-2 sidebar">
+				<div
+					class="px-2 pt-2 pb-1.5 sticky bottom-0 z-10 sidebar border-t border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-950"
+				>
 					<div class="flex flex-col">
 						{#if $user !== undefined && $user !== null}
 							<UserMenu

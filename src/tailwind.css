@@ -2,11 +2,22 @@
 
 @config '../tailwind.config.js';
 
+@font-face {
+	font-family: 'Inter';
+	src: url('/assets/fonts/Inter-Variable.ttf');
+	font-display: swap;
+}
+
+@font-face {
+	font-family: 'Vazirmatn';
+	src: url('/assets/fonts/Vazirmatn-Variable.ttf');
+	font-display: swap;
+}
+
 @theme {
 	--font-sans:
-		var(--app-font-family, -apple-system), BlinkMacSystemFont, 'Inter', 'Vazirmatn', ui-sans-serif,
-		system-ui, 'Segoe UI', Roboto, Ubuntu, Cantarell, 'Noto Sans', sans-serif, 'Helvetica Neue',
-		Arial, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
+		'Plus Jakarta Sans', var(--app-font-family, 'Inter'), -apple-system, BlinkMacSystemFont,
+		ui-sans-serif, system-ui, sans-serif;
 	--font-primary: var(--font-sans);
 	--font-secondary: var(--font-sans);
 
@@ -42,20 +53,33 @@
 	}
 }
 
+.custom-title {
+	font-family: 'Plus Jakarta Sans', sans-serif;
+	letter-spacing: -0.02em;
+}
+
 @layer base {
-	html {
-		font-family: var(--font-sans);
+	html,
+	body,
+	body * {
+		font-family: 'Plus Jakarta Sans', var(--font-sans) !important;
+		font-weight: 450 !important;       /* Leicht dickerer Grundtext */
+		letter-spacing: -0.015em !important; /* Enge Spationierung für den modernen Look */
 	}
 
-	pre {
-		font-family:
-			-apple-system, BlinkMacSystemFont, 'Inter', 'Vazirmatn', ui-sans-serif, system-ui, 'Segoe UI',
-			Roboto, Ubuntu, Cantarell, 'Noto Sans', sans-serif, 'Helvetica Neue', Arial,
-			'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
+	/* Überschriften, Titel und Buttons noch prägnanter (wie custom-title) */
+	h1, h2, h3, h4, h5, h6, button, .font-semibold, .font-bold {
+		font-weight: 650 !important;
+		letter-spacing: -0.02em !important;
 	}
 
-	pre {
-		white-space: pre-wrap;
+	/* Ausnahme für Code-Blöcke beibehalten: */
+	pre,
+	code,
+	pre * {
+		font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace !important;
+		font-weight: 400 !important;
+		letter-spacing: normal !important;
 	}
 
 	button {
