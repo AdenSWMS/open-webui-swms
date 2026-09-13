@@ -35,7 +35,7 @@
 >
 	<!-- Dynamischer Fortschrittsbalken -->
 	<div
-		class="absolute left-0 top-0 bottom-0 opacity-25 dark:opacity-40 transition-all duration-500 ease-out pointer-events-none {barColorClass}"
+		class="absolute left-0 top-0 bottom-0 transition-all duration-500 ease-out pointer-events-none {barColorClass}"
 		style="width: {spentPercent}%;"
 	></div>
 
