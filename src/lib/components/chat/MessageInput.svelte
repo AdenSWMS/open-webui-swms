@@ -2731,3 +2731,24 @@
 		</div>
 	</div>
 {/if}
+
+<style>
+	#chat-input-container :global(.ProseMirror p.is-editor-empty::before) {
+		position: absolute !important;
+		left: 0 !important;
+		top: 0 !important;
+		pointer-events: none !important;
+		user-select: none !important;
+		z-index: 0 !important;
+		color: rgba(156, 163, 175, 0.5) !important;
+	}
+
+	#chat-input-container :global(.ProseMirror p.is-editor-empty) {
+		position: relative !important;
+	}
+
+	#chat-input-container :global(.ProseMirror) {
+		position: relative !important;
+		z-index: 1 !important;
+	}
+</style>
