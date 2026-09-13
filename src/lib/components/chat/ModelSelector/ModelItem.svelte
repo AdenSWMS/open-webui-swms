@@ -46,8 +46,8 @@
 		if (!costData || !costData.input) return 'FREE';
 		const numericInput = parseFloat(costData.input.replace('$', '')) || 0;
 		if (numericInput === 0) return 'FREE';
-		if (maxInputCost > 0 && numericInput <= maxInputCost * 0.2) return '$';
-		if (maxInputCost > 0 && numericInput <= maxInputCost * 0.5) return '$$';
+		if (maxInputCost > 0 && numericInput <= maxInputCost * 0.05) return '$';
+		if (maxInputCost > 0 && numericInput <= maxInputCost * 0.3) return '$$';
 		return '$$$';
 	})();
 

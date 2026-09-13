@@ -10,7 +10,7 @@
 	import { slide } from 'svelte/transition';
 	import { quintOut } from 'svelte/easing';
 
-	import ChevronUp from '../icons/ChevronUp.svelte';
+	import ChevronRight from '../icons/ChevronRight.svelte';
 	import ChevronDown from '../icons/ChevronDown.svelte';
 	import Spinner from './Spinner.svelte';
 	import WrenchSolid from '../icons/WrenchSolid.svelte';
@@ -48,6 +48,108 @@
 		'py-1 text-[0.9375rem] text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 transition';
 
 	const componentId = id || uuidv4();
+interface ToolStateLabel {
+		active: string;    // Während der Vorbereitung
+		executing: string; // Während der Ausführung
+		done: string;      // Nach Abschluss
+	}
+
+	// Vollständiges Mapping aller 37 Tools
+	const TOOL_CONFIG: Record<string, ToolStateLabel> = {
+		// Zeit & Datum
+		get_current_timestamp: { active: 'Hole Uhrzeit...', executing: 'Hole Uhrzeit...', done: 'Uhrzeit abgerufen' },
+		calculate_timestamp: { active: 'Berechne Zeitstempel...', executing: 'Berechne Zeitstempel...', done: 'Zeitstempel berechnet' },
+
+		// Interaktion
+		ask_user: { active: 'Bereite Frage vor...', executing: 'Warte auf Benutzereingabe...', done: 'Benutzereingabe erhalten' },
+
+		// Wissensdatenbanken (Knowledge Bases)
+		list_knowledge_bases: { active: 'Lade Wissensdatenbanken...', executing: 'Lade Wissensdatenbanken...', done: 'Wissensdatenbanken geladen' },
+		search_knowledge_bases: { active: 'Durchsuche Wissensdatenbanken...', executing: 'Durchsuche Wissensdatenbanken...', done: 'Wissensdatenbanken durchsucht' },
+		query_knowledge_bases: { active: 'Frage Wissensdatenbank ab...', executing: 'Frage Wissensdatenbank ab...', done: 'Wissensdatenbank abgefragt' },
+
+		// Dateien in Knowledge Bases
+		grep_knowledge_files: { active: 'Durchsuche Dateien (Grep)...', executing: 'Durchsuche Dateien (Grep)...', done: 'Dateien durchsucht' },
+		search_knowledge_files: { active: 'Suche in Wissensdateien...', executing: 'Suche in Wissensdateien...', done: 'Wissensdateien durchsucht' },
+		query_knowledge_files: { active: 'Frage Wissensdateien ab...', executing: 'Frage Wissensdateien ab...', done: 'Wissensdateien abgefragt' },
+		view_knowledge_file: { active: 'Öffne Wissensdatei...', executing: 'Lade Wissensdatei...', done: 'Wissensdatei geöffnet' },
+
+		// Chats
+		search_chats: { active: 'Suche in Chats...', executing: 'Suche in Chats...', done: 'Chats durchsucht' },
+		view_chat: { active: 'Lade Chat...', executing: 'Lade Chat...', done: 'Chat geladen' },
+
+		// Speicher & Erinnerungen (Memories)
+		search_memories: { active: 'Durchsuche Erinnerungen...', executing: 'Durchsuche Erinnerungen...', done: 'Erinnerungen durchsucht' },
+		list_memory_paths: { active: 'Lade Speicherpfade...', executing: 'Lade Speicherpfade...', done: 'Speicherpfade geladen' },
+		read_memory_path: { active: 'Lese Speicherpfad...', executing: 'Lese Speicherpfad...', done: 'Speicherpfad gelesen' },
+		list_memories: { active: 'Lade Erinnerungen...', executing: 'Lade Erinnerungen...', done: 'Erinnerungen geladen' },
+		update_memory: { active: 'Aktualisiere Erinnerung...', executing: 'Aktualisiere Erinnerung...', done: 'Erinnerung aktualisiert' },
+		add_memory: { active: 'Speichere Erinnerung...', executing: 'Speichere Erinnerung...', done: 'Erinnerung gespeichert' },
+		replace_memory_content: { active: 'Ersetze Erinnerungsinhalt...', executing: 'Ersetze Erinnerungsinhalt...', done: 'Erinnerungsinhalt ersetzt' },
+		delete_memory: { active: 'Lösche Erinnerung...', executing: 'Lösche Erinnerung...', done: 'Erinnerung gelöscht' },
+
+		// Bilder
+		generate_image: { active: 'Bereite Bildgenerierung vor...', executing: 'Generiere Bild...', done: 'Bild generiert' },
+		edit_image: { active: 'Bereite Bildbearbeitung vor...', executing: 'Bearbeite Bild...', done: 'Bild bearbeitet' },
+
+		// Notizen
+		search_notes: { active: 'Durchsuche Notizen...', executing: 'Durchsuche Notizen...', done: 'Notizen durchsucht' },
+		view_note: { active: 'Öffne Notiz...', executing: 'Lade Notiz...', done: 'Notiz geöffnet' },
+		write_note: { active: 'Erstelle Notiz...', executing: 'Schreibe Notiz...', done: 'Notiz erstellt' },
+		replace_note_content: { active: 'Überarbeite Notiz...', executing: 'Ersetze Notizinhalt...', done: 'Notiz überarbeitet' },
+
+		// Aufgaben & Automationen
+		create_tasks: { active: 'Erstelle Aufgabe...', executing: 'Erstelle Aufgabe...', done: 'Aufgabe erstellt' },
+		update_task: { active: 'Aktualisiere Aufgabe...', executing: 'Aktualisiere Aufgabe...', done: 'Aufgabe aktualisiert' },
+		create_automation: { active: 'Richte Automation ein...', executing: 'Erstelle Automation...', done: 'Automation eingerichtet' },
+		update_automation: { active: 'Aktualisiere Automation...', executing: 'Aktualisiere Automation...', done: 'Automation aktualisiert' },
+		list_automations: { active: 'Lade Automationen...', executing: 'Lade Automationen...', done: 'Automationen geladen' },
+		toggle_automation: { active: 'Schalte Automation um...', executing: 'Schalte Automation um...', done: 'Automation umgeschaltet' },
+		delete_automation: { active: 'Lösche Automation...', executing: 'Lösche Automation...', done: 'Automation gelöscht' },
+
+		// Kalender
+		search_calendar_events: { active: 'Durchsuche Kalender...', executing: 'Durchsuche Kalender...', done: 'Kalender durchsucht' },
+		create_calendar_event: { active: 'Erstelle Kalendereintrag...', executing: 'Trage Termin ein...', done: 'Termin eingetragen' },
+		update_calendar_event: { active: 'Aktualisiere Kalendereintrag...', executing: 'Aktualisiere Termin...', done: 'Termin aktualisiert' },
+		delete_calendar_event: { active: 'Lösche Kalendereintrag...', executing: 'Lösche Termin...', done: 'Termin gelöscht' },
+
+		// Websuche
+		search_web: { active: 'Durchsuche Web...', executing: 'Durchsuche Web...', done: 'Web durchsucht' },
+		fetch_url: { active: 'Hole URL...', executing: 'Hole URL...', done: 'URL abgerufen' },
+	};
+
+	function formatFallbackName(name: string): string {
+		if (!name) return '';
+		return name
+			.replace(/_/g, ' ')
+			.replace(/([a-z])([A-Z])/g, '$1 $2')
+			.replace(/\b\w/g, (char) => char.toUpperCase());
+	}
+
+	function getStatusLabel(
+		name: string,
+		isDoneState: boolean,
+		isExecutingState: boolean,
+		isPreparingState: boolean
+	): string {
+		const config = TOOL_CONFIG[name];
+
+		if (config) {
+			if (isDoneState) return config.done;
+			if (isExecutingState) return config.executing;
+			if (isPreparingState) return config.active;
+		}
+
+		const prettyName = formatFallbackName(name);
+
+		if (isDoneState) return `${prettyName} abgeschlossen`;
+		if (isExecutingState) return `${prettyName} wird ausgeführt...`;
+		if (isPreparingState) return `${prettyName} wird vorbereitet...`;
+
+		return prettyName;
+	}
+
+	$: statusLabel = getStatusLabel(attributes?.name ?? '', isDone, isExecuting, isPreparing);
 
 	function parseJSONString(str: string) {
 		// Iteratively unwrap nested JSON-encoded strings. Same result as the previous
@@ -194,6 +296,7 @@
 		</div>
 	{:else}
 		<!-- Tool call display -->
+		<!-- Tool call display -->
 		<div
 			class="{buttonClassName} w-full min-w-0 cursor-pointer"
 			role="button"
@@ -201,8 +304,9 @@
 			on:click={toggleOpen}
 			on:keydown={toggleOpenOnKeydown}
 		>
+			<!-- inline-flex sorgt dafür, dass sich das Element eng um Inhalt & Chevron schmiegt -->
 			<div
-				class="w-full min-w-0 max-w-full font-normal flex items-center gap-1.5 {isActive
+				class="inline-flex max-w-full font-normal items-center gap-1.5 {isActive
 					? 'shimmer'
 					: ''}"
 			>
@@ -229,30 +333,23 @@
 					</div>
 				{/if}
 
-				<!-- Label -->
-				<div class="flex-1 min-w-0 line-clamp-1">
-					<!-- Short label (below md) -->
-					<span class="@md:hidden text-black dark:text-white">{attributes.name}</span>
-					<!-- Full label (md and above) -->
-					<span class="hidden @md:inline font-normal">
+				<!-- Label (ohne flex-1, damit es keine freie Fläche auffüllt) -->
+				<div class="min-w-0 truncate">
+					<span class="font-normal text-black dark:text-gray-500">
 						{#if isRejected}
-							{$i18n.t('Denied {{NAME}}', { NAME: attributes.name })}
-						{:else if isDone}
-							{$i18n.t('View Result from {{NAME}}', { NAME: attributes.name })}
+							{$i18n.t('Denied {{NAME}}', { NAME: statusLabel })}
 						{:else if needsInput}
 							{$i18n.t('Input needed')}
 						{:else if needsApproval}
-							{$i18n.t('Allow {{NAME}}?', { NAME: attributes.name })}
-						{:else if isPreparing}
-							{$i18n.t('Preparing {{NAME}}...', { NAME: attributes.name })}
+							{$i18n.t('Allow {{NAME}}?', { NAME: statusLabel })}
 						{:else}
-							{$i18n.t('Executing {{NAME}}...', { NAME: attributes.name })}
+							{statusLabel}
 						{/if}
 					</span>
 				</div>
 
 				{#if needsApproval && !isAskUser}
-					<span class="flex gap-1 shrink-0">
+					<span class="flex gap-1 shrink-0 ml-1">
 						<button
 							type="button"
 							class="tool-call-allow-button text-[0.6875rem] px-2.5 py-0.5 rounded-md text-gray-600 dark:text-gray-300 bg-gray-100 dark:bg-white/8 hover:bg-gray-200 dark:hover:bg-white/12 transition-colors duration-100 disabled:opacity-50"
@@ -271,12 +368,12 @@
 						</button>
 					</span>
 				{:else}
-					<!-- Chevron -->
+					<!-- Chevron (sitzt jetzt direkt neben dem Text dank gap-1.5) -->
 					<div class="flex shrink-0 self-center translate-y-[1px]">
 						{#if open}
-							<ChevronUp strokeWidth="3.5" className="size-3" />
-						{:else}
 							<ChevronDown strokeWidth="3.5" className="size-3" />
+						{:else}
+							<ChevronRight strokeWidth="3.5" className="size-3" />
 						{/if}
 					</div>
 				{/if}
