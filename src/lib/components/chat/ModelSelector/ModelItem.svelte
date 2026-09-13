@@ -8,6 +8,7 @@
 	import { WEBUI_API_BASE_URL, WEBUI_BASE_URL } from '$lib/constants';
 
 	import Tooltip from '$lib/components/common/Tooltip.svelte';
+	import ModelHoverCard from './ModelHoverCard.svelte';
 	import { copyToClipboard, sanitizeResponseContent } from '$lib/utils';
 	import ArrowUpTray from '$lib/components/icons/ArrowUpTray.svelte';
 	import Check from '$lib/components/icons/Check.svelte';
@@ -142,7 +143,7 @@
 			</div>
 		{/if} -->
 
-		<div class="flex items-center gap-2 overflow-hidden">
+		<div class="flex items-center gap-2 overflow-visible">
 			<div class="flex items-center min-w-fit">
 				<Tooltip content={$user?.role === 'admin' ? (item?.value ?? '') : ''} placement="top-start">
 					<img
@@ -160,12 +161,17 @@
 				</Tooltip>
 			</div>
 
-			<div class="flex min-w-0 items-center">
-				<Tooltip content={costTooltipText} placement="top-start">
-					<div class="line-clamp-1">
+			<div class="flex min-w-0 flex-1 items-center">
+				<ModelHoverCard 
+					model={item} 
+					info={modelCostMap?.find((c) => c.model === item.model.id || c.model === item.value)}
+					{costTier}
+					{costBadgeColor}
+				>
+					<div class="line-clamp-1 truncate">
 						{item.label}
 					</div>
-				</Tooltip>
+				</ModelHoverCard>
 			</div>
 
 			<div class="flex shrink-0 items-center gap-1.5">

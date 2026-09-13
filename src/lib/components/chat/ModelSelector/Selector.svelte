@@ -14,7 +14,7 @@
 
 	import { deleteModel, getOllamaVersion, pullModel } from '$lib/apis/ollama';
 	import { getAllowedModelsOfProject } from '$lib/apis/projects';
-	import { getModelCostMap } from '$lib/apis/litellm';
+	import { getModelInfoMap } from '$lib/apis/litellm';
 	import { unloadModel } from '$lib/apis';
 	import {
 		downloadProviderModel,
@@ -65,7 +65,7 @@
 	export let selectionOnly = false;
 	export let includeHidden = false;
 
-	let modelCostMap = [];
+	let modelCostMap: { model?: string; provider?: string }[] = [];
 
 	export let items: {
 		label: string;
@@ -256,10 +256,7 @@
 
 		if ($selectedProject?.id) {
 			try {
-				allowedModelIds = await getAllowedModelsOfProject(
-					localStorage.token,
-					$selectedProject.id
-				);
+				allowedModelIds = await getAllowedModelsOfProject(localStorage.token, $selectedProject.id);
 				models.set(allModels.filter((m) => allowedModelIds.includes(m.id)));
 			} catch (e) {
 				console.error('Konnte erlaubte Modelle für Projekt nicht laden', e);
@@ -315,6 +312,14 @@
 
 	const getProviderPoolKey = (connection, model: string) =>
 		`${connection.provider}:${connection.idx}:${model}`;
+
+	const getModelProvider = (item: (typeof items)[number]) => {
+		const modelInfo = modelCostMap.find((info) =>
+			[item.value, item.model?.id, item.model?.name].includes(info.model)
+		);
+
+		return modelInfo?.provider ?? '';
+	};
 
 	const fuse = new Fuse(
 		items.map((item) => {
@@ -399,7 +404,20 @@
 							return item.model?.direct;
 						}
 					})
-	).filter((item) => includeHidden || !(item.model?.info?.meta?.hidden ?? false));
+	)
+		.filter((item) => includeHidden || !(item.model?.info?.meta?.hidden ?? false))
+		.sort((a, b) => {
+			const providerA = getModelProvider(a);
+			const providerB = getModelProvider(b);
+
+			if (!providerA && providerB) return 1;
+			if (providerA && !providerB) return -1;
+
+			return (
+				providerA.localeCompare(providerB, undefined, { sensitivity: 'base' }) ||
+				a.label.localeCompare(b.label, undefined, { sensitivity: 'base' })
+			);
+		});
 
 	$: sanitizedSearchValue = searchValue.trim();
 	$: downloadTargets =
@@ -494,7 +512,13 @@
 		}
 
 		// Set the virtual scroll position so the selected item is rendered and centered
-		const targetScrollTop = Math.max(0, selectedModelIdx * ITEM_HEIGHT - 128 + ITEM_HEIGHT / 2);
+		const selectedRowIndex = modelRows.findIndex(
+			(row) => row.type === 'model' && row.index === selectedModelIdx
+		);
+		const targetScrollTop = Math.max(
+			0,
+			Math.max(0, selectedRowIndex) * ITEM_HEIGHT - 128 + ITEM_HEIGHT / 2
+		);
 		listScrollTop = targetScrollTop;
 
 		await tick();
@@ -844,17 +868,17 @@
 	};
 
 	onMount(() => {
-		getModelCostMap(localStorage.token)
+		getModelInfoMap(localStorage.token)
 			.then((res) => {
-				if (res?.model_cost_map) {
-					modelCostMap = res.model_cost_map;
+				if (res?.model_info_map) {
+					modelCostMap = res.model_info_map;
 				}
 			})
 			.catch((err) => {
 				console.error('Fehler beim Laden der Modellkosten:', err);
 			});
-		
-			if (items) {
+
+		if (items) {
 			tags = items
 				.filter((item) => includeHidden || !(item.model?.info?.meta?.hidden ?? false))
 				.flatMap((item) => item.model?.tags ?? [])
@@ -862,8 +886,6 @@
 			// Remove duplicates and sort
 			tags = Array.from(new Set(tags)).sort((a, b) => a.localeCompare(b));
 		}
-
-		
 
 		window.addEventListener('scroll', handleScroll, true);
 		window.visualViewport?.addEventListener('resize', scheduleSettledPositionUpdates);
@@ -1000,9 +1022,30 @@
 		};
 	};
 
+	$: modelGroups = filteredItems.reduce((groups, item) => {
+		const provider = getModelProvider(item) || $i18n.t('Other');
+		const group = groups.find((entry) => entry.provider === provider);
+
+		if (group) {
+			group.items.push(item);
+		} else {
+			groups.push({ provider, items: [item] });
+		}
+
+		return groups;
+	}, []);
+	$: modelRows = modelGroups.flatMap((group) => [
+		{ type: 'header', provider: group.provider },
+		...group.items.map((item) => ({
+			type: 'model',
+			item,
+			index: filteredItems.indexOf(item)
+		}))
+	]);
+
 	$: visibleStart = Math.max(0, Math.floor(listScrollTop / ITEM_HEIGHT) - OVERSCAN);
 	$: visibleEnd = Math.min(
-		filteredItems.length,
+		modelRows.length,
 		Math.ceil((listScrollTop + listViewportHeight) / ITEM_HEIGHT) + OVERSCAN
 	);
 </script>
@@ -1027,7 +1070,8 @@
 <div class="relative w-full">
 	<button
 		bind:this={triggerElement}
-		class="focus-ring relative w-full rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 {($settings?.highContrastMode ?? false)
+		class="focus-ring relative w-full rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 {($settings?.highContrastMode ??
+		false)
 			? ''
 			: 'outline-hidden focus:outline-hidden'}"
 		aria-label={selectedModel
@@ -1113,7 +1157,7 @@
 									});
 								}}
 							/>
-
+<!--
 							{#if modelFilterItems.length > 0 || (multipleEnabled && items.length > 0)}
 								<div class="flex min-w-0 shrink-0 items-center gap-0.5">
 									{#if multipleEnabled && items.length > 0}
@@ -1158,6 +1202,7 @@
 									{/if}
 								</div>
 							{/if}
+							-->
 						</div>
 					{/if}
 
@@ -1209,26 +1254,33 @@
 								}}
 							>
 								<div style="height: {visibleStart * ITEM_HEIGHT}px;" />
-								{#each filteredItems.slice(visibleStart, visibleEnd) as item, i (item.value)}
-									{@const index = visibleStart + i}
-									<ModelItem
-										{selectedModelIdx}
-										{item}
-										{index}
-										{modelCostMap}
-										value={primaryValue}
-										{pinModelHandler}
-										{unloadModelHandler}
-										{deleteModelHandler}
-										{selectionOnly}
-										{compareEnabled}
-										{selectedValues}
-										onClick={() => {
-											selectItem(item, index);
-										}}
-									/>
+								{#each modelRows.slice(visibleStart, visibleEnd) as row (row.type === 'header' ? `provider-${row.provider}` : row.item.value)}
+									{#if row.type === 'header'}
+										<div
+											class="flex h-8 items-center px-2 text-[0.6875rem] font-medium uppercase tracking-wide text-gray-400 dark:text-gray-500"
+										>
+											{row.provider}
+										</div>
+									{:else}
+										<ModelItem
+											{selectedModelIdx}
+											item={row.item}
+											index={row.index}
+											{modelCostMap}
+											value={primaryValue}
+											{pinModelHandler}
+											{unloadModelHandler}
+											{deleteModelHandler}
+											{selectionOnly}
+											{compareEnabled}
+											{selectedValues}
+											onClick={() => {
+												selectItem(row.item, row.index);
+											}}
+										/>
+									{/if}
 								{/each}
-								<div style="height: {(filteredItems.length - visibleEnd) * ITEM_HEIGHT}px;" />
+								<div style="height: {(modelRows.length - visibleEnd) * ITEM_HEIGHT}px;" />
 							</div>
 						{/if}
 

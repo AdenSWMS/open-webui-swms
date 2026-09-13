@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import { getUserAnalytics, getModelCostMap } from '$lib/apis/litellm';
+	import { getUserAnalytics, getModelInfoMap } from '$lib/apis/litellm';
 
 	import UsageTables from './UsagtTables.svelte';
 	import UsageTablesSkeleton from './Skeletons/TableSkeleton.svelte';
@@ -46,7 +46,7 @@
 	async function fetchModelCostMap() {
 		try {
 			const token = localStorage.token;
-			const cost_data = await getModelCostMap(token);
+			const cost_data = await getModelInfoMap(token);
 			
 			modelCostMap = cost_data?.model_cost_map || [];
 		} catch (err) {

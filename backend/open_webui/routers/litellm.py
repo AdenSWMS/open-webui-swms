@@ -396,8 +396,8 @@ async def get_user_analytics(
                 detail=f"LiteLLM Server nicht erreichbar: {exc}"
             )
 
-@router.get("/modelcost")
-async def get_model_cost_map(user = Depends(get_verified_user)):
+@router.get("/model_info")
+async def get_model_info_map(user = Depends(get_verified_user)):
     if not LITELLM_MASTER_KEY:
         raise HTTPException(
             status_code=500, 
@@ -424,10 +424,11 @@ async def get_model_cost_map(user = Depends(get_verified_user)):
 
             data = response.json().get("data", [])
 
-            model_cost_map = []
+            model_info_map = []
             for model in data:
                 model_name = model.get("model_name")
                 model_info = model.get("model_info", {})
+                litellm_params = model.get("litellm_params", {})
 
                 input_cost = model_info.get("input_cost_per_token") or 0.0
                 output_cost = model_info.get("output_cost_per_token") or 0.0
@@ -437,17 +438,22 @@ async def get_model_cost_map(user = Depends(get_verified_user)):
                 max_input = model_info.get("max_input_tokens") or model_info.get("max_tokens")
                 max_output = model_info.get("max_output_tokens") or model_info.get("max_tokens")
 
-                model_cost_map.append({
+                model_info_map.append({
                     "model": model_name,
+                    "provider": model_info.get("litellm_provider") or litellm_params.get("litellm_provider"),
+                    "description": model_info.get("description") or model.get("description"),
+                    "supports_vision": bool(model_info.get("supports_vision", model.get("supports_vision", False))),
+                    "supports_reasoning": bool(model_info.get("supports_reasoning", model.get("supports_reasoning", False))),
+                    "supports_function_calling": bool(model_info.get("supports_function_calling", model.get("supports_function_calling", False))),
                     "input": f"${input_cost * 1_000_000:.2f}" if input_cost else "$0.00",
                     "output": f"${output_cost * 1_000_000:.2f}" if output_cost else "$0.00",
                     "cacheRead": f"${cache_read_cost * 1_000_000:.2f}" if cache_read_cost else "—",
                     "cacheWrite": f"${cache_write_cost * 1_000_000:.2f}" if cache_write_cost else "—",
                     "maxInput": f"{max_input:,}" if max_input else "—",
-                    "maxOutput": f"{max_output:,}" if max_output else "—"
+                    "maxOutput": f"{max_output:,}" if max_output else "—",
                 })
 
-            return {"model_cost_map": model_cost_map}
+            return {"model_info_map": model_info_map}
 
         except httpx.RequestError as exc:
             raise HTTPException(
