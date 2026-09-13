@@ -48,7 +48,7 @@
 
 		<!-- Prozentanzeige (Auf Mobile einzig sichtbar) -->
 		<span class="font-bold">
-			{spentPercent}% Budget
+			({spentPercent}%) 
 		</span>
 	</div>
 </button>
