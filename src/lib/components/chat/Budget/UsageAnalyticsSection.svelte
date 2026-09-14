@@ -48,7 +48,7 @@
 			const token = localStorage.token;
 			const cost_data = await getModelInfoMap(token);
 			
-			modelCostMap = cost_data?.model_cost_map || [];
+			modelCostMap = cost_data?.model_info_map || [];
 		} catch (err) {
 			console.error('Fehler beim Abrufen der Modellkostenkarte:', err);
 			modelCostMap = [];

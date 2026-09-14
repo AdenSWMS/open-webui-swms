@@ -81,15 +81,15 @@
 </script>
 
 <div>
-	<div class="grid grid-cols-3 items-center gap-4 my-4">
-		<div class="text-right">
-			<div class="text-2xl font-bold text-sky-400">{timePercent}%</div>
-			<div class="text-xs font-semibold uppercase tracking-wider text-gray-400">Zeitraum</div>
-			<div class="text-xs text-gray-500 mt-1">{timeLabel}</div>
-		</div>
-
-		<div class="flex justify-center items-center relative">
-			<svg width={sizePx} height={sizePx} class="transform -rotate-90 overflow-visible">
+	<!-- Mobile: Flex Column (Diagramm oben, Werte unten nebeneinander). Desktop (md:): Original 3-Spalten Grid -->
+	<div class="flex flex-col md:grid md:grid-cols-3 items-center gap-6 md:gap-4 my-4">
+		
+		<!-- Diagramm (Auf Mobile als Erstes oben zentriert) -->
+		<div class="flex justify-center items-center relative order-1 md:order-2">
+			<svg 
+				viewBox="0 0 {sizePx} {sizePx}" 
+				class="w-[160px] h-[160px] sm:w-[180px] sm:h-[180px] transform -rotate-90 overflow-visible"
+			>
 				<circle cx={center} cy={center} r={outerRadius} stroke="currentColor" stroke-width={strokeWidth} fill="transparent" class="text-gray-200 dark:text-gray-800" />
 				<circle cx={center} cy={center} r={innerRadius} stroke="currentColor" stroke-width={strokeWidth} fill="transparent" class="text-gray-200 dark:text-gray-800" />
 
@@ -102,11 +102,21 @@
 			</div>
 		</div>
 
-		<div class="text-left">
+		<!-- Zeitraum (Mobile: Links unten, Desktop: Links) -->
+		<div class="w-full text-center md:text-right order-2 md:order-1 flex-1">
+			<div class="text-2xl font-bold text-sky-400">{timePercent}%</div>
+			<div class="text-xs font-semibold uppercase tracking-wider text-gray-400">Zeitraum</div>
+			<div class="text-xs text-gray-500 mt-1">{timeLabel}</div>
+		</div>
+
+		<!-- Verbraucht (Mobile: Rechts unten, Desktop: Rechts) -->
+		<div class="w-full text-center md:text-left order-3 flex-1">
 			<div class="text-2xl font-bold {budgetColorClass()}">{spentPercent}%</div>
 			<div class="text-xs font-semibold uppercase tracking-wider text-gray-400">Verbraucht</div>
-			<div class="text-xs text-gray-500 mt-1">{budgetLabel}</div>
+			<!-- break-words schützt vor Overflow bei lange Formatierungen -->
+			<div class="text-xs text-gray-500 mt-1 break-words">{budgetLabel}</div>
 		</div>
+
 	</div>
 
 	<div class="mt-6 p-4 rounded-xl border text-sm {statusInfo().bg} transition-colors duration-300">

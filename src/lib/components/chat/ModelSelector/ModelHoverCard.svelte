@@ -1,4 +1,9 @@
 <script lang="ts">
+    import { getContext } from 'svelte';
+
+    import { WEBUI_API_BASE_URL, WEBUI_BASE_URL } from '$lib/constants';
+
+    const i18n = getContext('i18n');
 	export let model: any;
 	export let info: any = null;
 
@@ -58,11 +63,28 @@
 			style={`top: ${cardPosition.top}px; left: ${cardPosition.left}px;`}
 		>
 			<div class="flex items-center gap-3 mb-3">
-				<img
-					src={model?.icon || '/favicon.png'}
-					alt={model?.label}
-					class="size-8 object-cover"
-				/>
+				<div class="flex items-center gap-3 mb-3">
+                    <img
+                        src={`${WEBUI_API_BASE_URL}/models/model/profile/image?id=${model?.model?.id || model?.id}&lang=${$i18n.language}`}
+                        alt={model?.label}
+						class="flex size-4 items-center rounded-full"
+						loading="lazy"
+                        on:error={(e) => {
+                            // LICENSE covers this Open WebUI fallback logo.
+                            // Do not alter, remove, obscure, or replace it except as LICENSE permits:
+                            // https://docs.openwebui.com/license.
+                            e.currentTarget.src = '/favicon.png';
+                        }}
+                    />
+                    <div class="min-w-0">
+                        <h4 class="font-semibold text-xs text-gray-900 dark:text-gray-100 truncate">
+                            {model?.label}
+                        </h4>
+                        <span class="text-[0.65rem] text-gray-500 capitalize">
+                            {info?.provider || 'Provider'}
+                        </span>
+                    </div>
+                </div>
 				<div class="min-w-0">
 					<h4 class="font-semibold text-xs text-gray-900 dark:text-gray-100 truncate">
 						{model?.label}
