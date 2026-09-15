@@ -76,15 +76,8 @@
                             e.currentTarget.src = '/favicon.png';
                         }}
                     />
-                    <div class="min-w-0">
-                        <h4 class="font-semibold text-xs text-gray-900 dark:text-gray-100 truncate">
-                            {model?.label}
-                        </h4>
-                        <span class="text-[0.65rem] text-gray-500 capitalize">
-                            {info?.provider || 'Provider'}
-                        </span>
-                    </div>
-                </div>
+                   
+				</div>
 				<div class="min-w-0">
 					<h4 class="font-semibold text-xs text-gray-900 dark:text-gray-100 truncate">
 						{model?.label}
