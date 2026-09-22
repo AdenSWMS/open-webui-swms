@@ -61,6 +61,9 @@ async def get_projects_by_member_id(
     user=Depends(get_verified_user),
     db: AsyncSession = Depends(get_async_session),
 ):
+    #Ensure use is in Default Project and that the Default Project exists
+    await Projects.ensure_default_project(user.id, db=db)
+    
     projects = await Projects.get_projects_by_member_id(user.id, db=db)
     return projects
 

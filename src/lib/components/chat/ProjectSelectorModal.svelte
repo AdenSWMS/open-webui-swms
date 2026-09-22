@@ -14,7 +14,7 @@
 
 	export let searchEnabled = true;
 	export let searchPlaceholder = $i18n.t('Suche nach Projekten');
-
+	const DEFAULT_PROJECT_NAME = 'Default';
 
 	let rawProjects: any[] = [];
 	let items: { name: string; id: string; project: any; [key: string]: any }[] = [];
@@ -32,28 +32,42 @@
 		loadProjects();
 	}
 
-	async function loadProjects() {
+	async function loadProjects(retries = 10, delayMs = 1000) {
 		loading = true;
 		searchValue = '';
 		listScrollTop = 0;
 		selectedProjectIdx = 0;
-		try {
-			const response = await getProjectsByUser(localStorage.token);
-			rawProjects = response ?? [];
 
-			items = rawProjects.map((p) => ({
-				name: p.name,
-				id: p.id,
-				project: p
-			}));
-		} catch (error) {
-			console.error('Fehler beim Laden der Projekte:', error);
-			items = [];
-		} finally {
-			loading = false;
-			await tick();
-			focusSearchInput();
+		for (let attempt = 0; attempt < retries; attempt++) {
+			try {
+				const response = await getProjectsByUser(localStorage.token);
+				rawProjects = response ?? [];
+
+				items = rawProjects.map((p) => ({
+					name: p.name,
+					id: p.id,
+					project: p
+				}));
+
+				if (items.length > 0) {
+					break;
+				}
+
+				if (attempt < retries - 1) {
+					await new Promise((resolve) => setTimeout(resolve, delayMs));
+				}
+			} catch (error) {
+				console.error(`Fehler beim Laden der Projekte (Versuch ${attempt + 1}):`, error);
+				items = [];
+				if (attempt < retries - 1) {
+					await new Promise((resolve) => setTimeout(resolve, delayMs));
+				}
+			}
 		}
+
+		loading = false;
+		await tick();
+		focusSearchInput();
 	}
 
 	function focusSearchInput() {
@@ -77,11 +91,9 @@
 		}
 	);
 
-	$: filteredItems = (
-		searchValue
-			? fuse.search(searchValue).map((e) => e.item)
-			: items
-	).filter((item) => !(item.project?.info?.meta?.hidden ?? false));
+	$: filteredItems = (searchValue ? fuse.search(searchValue).map((e) => e.item) : items).filter(
+		(item) => !(item.project?.info?.meta?.hidden ?? false)
+	);
 
 	$: if (searchValue !== undefined) {
 		resetView();
@@ -104,11 +116,17 @@
 	);
 
 	function confirmSelection(item: any | null) {
-		onSelect(item);
+		if (item) {
+			onSelect(item);
+		}
 	}
 
-	function handleSkip() {
-		confirmSelection(null);
+	function handleDefault() {
+		const defaultItem = items.find((item) => item.name === DEFAULT_PROJECT_NAME) ?? null;
+
+		if (defaultItem) {
+			confirmSelection(defaultItem);
+		}
 	}
 
 	function handleKeydown(e: KeyboardEvent) {
@@ -136,17 +154,21 @@
 	}
 </script>
 
-<Modal bind:show size="md">
+<Modal bind:show size="md" dismissible={false}>
 	<div class="p-6 text-gray-900 dark:text-gray-100 flex flex-col max-h-[85vh]">
 		<h3 class="text-xl font-semibold mb-1">
 			{$i18n.t('Wähle ein Projekt')}
 		</h3>
 		<p class="text-sm text-gray-500 dark:text-gray-400 mb-4">
-			{$i18n.t('Dieses Projets wird dem Chat zugewiesen. Dadurch werden genau die Modelle freigeschaltet, die für dieses Projekt vorgesehen sind. Wenn kein Projekt ausgewählt wird, dann wird der Chat keinem Projekt zugeordnet und es werden alle Modelle freigeschaltet.')}
+			{$i18n.t(
+				'Bitte wähle ein Projekt aus, um fortzufahren. Das gewählte Projekt schaltet die entsprechenden Modelle für den Chat frei.'
+			)}
 		</p>
 
 		{#if searchEnabled && !loading && items.length > 0}
-			<div class="flex items-center gap-2.5 px-3 py-2 border border-gray-200 dark:border-gray-800 rounded-xl mb-3 bg-gray-50 dark:bg-gray-900">
+			<div
+				class="flex items-center gap-2.5 px-3 py-2 border border-gray-200 dark:border-gray-800 rounded-xl mb-3 bg-gray-50 dark:bg-gray-900"
+			>
 				<Search className="size-4 text-gray-400" strokeWidth="2.5" />
 				<input
 					id="modal-project-search-input"
@@ -206,10 +228,11 @@
 		<div class="mt-6 flex justify-end gap-2 pt-3 border-t border-gray-100 dark:border-gray-800">
 			<button
 				type="button"
-				on:click={handleSkip}
-				class="px-4 py-2 text-sm rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+				disabled={loading || !items.some((item) => item.name === DEFAULT_PROJECT_NAME)}
+				on:click={handleDefault}
+				class="px-4 py-2 text-sm rounded-lg border border-gray-300 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors disabled:opacity-50"
 			>
-				{$i18n.t('Überspringen')}
+				{$i18n.t('Default')}
 			</button>
 			<button
 				type="button"

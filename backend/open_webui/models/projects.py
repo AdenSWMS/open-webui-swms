@@ -143,6 +143,58 @@ class ProjectTable:
             project_data['data']['config']['share'] = DEFAULT_PROJECT_SHARE_PERMISSION
         return project_data
 
+    async def ensure_default_project(
+        self, user_id: str, db: Optional[AsyncSession] = None
+    ) -> Optional[ProjectModel]:
+        """Ensure the user belongs to the shared Default project.
+
+        Returns the project when it or the membership was created, otherwise None.
+        """
+        async with get_async_db_context(db) as db:
+            result = await db.execute(select(Project).filter(Project.name == 'Default'))
+            project = result.scalars().first()
+            now = int(time.time())
+
+            if not project:
+                project = Project(
+                    id=str(uuid.uuid4()),
+                    user_id=user_id,
+                    name='Default',
+                    description='',
+                    data={
+                        'config': {
+                            'share': DEFAULT_PROJECT_SHARE_PERMISSION,
+                        }
+                    },
+                    created_at=now,
+                    updated_at=now,
+                )
+                db.add(project)
+                await db.flush()
+
+            member_result = await db.execute(
+                select(ProjectMember).filter(
+                    ProjectMember.project_id == project.id,
+                    ProjectMember.user_id == user_id,
+                )
+            )
+            if member_result.scalars().first():
+                return None
+
+            db.add(
+                ProjectMember(
+                    id=str(uuid.uuid4()),
+                    project_id=project.id,
+                    user_id=user_id,
+                    created_at=now,
+                    updated_at=now,
+                )
+            )
+            project.updated_at = now
+            await db.commit()
+            await db.refresh(project)
+            return ProjectModel.model_validate(project)
+
     async def insert_new_project(
         self, user_id: str, form_data: ProjectForm, db: Optional[AsyncSession] = None
     ) -> Optional[ProjectModel]:

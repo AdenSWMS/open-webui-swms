@@ -52,6 +52,7 @@ from open_webui.models.auths import (
 from open_webui.models.config import Config
 from open_webui.models.groups import Groups
 from open_webui.models.oauth_sessions import OAuthSessions
+from open_webui.models.projects import Projects
 from open_webui.models.users import (
     UpdateProfileForm,
     UserModel,
@@ -295,10 +296,13 @@ async def get_session_user(
 
     litellm_status = {'created': False, 'exists': False}
 
+    # Ensure the user exists in the LiteLLM system
     try:
         litellm_status = await ensure_litellm_user(user)
     except Exception as e:
         print(f'LiteLLM User Sync Fehler für {user.email}: {e}')
+
+
 
     response_data = {
         'token': token,

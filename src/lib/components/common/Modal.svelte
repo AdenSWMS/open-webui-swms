@@ -8,6 +8,7 @@
 	import { matchKeybinding, Shortcut } from '$lib/shortcuts';
 	export let show = true;
 	export let size = 'md';
+	export let dismissible = true;
 	export let containerClassName = 'p-3';
 	export let className = 'bg-white dark:bg-gray-900 rounded-4xl';
 
@@ -43,6 +44,7 @@
 
 	const handleKeyDown = (event: KeyboardEvent) => {
 		if (
+			dismissible &&
 			(event.key === 'Escape' ||
 				($settings?.keyboardShortcuts !== false &&
 					matchKeybinding(event) === Shortcut.CLOSE_MODAL)) &&
@@ -68,6 +70,8 @@
 	$: if (show && modalElement) {
 		document.body.appendChild(modalElement);
 		focusTrap = FocusTrap.createFocusTrap(modalElement, {
+			fallbackFocus: modalElement,
+			
 			allowOutsideClick: (e) => {
 				return (
 					e.target.closest('[data-sonner-toast]') !== null ||
@@ -132,7 +136,9 @@
 		style="scrollbar-gutter: stable;"
 		in:fade={{ duration: 10 }}
 		on:mousedown={() => {
-			show = false;
+			if (dismissible) {
+				show = false;
+			}
 		}}
 	>
 		<div
