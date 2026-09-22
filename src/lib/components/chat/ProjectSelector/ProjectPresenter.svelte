@@ -4,16 +4,17 @@
 	import equal from 'fast-deep-equal';
 
 	import ProjectPresenter from './ProjectPresenter.svelte';
+	import ProjectDetailModal from './ProjectInfoModal.svelte';
 
 	const i18n = getContext('i18n');
 
 	export let selectedProjects = [''];
-
 	export let editable = false;
-
 	export let placeholder = $i18n.t('Kein Projekt');
 	export let className = '';
 	export let labelClassName = 'text-sm font-medium';
+
+	let showDetailModal = false;
 
 	$: if (selectedProjects.length > 0 && $projects.length > 0) {
 		const _selectedProjects = selectedProjects.map((project) =>
@@ -21,6 +22,12 @@
 		);
 		if (!equal(_selectedProjects, selectedProjects)) {
 			selectedProjects = _selectedProjects;
+		}
+	}
+
+	function handleButtonClick() {
+		if ($selectedProject) {
+			showDetailModal = true;
 		}
 	}
 </script>
@@ -48,12 +55,16 @@
 	</div>
 {:else}
 	<div class="inline-flex items-center gap-2 select-none {className}">
-		<div
-			class="flex items-center gap-1.5 px-2.5 py-1 rounded-lg border border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-900/50 text-gray-700 dark:text-gray-300 truncate {($settings?.highContrastMode ??
-			false)
+		<button
+			type="button"
+			on:click={handleButtonClick}
+			disabled={!$selectedProject}
+			class="flex items-center gap-1.5 px-2.5 py-1 rounded-lg border border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-900/50 text-gray-700 dark:text-gray-300 truncate transition-colors {$selectedProject
+				? 'hover:bg-gray-100 dark:hover:bg-gray-800 cursor-pointer'
+				: 'cursor-default'} {($settings?.highContrastMode ?? false)
 				? 'border-gray-400 dark:border-gray-600'
 				: ''}"
-			title={$selectedProject?.label ?? placeholder}
+			title={$selectedProject?.name ?? placeholder}
 		>
 			<svg
 				xmlns="http://www.w3.org/2000/svg"
@@ -72,6 +83,9 @@
 					<span class="text-gray-400 dark:text-gray-500">{placeholder}</span>
 				{/if}
 			</span>
-		</div>
+		</button>
 	</div>
 {/if}
+
+<!-- Detail Modal zur Anzeige aller Projektinhalte -->
+<ProjectDetailModal bind:show={showDetailModal} project={$selectedProject} />

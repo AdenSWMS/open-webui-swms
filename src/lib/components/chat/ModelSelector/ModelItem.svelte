@@ -163,8 +163,8 @@
 			</div>
 
 			<div class="flex min-w-0 flex-1 items-center">
-				<ModelHoverCard 
-					model={item} 
+				<ModelHoverCard
+					model={item}
 					info={modelCostMap?.find((c) => c.model === item.model.id || c.model === item.value)}
 					{costTier}
 					{costBadgeColor}
@@ -306,10 +306,10 @@
 					</Tooltip>
 				{/if}
 
-				{#if localizedDescription}
+				{#if item.model?.info?.meta?.description}
 					<Tooltip
 						content={`${marked.parse(
-							sanitizeResponseContent(localizedDescription).replaceAll('\n', '<br>')
+							sanitizeResponseContent(item.model?.info?.meta?.description).replaceAll('\n', '<br>')
 						)}`}
 					>
 						<div class=" translate-y-[1px]">
