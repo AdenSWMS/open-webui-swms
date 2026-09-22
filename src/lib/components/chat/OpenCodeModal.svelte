@@ -231,29 +231,56 @@
 
 			{#if activeTab === 'windows'}
 				<!-- Installation Windows -->
-				<h3 class="font-semibold text-gray-900 dark:text-gray-100 text-base mb-3">Anleitung zur Installation</h3>
-				<ol class="list-decimal list-inside space-y-4 mb-8 text-gray-700 dark:text-gray-300">
+				<h3 class="font-semibold text-gray-900 dark:text-gray-100 text-base mb-3">Anleitung zur Einrichtung (PowerShell)</h3>
+				
+				<ol class="list-decimal list-inside space-y-5 mb-8 text-gray-700 dark:text-gray-300">
 					<li>Installieren Sie zuerst OpenCode.</li>
 					<li>
 						Wenn OpenCode schon installiert ist und eine Config-Datei für OpenCode auf Ihrem Rechner vorhanden ist, nutzen Sie die Anleitung zum Updaten.
 					</li>
 					<li>
-						<span>Installieren Sie <code class="px-1.5 py-0.5 rounded bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-200 font-mono text-xs">jq</code>, um die Konfigurationsdateien zusammenzuführen. Führen Sie dazu folgenden Befehl in der <strong class="text-gray-900 dark:text-white">PowerShell</strong> aus:</span>
+						<span><strong>Encoding & Paketmanager vorbereiten:</strong> UTF-8 Standard setzen, <code class="px-1.5 py-0.5 rounded bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-200 font-mono text-xs">jq</code> installieren und Execution Policy anpassen:</span>
 						<div class="mt-2">
-							<code class="block whitespace-pre-wrap bg-gray-100 dark:bg-gray-800 p-3 rounded-xl font-mono text-xs text-gray-800 dark:text-gray-200 overflow-x-auto leading-relaxed border border-gray-200 dark:border-gray-700/50">winget install jqlang.jq</code>
+							<code class="block whitespace-pre-wrap bg-gray-100 dark:bg-gray-800 p-3 rounded-xl font-mono text-xs text-gray-800 dark:text-gray-200 overflow-x-auto leading-relaxed border border-gray-200 dark:border-gray-700/50">[Console]::OutputEncoding = [System.Text.UTF8Encoding]::new($false)
+$OutputEncoding = [System.Text.UTF8Encoding]::new($false)
+
+winget install jqlang.jq
+Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser</code>
 						</div>
 					</li>
 					<li>
-						<span>Erstellen Sie den Konfigurationsordner und laden Sie die Basis-Datei herunter:</span>
+						<span><strong>Konfiguration herunterladen & API-Key eintragen:</strong> Erstellt den Konfigurationsordner, lädt die Basis-Datei und setzt den API-Key ein:</span>
 						<div class="mt-2">
 							<code class="block whitespace-pre-wrap bg-gray-100 dark:bg-gray-800 p-3 rounded-xl font-mono text-xs text-gray-800 dark:text-gray-200 overflow-x-auto leading-relaxed border border-gray-200 dark:border-gray-700/50">mkdir "$HOME\.config\opencode" -Force | Out-Null
-iwr https://opencode.office.swms.de/opencode.json -OutFile "$HOME\.config\opencode\opencode.json"</code>
+iwr https://opencode.office.swms.de/opencode.json -OutFile "$HOME\.config\opencode\opencode.json"
+
+$content = jq --arg key {apiKey || '"API Key hier"'} '.provider.swms.options.apiKey = $key' "$HOME\.config\opencode\opencode.json"
+[System.IO.File]::WriteAllText("$HOME\.config\opencode\opencode.json", $content, [System.Text.UTF8Encoding]::new($false))</code>
 						</div>
 					</li>
 					<li>
-						<span>API-Schlüssel in die Konfiguration eintragen (bei zuvor generiertem Key wird dieser automatisch eingesetzt):</span>
+						<span><strong>Plugins installieren (ponytail & i-have-adhd):</strong> Fügt die Erweiterungen zur Konfigurationsdatei hinzu:</span>
 						<div class="mt-2">
-							<code class="block whitespace-pre-wrap bg-gray-100 dark:bg-gray-800 p-3 rounded-xl font-mono text-xs text-gray-800 dark:text-gray-200 overflow-x-auto leading-relaxed border border-gray-200 dark:border-gray-700/50">$content = jq --arg key {apiKey || '"API Key hier"'} '.provider.swms.options.apiKey = $key' "$HOME\.config\opencode\opencode.json"; [System.IO.File]::WriteAllText("$HOME\.config\opencode\opencode.json", $content, [System.Text.UTF8Encoding]::new($false))</code>
+							<code class="block whitespace-pre-wrap bg-gray-100 dark:bg-gray-800 p-3 rounded-xl font-mono text-xs text-gray-800 dark:text-gray-200 overflow-x-auto leading-relaxed border border-gray-200 dark:border-gray-700/50"># ponytail plugin
+$content = jq --arg p "@dietrichgebert/ponytail" '.plugin = (.plugin // []) + [$p]' "$HOME\.config\opencode\opencode.json"
+[System.IO.File]::WriteAllText("$HOME\.config\opencode\opencode.json", $content, [System.Text.UTF8Encoding]::new($false))
+
+# i-have-adhd plugin
+git clone https://github.com/ayghri/i-have-adhd "$HOME\.config\opencode\vendor\i-have-adhd"
+$adhdPluginPath = "$HOME\.config\opencode\vendor\i-have-adhd\.opencode\plugins\i-have-adhd.mjs" -replace '\\', '/'
+$content = jq --arg p $adhdPluginPath '.plugin = (.plugin // []) + [$p]' "$HOME\.config\opencode\opencode.json"
+[System.IO.File]::WriteAllText("$HOME\.config\opencode\opencode.json", $content, [System.Text.UTF8Encoding]::new($false))
+New-Item -ItemType File -Path "$HOME\.config\opencode\.i-have-adhd-always" -Force | Out-Null</code>
+						</div>
+					</li>
+					<li>
+						<span><strong>Globales UI/UX Tooling & Skills installieren:</strong></span>
+						<div class="mt-2">
+							<code class="block whitespace-pre-wrap bg-gray-100 dark:bg-gray-800 p-3 rounded-xl font-mono text-xs text-gray-800 dark:text-gray-200 overflow-x-auto leading-relaxed border border-gray-200 dark:border-gray-700/50">npm install -g ui-ux-pro-max-cli
+uipro init --ai opencode --global
+
+# mattpocock skills (Interaktiv - Prompts manuell beantworten und OpenCode als Ziel wählen)
+npx skills@latest add mattpocock/skills</code>
 						</div>
 					</li>
 					<li>Starten Sie OpenCode neu und Sie sind fertig!</li>
@@ -261,28 +288,34 @@ iwr https://opencode.office.swms.de/opencode.json -OutFile "$HOME\.config\openco
 
 				<hr class="my-6 border-gray-100 dark:border-gray-850" />
 
-				<!-- Update Windows -->
-				<h3 class="font-semibold text-gray-900 dark:text-gray-100 text-base mb-3">Anleitung zum Updaten</h3>
-				<ol class="list-decimal list-inside space-y-4 text-gray-700 dark:text-gray-300">
-					<li>Der API-Key, sofern Sie ihn nicht neu generieren möchten, bleibt in der Config erhalten.</li>
-					<li>
-						<span>Um die Config zu aktualisieren, führen Sie folgenden Befehl in der <strong class="text-gray-900 dark:text-white">PowerShell</strong> aus:</span>
-						<div class="mt-2">
-							<code class="block whitespace-pre-wrap bg-gray-100 dark:bg-gray-800 p-3 rounded-xl font-mono text-xs text-gray-800 dark:text-gray-200 overflow-x-auto leading-relaxed border border-gray-200 dark:border-gray-700/50">
+			<!-- Update Windows -->
+			<h3 class="font-semibold text-gray-900 dark:text-gray-100 text-base mb-3">Anleitung zum Updaten</h3>
+			<ol class="list-decimal list-inside space-y-4 text-gray-700 dark:text-gray-300">
+				<li>Der API-Key sowie benutzerdefinierte Einstellungen bleiben in der Config erhalten.</li>
+				<li>
+					<span>Führen Sie folgenden Befehle in der <strong>PowerShell</strong> aus, um die SWMS-Modelle und installierten Skills zu aktualisieren:</span>
+					<div class="mt-2">
+						<code class="block whitespace-pre-wrap bg-gray-100 dark:bg-gray-800 p-3 rounded-xl font-mono text-xs text-gray-800 dark:text-gray-200 overflow-x-auto leading-relaxed border border-gray-200 dark:border-gray-700/50">[Console]::OutputEncoding = [System.Text.UTF8Encoding]::new($false)
+$OutputEncoding = [System.Text.UTF8Encoding]::new($false)
+
 iwr https://opencode.office.swms.de/opencode.json -OutFile "$env:TEMP\opencode.remote.json"
 
 $local = Get-Content "$HOME\.config\opencode\opencode.json" -Raw | ConvertFrom-Json
 $remote = Get-Content "$env:TEMP\opencode.remote.json" -Raw | ConvertFrom-Json
 
 $local.provider.swms.models = $remote.provider.swms.models
-
 $local | ConvertTo-Json -Depth 100 | Set-Content "$HOME\.config\opencode\opencode.json" -Encoding utf8
+Remove-Item "$env:TEMP\opencode.remote.json" -Force
 
-Remove-Item "$env:TEMP\opencode.remote.json" -Force</code>
-						</div>
-					</li>
-					<li>Starten Sie OpenCode neu und Sie sind fertig!</li>
-				</ol>
+# Skills & Plugins aktualisieren
+git -C "$HOME\.config\opencode\vendor\i-have-adhd" pull
+npm update -g ui-ux-pro-max-cli
+uipro update --global
+npx skills@latest update</code>
+					</div>
+				</li>
+				<li>Starten Sie OpenCode neu und Sie sind fertig!</li>
+			</ol>
 
 			{:else if activeTab === 'unix'}
 				<!-- Installation Unix -->
