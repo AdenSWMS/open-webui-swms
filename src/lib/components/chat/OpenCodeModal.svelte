@@ -239,12 +239,16 @@
 						Wenn OpenCode schon installiert ist und eine Config-Datei für OpenCode auf Ihrem Rechner vorhanden ist, nutzen Sie die Anleitung zum Updaten.
 					</li>
 					<li>
-						<span><strong>Encoding & Paketmanager vorbereiten:</strong> UTF-8 Standard setzen, <code class="px-1.5 py-0.5 rounded bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-200 font-mono text-xs">jq</code> installieren und Execution Policy anpassen:</span>
+						<span><strong>Encoding & Paketmanager vorbereiten:</strong> UTF-8 Standard setzen, <code class="px-1.5 py-0.5 rounded bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-200 font-mono text-xs">jq</code>
+							und <code class="px-1.5 py-0.5 rounded bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-200 font-mono text-xs">git</code> installieren und Execution Policy anpassen:</span>
 						<div class="mt-2">
 							<code class="block whitespace-pre-wrap bg-gray-100 dark:bg-gray-800 p-3 rounded-xl font-mono text-xs text-gray-800 dark:text-gray-200 overflow-x-auto leading-relaxed border border-gray-200 dark:border-gray-700/50">[Console]::OutputEncoding = [System.Text.UTF8Encoding]::new($false)
 $OutputEncoding = [System.Text.UTF8Encoding]::new($false)
 
 winget install jqlang.jq
+
+winget install git.git
+
 Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser</code>
 						</div>
 					</li>
