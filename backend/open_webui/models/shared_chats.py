@@ -46,6 +46,7 @@ class SharedChatModel(BaseModel):
 class SharedChatResponse(BaseModel):
     id: str
     chat_id: str
+    user_name: Optional[str] = None
     title: str
     share_id: Optional[str] = None  # Alias for id, for backward compat
     updated_at: int

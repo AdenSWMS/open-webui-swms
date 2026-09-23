@@ -107,7 +107,7 @@
 					</div>
 				{/if}
 			</a>
-
+		<!--
 		<a
 			id="groups"
 			href="/admin/users/groups"
@@ -131,7 +131,7 @@
 			</div>
 			<div class=" self-center">{$i18n.t('Groups')}</div>
 		</a>
-		
+	-->
 		<a
 			id="projects"
 			href="/admin/users/projects"
@@ -160,8 +160,8 @@
 		<div class="flex-1 px-3.5 lg:pr-[1rem] lg:pl-0 overflow-y-scroll">
 			{#if selectedTab === 'overview'}
 				<UserList />
-			{:else if selectedTab === 'groups'}
-				<Groups />
+			<!--{:else if selectedTab === 'groups'}
+				<Groups />-->
 			{:else if selectedTab === 'projects'}
 			<Projects />
 		{/if}

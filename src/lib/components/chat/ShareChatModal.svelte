@@ -8,18 +8,28 @@
 		getChatById,
 		shareChatById,
 		getChatAccessGrants,
-		updateChatAccessGrants
+		updateChatAccessGrants,
+		shareChatByIdWithProject,
+		unshareChatByIdWithProject
 	} from '$lib/apis/chats';
 	import { copyToClipboard } from '$lib/utils';
 
 	import Modal from '../common/Modal.svelte';
 	import Link from '../icons/Link.svelte';
+	import Folder from '../icons/Folder.svelte';
 	import XMark from '$lib/components/icons/XMark.svelte';
 	import AccessControl from '$lib/components/workspace/common/AccessControl.svelte';
 
+	type ShareableChat = {
+		id: string;
+		share_id?: string | null;
+		project_id?: string | null;
+		shared_with_project?: boolean;
+	};
+
 	export let chatId;
 
-	let chat = null;
+	let chat: ShareableChat | null = null;
 	let shareUrl = null;
 	let accessGrants: any[] = [];
 	const i18n = getContext('i18n');
@@ -35,34 +45,25 @@
 		return shareUrl;
 	};
 
-	const shareChat = async () => {
-		const _chat = chat.chat;
-		console.log('share', _chat);
+	const shareWithProject = async () => {
+		if (!chat?.project_id) {
+			toast.error($i18n.t('This chat is not assigned to a project'));
+			return;
+		}
 
-		// LICENSE covers this Open WebUI Community wordmark.
-		// Do not alter, remove, obscure, or replace it except as LICENSE permits:
-		// https://docs.openwebui.com/license.
-		toast.success($i18n.t('Redirecting you to Open WebUI Community'));
-		const url = 'https://openwebui.com';
-		// const url = 'http://localhost:5173';
+		try {
+			if (chat.shared_with_project) {
+				await unshareChatByIdWithProject(localStorage.token, chatId);
+				toast.success($i18n.t('Chat removed from project sharing'));
+			} else {
+				await shareChatByIdWithProject(localStorage.token, chatId);
+				toast.success($i18n.t('Chat shared with project'));
+			}
 
-		const tab = await window.open(`${url}/chats/upload`, '_blank');
-		window.addEventListener(
-			'message',
-			(event) => {
-				if (event.origin !== url) return;
-				if (event.data === 'loaded') {
-					tab.postMessage(
-						JSON.stringify({
-							chat: _chat,
-							models: $models.filter((m) => _chat.models.includes(m.id))
-						}),
-						'*'
-					);
-				}
-			},
-			false
-		);
+			chat = await getChatById(localStorage.token, chatId);
+		} catch (e) {
+			toast.error(`${e}`);
+		}
 	};
 
 	const loadAccessGrants = async () => {
@@ -86,7 +87,7 @@
 
 	export let show = false;
 
-	const isDifferentChat = (_chat) => {
+	const isDifferentChat = (_chat: ShareableChat | null) => {
 		if (!chat) {
 			return true;
 		}
@@ -172,20 +173,23 @@
 				{/if}
 
 				<div class="flex justify-end gap-1 mt-3">
-					{#if $config?.features.enable_community_sharing}
-						<button
-							class="flex items-center gap-1 px-3.5 py-2 text-sm font-normal bg-gray-100 hover:bg-gray-200 text-gray-800 dark:bg-gray-850 dark:text-white dark:hover:bg-gray-800 transition rounded-full"
-							type="button"
-							on:click={() => {
-								shareChat();
-							}}
-						>
-							<!-- LICENSE covers this Open WebUI Community wordmark.
-							Do not alter, remove, obscure, or replace it except as LICENSE permits:
-							https://docs.openwebui.com/license. -->
-							{$i18n.t('Share to Open WebUI Community')}
-						</button>
-					{/if}
+					<button
+						class:!bg-green-100={chat.shared_with_project}
+						class:!text-green-800={chat.shared_with_project}
+						class:dark:!bg-green-950={chat.shared_with_project}
+						class:dark:!text-green-200={chat.shared_with_project}
+						class="flex items-center gap-1 px-3.5 py-2 text-sm font-normal bg-gray-100 hover:bg-gray-200 text-gray-800 dark:bg-gray-850 dark:text-white dark:hover:bg-gray-800 transition rounded-full disabled:cursor-not-allowed disabled:opacity-50"
+						type="button"
+						disabled={!chat.project_id}
+						aria-pressed={chat.shared_with_project}
+						title={!chat.project_id ? $i18n.t('This chat is not assigned to a project') : ''}
+						on:click={shareWithProject}
+					>
+						<Folder className="size-4" />
+						{chat.shared_with_project
+							? $i18n.t('Remove from Project Sharing')
+							: $i18n.t('Share with Project')}
+					</button>
 
 					<button
 						class="flex items-center gap-1 px-3.5 py-2 text-sm font-normal bg-black hover:bg-gray-900 text-white dark:bg-white dark:text-black dark:hover:bg-gray-100 transition rounded-full"

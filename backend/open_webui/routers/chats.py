@@ -1953,6 +1953,87 @@ async def archive_chat_by_id(
 # --- Share Chat ---
 
 
+@router.get('/project/{project_id}/shared', response_model=list[SharedChatResponse])
+async def get_project_shared_chats(
+    project_id: str,
+    page: int | None = None,
+    user=Depends(get_verified_user),
+    db: AsyncSession = Depends(get_async_session),
+):
+    if user.role != 'admin':
+        project_user_ids = await Projects.get_project_user_ids_by_id(project_id, db=db)
+        if user.id not in project_user_ids:
+            raise HTTPException(status.HTTP_403_FORBIDDEN, detail=ERROR_MESSAGES.ACCESS_PROHIBITED)
+
+    page = page or 1
+    limit = 60
+    return await Chats.get_shared_chats_by_project_id(
+        project_id,
+        skip=(page - 1) * limit,
+        limit=limit,
+        db=db,
+    )
+
+
+@router.post('/{id}/project-share', response_model=ChatResponse | None)
+async def share_chat_with_project(
+    request: Request,
+    id: str,
+    user=Depends(get_verified_user),
+    db: AsyncSession = Depends(get_async_session),
+):
+    if user.role != 'admin' and not await has_permission(user.id, 'chat.share', await Config.get('user.permissions')):
+        raise HTTPException(status.HTTP_401_UNAUTHORIZED, detail=ERROR_MESSAGES.ACCESS_PROHIBITED)
+
+    chat = await Chats.get_chat_by_id_and_user_id(id, user.id, db=db)
+    if not chat or chat.project_id is None:
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, detail='Chat does not belong to a project')
+
+    if not chat.share_id:
+        shared = await SharedChats.create(id, user.id, db=db)
+        if not shared:
+            raise HTTPException(status.HTTP_500_INTERNAL_SERVER_ERROR, detail=ERROR_MESSAGES.DEFAULT())
+        chat = await Chats.update_chat_share_id_by_id(id, shared.id, db=db)
+
+    chat = await Chats.update_chat_project_share_by_id(id, True, db=db)
+    if not chat:
+        raise HTTPException(status.HTTP_500_INTERNAL_SERVER_ERROR, detail=ERROR_MESSAGES.DEFAULT())
+
+    await publish_event(
+        request,
+        EVENTS.CHAT_SHARED,
+        actor=user,
+        subject_id=id,
+        data={'share_id': chat.share_id, 'shared_with_project': True},
+    )
+    return ChatResponse.model_validate(chat, from_attributes=True)
+
+
+@router.delete('/{id}/project-share', response_model=bool)
+async def unshare_chat_from_project(
+    request: Request,
+    id: str,
+    user=Depends(get_verified_user),
+    db: AsyncSession = Depends(get_async_session),
+):
+    chat = await Chats.get_chat_by_id_and_user_id(id, user.id, db=db)
+    if not chat:
+        raise HTTPException(status.HTTP_401_UNAUTHORIZED, detail=ERROR_MESSAGES.ACCESS_PROHIBITED)
+
+    updated = await Chats.update_chat_project_share_by_id(id, False, db=db)
+    if not updated:
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, detail='Chat does not belong to a project')
+
+    await publish_event(
+        request,
+        EVENTS.CHAT_UNSHARED,
+        actor=user,
+        subject_id=id,
+        data={'share_id': chat.share_id, 'shared_with_project': False},
+    )
+    return True
+
+
 @router.post('/{id}/share', response_model=ChatResponse | None)
 async def share_chat_by_id(
     request: Request,

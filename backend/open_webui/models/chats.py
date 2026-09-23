@@ -134,12 +134,13 @@ class Chat(Base):  # database table mapping for chat entity
     title = Column(Text)  # user-visible conversation title
     chat = Column(JSON)
 
-    project_id = Column(String, nullable=True)  
+    project_id = Column(String, ForeignKey('project.id'), nullable=True)  
 
     created_at = Column(BigInteger, index=True)  # conversation creation timestamp
     updated_at = Column(BigInteger, index=True)  # conversation modification timestamp
 
     share_id = Column(Text, unique=True, nullable=True)  # public share link token
+    shared_with_project = Column(Boolean, default=False, nullable=False)
     archived = Column(Boolean, default=False)  # hidden from main chat list
     pinned = Column(Boolean, default=False, nullable=True)
 
@@ -197,6 +198,7 @@ class ChatModel(BaseModel):
     updated_at: int  # timestamp in epoch
 
     share_id: str | None = None
+    shared_with_project: bool = False
     archived: bool = False
     pinned: bool | None = False
 
@@ -285,6 +287,7 @@ class ChatResponse(BaseModel):
     updated_at: int  # timestamp in epoch
     created_at: int  # timestamp in epoch
     share_id: str | None = None  # id of the chat to be shared
+    shared_with_project: bool = False
     archived: bool
     pinned: bool | None = False
     meta: dict = {}
@@ -1353,6 +1356,61 @@ class ChatTable:
             return ChatModel.model_validate(record)
         # unreachable — context manager above always returns
         return
+
+    async def get_shared_chats_by_project_id(
+        self,
+        project_id: str,
+        skip: int = 0,
+        limit: int = 50,
+        db: AsyncSession | None = None,
+    ) -> list:
+        """Return shared chat snapshots belonging to a project."""
+        from open_webui.models.shared_chats import SharedChat, SharedChatResponse
+        from open_webui.models.users import User
+
+        async with get_async_db_context(db) as session:
+            stmt = (
+                select(SharedChat, User.name.label('user_name'))
+                .join(Chat, Chat.id == SharedChat.chat_id)
+                .outerjoin(User, User.id == SharedChat.user_id)
+                .where(Chat.project_id == project_id, Chat.shared_with_project.is_(True))
+                .order_by(SharedChat.updated_at.desc(), SharedChat.id)
+                .offset(skip)
+                .limit(limit)
+            )
+            result = await session.execute(stmt)
+
+            return [
+                SharedChatResponse(
+                    id=shared.chat_id,
+                    chat_id=shared.chat_id,
+                    user_name=user_name,
+                    title=shared.title,
+                    share_id=shared.id,
+                    updated_at=shared.updated_at,
+                    created_at=shared.created_at,
+                )
+                for shared, user_name in result.all()
+            ]
+
+    async def update_chat_project_share_by_id(
+        self,
+        id: str,
+        shared_with_project: bool,
+        db: AsyncSession | None = None,
+    ) -> ChatModel | None:
+        """Enable or disable visibility of a chat in its project's shared chats."""
+        try:
+            async with get_async_db_context(db) as session:
+                chat = await session.get(Chat, id)
+                if chat is None or chat.project_id is None:
+                    return None
+
+                chat.shared_with_project = shared_with_project
+                await session.commit()
+                return ChatModel.model_validate(chat)
+        except Exception:
+            return None
 
     async def delete_shared_chat_by_chat_id(self, chat_id: str, db: AsyncSession | None = None) -> bool:
         """Delete shared snapshot for a chat."""

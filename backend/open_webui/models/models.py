@@ -575,6 +575,9 @@ class ModelsTable:
     async def delete_model_by_id(self, id: str, db: AsyncSession | None = None) -> bool:
         try:
             async with get_async_db_context(db) as db:
+                from open_webui.models.projects import Projects
+
+                await Projects.remove_allowed_model_ids_from_all_projects([id], db=db)
                 await AccessGrants.revoke_all_access('model', id, db=db)
                 await db.execute(delete(Model).filter_by(id=id))
                 await db.commit()
@@ -588,6 +591,9 @@ class ModelsTable:
             async with get_async_db_context(db) as db:
                 result = await db.execute(select(Model.id))
                 model_ids = [row[0] for row in result.all()]
+                from open_webui.models.projects import Projects
+
+                await Projects.remove_allowed_model_ids_from_all_projects(model_ids, db=db)
                 for model_id in model_ids:
                     await AccessGrants.revoke_all_access('model', model_id, db=db)
                 await db.execute(delete(Model))
@@ -627,6 +633,9 @@ class ModelsTable:
                 # Remove models that are no longer present
                 for model in existing_models:
                     if model.id not in new_model_ids:
+                        from open_webui.models.projects import Projects
+
+                        await Projects.remove_allowed_model_ids_from_all_projects([model.id], db=db)
                         await AccessGrants.revoke_all_access('model', model.id, db=db)
                         await db.delete(model)
 

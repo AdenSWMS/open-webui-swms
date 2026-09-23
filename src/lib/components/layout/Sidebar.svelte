@@ -1026,6 +1026,33 @@
 						</Tooltip>
 					</div>
 
+					<div>
+						<Tooltip content={$i18n.t('Projects')} placement="right">
+							<a
+								id="projects"
+								class="cursor-pointer flex size-8 items-center justify-center transition group"
+								href="/projects"
+								draggable="false"
+								aria-label={$i18n.t('Projects')}
+							>
+								<div
+									class="self-center flex size-[calc(30px*var(--app-text-scale,1))] items-center justify-center rounded-lg transition group-hover:bg-gray-100 dark:group-hover:bg-gray-900"
+								>
+									<svg
+										xmlns="http://www.w3.org/2000/svg"
+										viewBox="0 0 16 16"
+										fill="currentColor"
+										class="size-4 text-gray-900 dark:text-gray-500"
+									>
+										<path
+											d="M2 2a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V2zm2 1a1 1 0 1 0 0 2 1 1 0 0 0 0-2zm3 0a1 1 0 1 0 0 2 1 1 0 0 0 0-2zm3 0a1 1 0 1 0 0 2 1 1 0 0 0 0-2zM3 7a1 1 0 0 0 0 2h10a1 1 0 0 0 0-2H3z"
+										/>
+									</svg>
+								</div>
+							</a>
+						</Tooltip>
+					</div>
+
 					{#each pinnedItems as itemId (itemId)}
 						{@const meta = getMenuItemMeta(itemId)}
 						{#if meta && isMenuItemVisible(itemId)}
@@ -1233,6 +1260,33 @@
 							</div>
 							<HotkeyHint name="search" className=" hover-reveal " />
 						</button>
+					</div>
+
+					<div class="px-1 flex justify-center text-gray-700 dark:text-gray-300">
+						<a
+							id="sidebar-projects-button"
+							class="group grow flex items-center space-x-2 rounded-xl px-2 py-1.5 hover:bg-gray-100 dark:hover:bg-gray-900 transition outline-none"
+							href="/projects"
+							draggable="false"
+							aria-label={$i18n.t('Projects')}
+						>
+							<div class="self-center flex size-4 shrink-0 items-center justify-center">
+								<svg
+									xmlns="http://www.w3.org/2000/svg"
+									viewBox="0 0 16 16"
+									fill="currentColor"
+									class="size-4 text-gray-900 dark:text-gray-500"
+								>
+									<path
+										d="M2 2a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V2zm2 1a1 1 0 1 0 0 2 1 1 0 0 0 0-2zm3 0a1 1 0 1 0 0 2 1 1 0 0 0 0-2zm3 0a1 1 0 1 0 0 2 1 1 0 0 0 0-2zM3 7a1 1 0 0 0 0 2h10a1 1 0 0 0 0-2H3z"
+									/>
+								</svg>
+							</div>
+
+							<div class="flex flex-1 self-center translate-y-[0.5px]">
+								<div class="self-center text-[0.8125rem] leading-5">{$i18n.t('Projects')}</div>
+							</div>
+						</a>
 					</div>
 
 					<div id="pinned-menu-items-list">

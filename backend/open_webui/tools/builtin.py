@@ -32,6 +32,7 @@ from open_webui.models.groups import Groups
 from open_webui.models.memories import Memories
 from open_webui.models.messages import Message, Messages
 from open_webui.models.notes import Notes
+from open_webui.models.projects import Projects
 from open_webui.models.users import UserModel
 from open_webui.retrieval.utils import get_content_from_url
 from open_webui.retrieval.utils import filter_source_metadata, get_content_from_url
@@ -1908,6 +1909,93 @@ async def view_chat(
         )
     except Exception as e:
         log.exception(f'view_chat error: {e}')
+        return JSONCodec.dumps({'error': str(e)})
+
+
+async def get_project_shared_chats(
+    start_timestamp: Optional[int] = None,
+    end_timestamp: Optional[int] = None,
+    count: int = 10,
+    __request__: Request = None,
+    __user__: dict = None,
+    __metadata__: dict = None,
+) -> str:
+    """Read shared chats from the project selected in the current chat.
+
+    The project ID is intentionally taken from request metadata instead of
+    being supplied by the model, so the tool cannot browse another project.
+    Timestamps are Unix seconds and filter by chat update time.
+    """
+    if __request__ is None:
+        return JSONCodec.dumps({'error': 'Request context not available'})
+    if not __user__:
+        return JSONCodec.dumps({'error': 'User context not available'})
+
+    try:
+        metadata = __metadata__ or {}
+        project_id = metadata.get('project_id')
+        if not project_id:
+            return JSONCodec.dumps({'error': 'No project is selected in the current chat'})
+
+        project_user_ids = await Projects.get_project_user_ids_by_id(project_id)
+        user_id = __user__.get('id')
+        if __user__.get('role') != 'admin' and user_id not in project_user_ids:
+            return JSONCodec.dumps({'error': 'Access denied to the selected project'})
+
+        count = max(1, min(int(count), 20))
+        shared_chats = await Chats.get_shared_chats_by_project_id(project_id, skip=0, limit=count * 3)
+        results = []
+
+        for shared_chat in shared_chats:
+            if start_timestamp is not None and shared_chat.updated_at < start_timestamp:
+                continue
+            if end_timestamp is not None and shared_chat.updated_at > end_timestamp:
+                continue
+
+            chat = await Chats.get_chat_by_id(shared_chat.chat_id)
+            if not chat:
+                continue
+
+            history = (chat.chat or {}).get('history') or {}
+            messages_map = history.get('messages') or {}
+            current_id = history.get('currentId')
+            messages = []
+            visited = set()
+
+            while current_id and current_id not in visited:
+                visited.add(current_id)
+                message = messages_map.get(current_id)
+                if not isinstance(message, dict):
+                    break
+                content = message.get('content', '')
+                if isinstance(content, list):
+                    content = ' '.join(
+                        item.get('text', '') for item in content if isinstance(item, dict) and item.get('text')
+                    )
+                messages.append({'role': message.get('role', ''), 'content': str(content)[:4000]})
+                current_id = message.get('parentId')
+
+            messages.reverse()
+            results.append(
+                {
+                    'id': chat.id,
+                    'title': chat.title,
+                    'updated_at': chat.updated_at,
+                    'created_at': chat.created_at,
+                    'share_id': shared_chat.share_id,
+                    'shared_by': shared_chat.user_name,
+                    'messages': messages,
+                }
+            )
+            if len(results) >= count:
+                break
+
+        return JSONCodec.dumps(
+            {'project_id': project_id, 'count': len(results), 'chats': results},
+            ensure_ascii=False,
+        )
+    except Exception as e:
+        log.exception(f'get_project_shared_chats error: {e}')
         return JSONCodec.dumps({'error': str(e)})
 
 

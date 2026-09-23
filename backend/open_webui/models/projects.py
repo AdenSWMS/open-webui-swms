@@ -96,6 +96,7 @@ class ProjectMemberModel(BaseModel):
 
 class ProjectResponse(ProjectModel):
     member_count: Optional[int] = None
+    shared_chat_count: int = 0
 
 
 class ProjectInfoResponse(BaseModel):
@@ -355,13 +356,34 @@ class ProjectTable:
 
     async def get_projects_by_member_id(self, user_id: str, db: Optional[AsyncSession] = None) -> list[ProjectModel]:
         async with get_async_db_context(db) as db:
+            from open_webui.models.chats import Chat
+
+            shared_chat_count = (
+                select(func.count(Chat.id))
+                .where(
+                    Chat.project_id == Project.id,
+                    Chat.shared_with_project.is_(True),
+                )
+                .correlate(Project)
+                .scalar_subquery()
+                .label('shared_chat_count')
+            )
+
             result = await db.execute(
-                select(Project)
+                select(Project, shared_chat_count)
                 .join(ProjectMember, ProjectMember.project_id == Project.id)
                 .filter(ProjectMember.user_id == user_id)
                 .order_by(Project.updated_at.desc())
             )
-            return [ProjectModel.model_validate(project) for project in result.scalars().all()]
+            return [
+                ProjectResponse.model_validate(
+                    {
+                        **ProjectModel.model_validate(project).model_dump(),
+                        'shared_chat_count': count or 0,
+                    }
+                )
+                for project, count in result.all()
+            ]
 
     async def get_projects_by_member_ids(
         self, user_ids: list[str], db: Optional[AsyncSession] = None
@@ -712,6 +734,27 @@ class ProjectTable:
             result = await db.execute(select(Project.allowed_model_ids).filter_by(id=id))
             allowed_model_ids = result.scalar()
             return allowed_model_ids if allowed_model_ids else []
+
+    async def remove_allowed_model_ids_from_all_projects(
+        self, model_ids: list[str], db: Optional[AsyncSession] = None
+    ) -> bool:
+        """Remove unavailable model IDs from every project's allow-list."""
+        if not model_ids:
+            return True
+
+        async with get_async_db_context(db) as db:
+            result = await db.execute(select(Project))
+            model_ids_to_remove = set(model_ids)
+
+            for project in result.scalars().all():
+                allowed_model_ids = project.allowed_model_ids or []
+                cleaned_model_ids = [model_id for model_id in allowed_model_ids if model_id not in model_ids_to_remove]
+                if cleaned_model_ids != allowed_model_ids:
+                    project.allowed_model_ids = cleaned_model_ids
+                    project.updated_at = int(time.time())
+
+            await db.commit()
+            return True
     
     async def add_allowed_model_ids_to_project(
         self,

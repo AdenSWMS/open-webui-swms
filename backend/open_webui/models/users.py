@@ -5,7 +5,7 @@ from __future__ import annotations
 import datetime
 import time
 from typing import Optional
-from open_webui.models.projects import ProjectMember
+from open_webui.models.projects import ProjectMember, Projects
 from typing import Literal, Optional
 from open_webui.env import DATABASE_USER_ACTIVE_STATUS_UPDATE_INTERVAL
 from open_webui.internal.db import Base, JSONField, get_async_db_context
@@ -898,6 +898,9 @@ class UsersTable:
 
         # Remove User from Groups
         await Groups.remove_user_from_all_groups(id)
+
+        #Remove User from Projects
+        await Projects.remove_user_from_all_projects(id)
 
         # Delete User Chats
         async with get_async_db_context(db) as session:

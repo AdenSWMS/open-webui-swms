@@ -3292,6 +3292,13 @@
 			regenerationPrompt?: string | null;
 		} = {}
 	) => {
+
+		const projectId = $selectedProject?.id ?? null;
+
+		if (!projectId) {
+			return;
+		}
+
 		if (autoScroll) {
 			scrollToBottom();
 		}
@@ -3436,7 +3443,7 @@
 						// column identity and collapse on reload.
 						messageIdsList: messageIdsList.length > 0 ? messageIdsList : undefined,
 						regenerationPrompt,
-						project_id: $selectedProject?.value ?? $selectedProject?.id ?? undefined,
+						project_id: projectId,
 					}
 				);
 			} finally {
