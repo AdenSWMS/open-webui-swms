@@ -164,8 +164,6 @@ async def get_all_models(request, refresh: bool = False, user: UserModel = None)
         global_filter_ids = set()
         enabled_filter_ids = set()
 
-    custom_models = await Models.get_all_models()
-
     # Single O(1) lookup: Ollama base names first, then exact IDs (exact wins).
     base_model_lookup = {}
     for model in models:
@@ -174,6 +172,18 @@ async def get_all_models(request, refresh: bool = False, user: UserModel = None)
         base_model_lookup[model['id']] = model
 
     existing_ids = {m['id'] for m in models}
+
+    custom_models = await Models.get_all_models()
+    available_base_ids = set(base_model_lookup)
+    unavailable_model_ids = []
+    for custom_model in custom_models:
+        base_id = custom_model.base_model_id or custom_model.id
+        if base_id not in available_base_ids:
+            unavailable_model_ids.append(custom_model.id)
+
+    if unavailable_model_ids and models:
+        await Models.remove_unavailable_models(unavailable_model_ids)
+        custom_models = [model for model in custom_models if model.id not in unavailable_model_ids]
 
     for custom_model in custom_models:
         if custom_model.base_model_id is None:

@@ -241,6 +241,23 @@ class ModelsTable:
                     log.error('Skipping model %r during get_all_models due to error: %s', model.id, exc)
             return models
 
+    async def remove_unavailable_models(
+        self, unavailable_ids: list[str], db: AsyncSession | None = None
+    ) -> bool:
+        """Remove custom models that no longer have an available base model."""
+        if not unavailable_ids:
+            return True
+
+        async with get_async_db_context(db) as db:
+            from open_webui.models.projects import Projects
+
+            await Projects.remove_allowed_model_ids_from_all_projects(unavailable_ids, db=db)
+            for model_id in unavailable_ids:
+                await AccessGrants.revoke_all_access('model', model_id, db=db)
+            await db.execute(delete(Model).where(Model.id.in_(unavailable_ids)))
+            await db.commit()
+            return True
+
     async def get_models(
         self, writable_by_user_id: str | None = None, db: AsyncSession | None = None, ids: list[str] | None = None
     ) -> list[ModelUserResponse]:
