@@ -239,10 +239,13 @@
 						Wenn OpenCode schon installiert ist und eine Config-Datei für OpenCode auf Ihrem Rechner vorhanden ist, nutzen Sie die Anleitung zum Updaten.
 					</li>
 					<li>
-						<span><strong>Paketmanager vorbereiten:</strong><code class="px-1.5 py-0.5 rounded bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-200 font-mono text-xs">jq</code>
+						<span><strong>Paketmanager vorbereiten:</strong>
+							<code class="px-1.5 py-0.5 rounded bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-200 font-mono text-xs">git</code>, 
+							<code class="px-1.5 py-0.5 rounded bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-200 font-mono text-xs">jq</code>
 							und <code class="px-1.5 py-0.5 rounded bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-200 font-mono text-xs">git</code> installieren:</span>
 						<div class="mt-2 mb-2">
 							<code class="block whitespace-pre-wrap bg-gray-100 dark:bg-gray-800 p-3 rounded-xl font-mono text-xs text-gray-800 dark:text-gray-200 overflow-x-auto leading-relaxed border border-gray-200 dark:border-gray-700/50">
+winget install OpenJS.NodeJS.LTS
 
 winget install jqlang.jq
 
@@ -250,7 +253,7 @@ winget install git.git
 
 </code>
 						</div>
-					<span class="text-sm text-gray-500 dark:text-gray-400 font-semibold">Starte deine PowerShell am besten einmal neu</span>
+					<span class="text-sm text-gray-500 dark:text-gray-400 font-semibold">Starte deine <strong>PowerShell</strong> besten einmal neu</span>
 					</li>
 					<li>
 						<span><strong>UTF-8 Standard setzen, Execution Policy anpassen, Konfiguration herunterladen & API-Key eintragen:</strong></span>
