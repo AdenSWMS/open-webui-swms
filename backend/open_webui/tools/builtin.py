@@ -1999,6 +1999,46 @@ async def get_project_shared_chats(
         return JSONCodec.dumps({'error': str(e)})
 
 
+async def get_project_info(
+    __request__: Request = None,
+    __user__: dict = None,
+    __metadata__: dict = None,
+) -> str:
+    """Read the information of the project selected in the current chat including its members, name and description.
+
+    The project ID is intentionally taken from request metadata instead of
+    being supplied by the model, so the tool cannot browse another project.
+    """
+    if __request__ is None:
+        return JSONCodec.dumps({'error': 'Request context not available'})
+    if not __user__:
+        return JSONCodec.dumps({'error': 'User context not available'})
+
+    try:
+        metadata = __metadata__ or {}
+        project_id = metadata.get('project_id')
+        if not project_id:
+            return JSONCodec.dumps({'error': 'No project is selected in the current chat'}) 
+        
+        project_user_ids = await Projects.get_project_user_ids_by_id(project_id)
+        user_id = __user__.get('id')
+        if __user__.get('role') != 'admin' and user_id not in project_user_ids:
+            return JSONCodec.dumps({'error': 'Access denied to the selected project'})
+
+        project_info = await Projects.get_project_info_by_id(project_id)
+
+        if not project_info:
+            return JSONCodec.dumps({'error': 'Project not found'})
+
+        result = project_info
+
+        return JSONCodec.dumps(result, ensure_ascii=False) 
+
+    except Exception as e:
+        log.exception(f'get_project_description error: {e}')
+        return JSONCodec.dumps({'error': str(e)})
+    
+
 # =============================================================================
 # SUB-AGENT TOOL
 # =============================================================================

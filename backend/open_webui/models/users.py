@@ -732,7 +732,7 @@ class UsersTable:
     
     async def get_users_by_project_id(self, project_id: str, db: Optional[AsyncSession] = None) -> list[UserModel]:
         async with get_async_db_context(db) as session:
-            from open_webui.models.groups import GroupMember
+            from open_webui.models.projects import ProjectMember
 
             result = await session.execute(
                 select(User).join(ProjectMember, User.id == ProjectMember.user_id).filter(ProjectMember.project_id == project_id)

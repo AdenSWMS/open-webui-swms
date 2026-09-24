@@ -61,6 +61,7 @@ from open_webui.tools.builtin import (
     generate_image,
     get_current_timestamp,
     get_project_shared_chats,
+    get_project_info,
     grep_chat_files,
     grep_knowledge_files,
     kb_exec,
@@ -644,7 +645,7 @@ async def get_builtin_tools(
 
     # Chats tools - search and fetch user's chat history
     if is_builtin_tool_enabled('chats'):
-        builtin_functions.extend([search_chats, view_chat, get_project_shared_chats])
+        builtin_functions.extend([search_chats, view_chat, get_project_shared_chats, get_project_info])
 
     if (
         is_builtin_tool_enabled('subagents')

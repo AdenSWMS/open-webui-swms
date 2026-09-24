@@ -1,7 +1,7 @@
 import json
 import logging
 import time
-from typing import Optional
+from typing import Any, Optional
 import uuid
 
 from openai import project
@@ -12,7 +12,6 @@ from open_webui.env import DEFAULT_PROJECT_SHARE_PERMISSION
 
 from open_webui.models.files import FileMetadataResponse
 
-
 from pydantic import BaseModel, ConfigDict
 from sqlalchemy import (
     BigInteger,
@@ -21,6 +20,7 @@ from sqlalchemy import (
     JSON,
     ForeignKey,
 )
+from sqlalchemy.orm import selectinload
 
 log = logging.getLogger(__name__)
 
@@ -492,6 +492,26 @@ class ProjectTable:
             )
             rows = result.all()
             return {project_id: count for project_id, count in rows}
+
+    async def get_project_info_by_id(
+            self, id: str, db: Optional[AsyncSession] = None
+        ) -> dict[str, Any]:
+        from open_webui.models.users import Users
+        
+        async with get_async_db_context(db) as db:
+            stmt = select(Project).filter(Project.id == id)
+            result = await db.execute(stmt)
+            project = result.scalars().one_or_none()
+            if not project:
+                return {}
+
+            users = await Users.get_users_by_project_id(project_id=id, db=db)
+
+            return {
+                "name": project.name,
+                "description": project.description,
+                "usernames": [user.name for user in users],
+            }
 
     async def update_project_by_id(
         self,
