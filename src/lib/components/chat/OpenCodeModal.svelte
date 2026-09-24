@@ -240,7 +240,7 @@
 					</li>
 					<li>
 						<span><strong>Paketmanager vorbereiten:</strong>
-							<code class="px-1.5 py-0.5 rounded bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-200 font-mono text-xs">git</code>, 
+							<code class="px-1.5 py-0.5 rounded bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-200 font-mono text-xs">NodeJS</code>, 
 							<code class="px-1.5 py-0.5 rounded bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-200 font-mono text-xs">jq</code>
 							und <code class="px-1.5 py-0.5 rounded bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-200 font-mono text-xs">git</code> installieren:</span>
 						<div class="mt-2 mb-2">
