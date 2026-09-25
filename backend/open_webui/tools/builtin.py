@@ -1911,6 +1911,9 @@ async def view_chat(
         log.exception(f'view_chat error: {e}')
         return JSONCodec.dumps({'error': str(e)})
 
+#=============================================================================
+# PROJECT TOOLS
+#=============================================================================
 
 async def get_project_shared_chats(
     start_timestamp: Optional[int] = None,

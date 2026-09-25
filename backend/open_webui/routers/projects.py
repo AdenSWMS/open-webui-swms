@@ -166,7 +166,7 @@ async def export_project_by_id(id: str, user=Depends(get_admin_user), db: AsyncS
 
 
 @router.post('/id/{id}/users', response_model=list[UserInfoResponse])
-async def get_users_in_project(id: str, user=Depends(get_admin_user), db: AsyncSession = Depends(get_async_session)):
+async def get_users_in_project(id: str, user=Depends(get_verified_user), db: AsyncSession = Depends(get_async_session)):
     try:
         users = await Users.get_users_by_project_id(id, db=db)
         return users
@@ -300,7 +300,7 @@ async def delete_project_by_id(id: str, user=Depends(get_admin_user), db: AsyncS
 ############################
 
 @router.get('/id/{id}/allowed_models', response_model=list[str])
-async def get_allowed_models_in_project(id: str, user=Depends(get_admin_user), db: AsyncSession = Depends(get_async_session)):
+async def get_allowed_models_in_project(id: str, user=Depends(get_verified_user), db: AsyncSession = Depends(get_async_session)):
     try:
         allowed_model_ids = await Projects.get_project_allowed_models_ids_by_id(id, db=db)
         return allowed_model_ids
