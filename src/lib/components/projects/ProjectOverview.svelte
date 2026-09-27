@@ -124,7 +124,21 @@
 							>
 								<!--<span>📝 {project.counts?.notes ?? 0}</span>
 								<span>⚡ {project.counts?.prompts ?? 0}</span>-->
-								<span>💬 {project.shared_chat_count ?? 0}</span>
+								<span class="flex items-center gap-1.5">
+									<svg
+										xmlns="http://www.w3.org/2000/svg"
+										viewBox="0 0 24 24"
+										fill="none"
+										stroke="currentColor"
+										stroke-width="2"
+										stroke-linecap="round"
+										stroke-linejoin="round"
+										class="w-3.5 h-3.5 text-gray-400"
+									>
+										<path d="M7.9 20A9 9 0 1 0 4 16.1L2 22z" />
+									</svg>
+									{project.shared_chat_count ?? 0}
+								</span>
 							</div>
 						</button>
 					{/each}

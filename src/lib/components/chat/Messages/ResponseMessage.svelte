@@ -69,6 +69,8 @@
 	import OutputEditView from './OutputEditView.svelte';
 	import { getOutputText, replaceOutputMessageText, type OutputItem } from './structuredOutput';
 
+	import LogoLoader from '$lib/components/common/LogoLoader.svelte';
+
 	interface MessageType {
 		id: string;
 		model: string;
@@ -483,6 +485,28 @@
 		return { input_tokens, output_tokens, total_tokens, reasoning_tokens, cached, cost };
 	})();
 
+	type LoaderStateType = 'idle' | 'thinking' | 'writing' | 'done';
+
+	let loaderState: LoaderStateType = 'idle';
+	let loaderTimeout: ReturnType<typeof setTimeout>;
+
+	$: {
+		if (message?.error) {
+			loaderState = 'idle';
+		} else if (!message?.done) {
+			// Während der Generierung
+			loaderState = hasResponseContent ? 'writing' : 'thinking';
+		} else if (message?.done && loaderState !== 'idle' && loaderState !== 'done') {
+			// Sobald fertig: Einmalig 'done' setzen und nach 1.2s auf 'idle' / ausblenden
+			loaderState = 'done';
+
+			clearTimeout(loaderTimeout);
+			loaderTimeout = setTimeout(() => {
+				loaderState = 'idle';
+			}, 1200);
+		}
+	}
+
 	let feedbackLoading = false;
 
 	const feedbackHandler = async (rating: number | null = null, details: object | null = null) => {
@@ -706,68 +730,7 @@
 		dir={$settings.chatDirection}
 		style="scroll-margin-top: 3rem;"
 	>
-		<div class={`shrink-0 ltr:mr-2 rtl:ml-2 hidden @lg:flex mt-0.5 `}>
-			<ProfileImage
-				src={`${WEBUI_API_BASE_URL}/models/model/profile/image?id=${model?.id}&lang=${$i18n.language}`}
-				className={'size-7 assistant-message-profile-image'}
-			/>
-		</div>
-
 		<div class="flex-auto w-0 pl-1 relative">
-			{#if !compactPreview}
-				<Name>
-					<Tooltip content={localizedModelName} placement="top-start">
-						<span id="response-message-model-name" class="line-clamp-1 text-black dark:text-white">
-							{localizedModelName}
-						</span>
-					</Tooltip>
-				</Name>
-
-				{#if tokenStats}
-					<div
-						class="flex items-center gap-1.5 text-sm text-gray-500 dark:text-gray-500 select-none mt-1"
-						title="Token-Verbrauch"
-					>
-						<span title="Prompt / Input Tokens" class="flex items-center gap-1">
-							<span class="text-gray-500 dark:text-gray-500">⬆︎ </span>
-							<span>{tokenStats.input_tokens ?? 0}</span>
-						</span>
-
-						{#if tokenStats.cached ?? tokenStats.cached}
-							<span title="Aus dem Cache geladen" class="text-gray-500 dark:text-gray-500">
-								(⚡{tokenStats.cached ?? tokenStats.cached})
-							</span>
-						{/if}
-
-						<span class="text-gray-300 dark:text-gray-600">•</span>
-
-						<span title="Completion / Output Tokens" class="flex items-center gap-1">
-							<span class="text-gray-500 dark:text-gray-500">⬇︎ </span>
-							<span>{tokenStats.output_tokens ?? 0}</span>
-						</span>
-
-						<span class="text-gray-300 dark:text-gray-600">•</span>
-
-						{#if tokenStats.reasoning_tokens}
-							<span title="Reasoning / Denk-Tokens" class="text-gray-500 dark:text-gray-500">
-								🧠 {tokenStats.reasoning_tokens}
-							</span>
-							<span class="text-gray-300 dark:text-gray-600">•</span>
-						{/if}
-
-						<span title="Gesamte Tokens" class="flex items-center gap-1">
-							<span class="text-gray-500 dark:text-gray-500">Σ</span>
-							<span class="font-medium">{tokenStats.total_tokens ?? 0}</span>
-						</span>
-
-						<span class="text-gray-300 dark:text-gray-600">•</span>
-
-						<span title="Kosten der Anfrage" class="text-gray-500 dark:text-gray-500">
-							$ {tokenStats.cost}
-						</span>
-					</div>
-				{/if}
-			{/if}
 			<div>
 				<div class="chat-{message.role} w-full min-w-full">
 					<div>
@@ -909,8 +872,6 @@
 							id="response-content-container"
 						>
 							{#if hasResponseContent && message.error !== true}
-								<!-- always show message contents even if there's an error -->
-								<!-- unless message.error === true which is legacy error handling, where the error message is stored in message.content -->
 								<ContentRenderer
 									id={`${chatId}-${message.id}`}
 									{chatId}
@@ -969,14 +930,6 @@
 										updateChat();
 									}}
 								/>
-							{/if}
-
-							{#if !message.done && !message.error && (hasResponseContent || !hasVisibleStatus)}
-								<div class="text-[0.9375rem] leading-relaxed">
-									<span
-										class="inline-block w-[0.125rem] h-3.5 bg-gray-400 dark:bg-gray-500 ml-0.5 animate-pulse align-text-bottom"
-									></span>
-								</div>
 							{/if}
 
 							{#if message?.error}
@@ -1673,6 +1626,120 @@
 											</Tooltip>
 										{/if}
 									{/if}
+									{#if tokenStats}
+									<div 
+										class="{isLastMessage || ($settings?.highContrastMode ?? false)
+											? 'visible'
+											: 'hover-reveal'} inline-flex items-centerrounded-lg transition h-3.5 w-px bg-gray-300 dark:bg-gray-700 mx-1.5 self-center pointer-events-none"
+
+									 />
+										<div
+											class="flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400 select-none"
+										>
+											<!-- Input / Prompt -->
+											<span
+												title="Prompt / Input Tokens"
+												class="{isLastMessage || ($settings?.highContrastMode ?? false)
+													? 'visible'
+													: 'hover-reveal'} inline-flex items-center gap-1 p-1 hover:bg-black/5 dark:hover:bg-white/5 rounded-lg dark:hover:text-white hover:text-black transition"
+											>
+												<span>⬆︎</span>
+												<span>{tokenStats.input_tokens ?? 0}</span>
+											</span>
+
+											<!-- Cached (optional) -->
+											{#if tokenStats.cached}
+												<span
+													title="Aus dem Cache geladen"
+													class="{isLastMessage || ($settings?.highContrastMode ?? false)
+														? 'visible'
+														: 'hover-reveal'} inline-flex items-center gap-1 p-1 opacity-80 hover:bg-black/5 dark:hover:bg-white/5 rounded-lg dark:hover:text-white hover:text-black transition"
+												>
+													⚡{tokenStats.cached}
+												</span>
+											{/if}
+
+											<span
+												class="{isLastMessage || ($settings?.highContrastMode ?? false)
+													? 'visible'
+													: 'hover-reveal'} text-gray-300 dark:text-gray-700 pointer-events-none"
+												>•</span
+											>
+
+											<!-- Output / Completion -->
+											<span
+												title="Completion / Output Tokens"
+												class="{isLastMessage || ($settings?.highContrastMode ?? false)
+													? 'visible'
+													: 'hover-reveal'} inline-flex items-center gap-1 p-1 hover:bg-black/5 dark:hover:bg-white/5 rounded-lg dark:hover:text-white hover:text-black transition"
+											>
+												<span>⬇︎</span>
+												<span>{tokenStats.output_tokens ?? 0}</span>
+											</span>
+
+											<!-- Reasoning (optional) -->
+											{#if tokenStats.reasoning_tokens}
+												<span
+													class="{isLastMessage || ($settings?.highContrastMode ?? false)
+														? 'visible'
+														: 'hover-reveal'} text-gray-300 dark:text-gray-700 pointer-events-none"
+													>•</span
+												>
+
+												<span
+													title="Reasoning / Denk-Tokens"
+													class="{isLastMessage || ($settings?.highContrastMode ?? false)
+														? 'visible'
+														: 'hover-reveal'} inline-flex items-center gap-1 p-1 hover:bg-black/5 dark:hover:bg-white/5 rounded-lg dark:hover:text-white hover:text-black transition"
+												>
+													<span>🧠</span>
+													<span>{tokenStats.reasoning_tokens}</span>
+												</span>
+											{/if}
+
+											<span
+												class="{isLastMessage || ($settings?.highContrastMode ?? false)
+													? 'visible'
+													: 'hover-reveal'} text-gray-300 dark:text-gray-700 pointer-events-none"
+												>•</span
+											>
+
+											<!-- Total -->
+											<span
+												title="Gesamte Tokens"
+												class="{isLastMessage || ($settings?.highContrastMode ?? false)
+													? 'visible'
+													: 'hover-reveal'} inline-flex items-center gap-1 p-1 font-medium hover:bg-black/5 dark:hover:bg-white/5 rounded-lg dark:hover:text-white hover:text-black transition"
+											>
+												<span>Σ</span>
+												<span>{tokenStats.total_tokens ?? 0}</span>
+											</span>
+
+											<!-- Kosten -->
+											{#if tokenStats.cost !== undefined}
+												<span
+													class="{isLastMessage || ($settings?.highContrastMode ?? false)
+														? 'visible'
+														: 'hover-reveal'} text-gray-300 dark:text-gray-700 pointer-events-none"
+													>•</span
+												>
+
+												<span
+													title="Kosten der Anfrage"
+													class="{isLastMessage || ($settings?.highContrastMode ?? false)
+														? 'visible'
+														: 'hover-reveal'} inline-flex items-center gap-1 p-1 font-medium hover:bg-black/5 dark:hover:bg-white/5 rounded-lg dark:hover:text-white hover:text-black transition"
+												>
+													<span>$</span>
+													<span
+														>{typeof tokenStats.cost === 'number'
+															? tokenStats.cost
+															: tokenStats.cost}</span
+													>
+												</span>
+											{/if}
+										</div>
+									{/if}
 
 									{#if message.timestamp}
 										<Tooltip
@@ -1705,6 +1772,12 @@
 								}}
 							/>
 						{/key}
+					{/if}
+
+					{#if isLastMessage}
+						<div class="mt-5 mb-5 flex items-center">
+							<LogoLoader state={loaderState} size="big" />
+						</div>
 					{/if}
 
 					{#if (isLastMessage || ($settings?.keepFollowUpPrompts ?? false)) && message.done && !readOnly && (message?.followUps ?? []).length > 0}

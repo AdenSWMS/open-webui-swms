@@ -42,7 +42,7 @@
 	<!-- Inhalt -->
 	<div class="relative z-10 flex w-full items-center justify-center gap-1 text-center text-gray-900 dark:text-white whitespace-nowrap">
 		<!-- Ausführlicher Text (Standardmäßig ausgeblendet, erscheint ab sm/Desktop) -->
-		<span class="hidden sm:inline text-gray-600 dark:text-gray-300">
+		<span class="hidden sm:inline text-gray-600 dark:text-white">
 			Budget: ${spend.toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} / ${maxBudget.toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
 		</span>
 

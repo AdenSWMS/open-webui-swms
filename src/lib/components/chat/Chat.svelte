@@ -203,13 +203,11 @@
 	let serverContextUsage = null;
 	let contextUsage = null;
 
-
 	$: if (!showProjectModal && resolveProjectSelection) {
 		const resolve = resolveProjectSelection;
 		resolveProjectSelection = null;
 		resolve(null);
-	};
-
+	}
 
 	const promptProjectSelection = (): Promise<any> => {
 		return new Promise((resolve) => {
@@ -224,7 +222,7 @@
 
 		showProjectModal = false;
 		selectedProject.set(project);
-		
+
 		if (resolve) {
 			resolve(project);
 		}
@@ -2329,7 +2327,7 @@
 
 		if (chat) {
 			if (chat?.project_id) {
-				console.log(chat?.project_id,);
+				console.log(chat?.project_id);
 				const project = await getProjectById(localStorage.token, chat.project_id).catch((error) => {
 					console.warn('[note-chat] getProjectById failed', {
 						projectId: chat.project_id,
@@ -3292,7 +3290,6 @@
 			regenerationPrompt?: string | null;
 		} = {}
 	) => {
-
 		const projectId = $selectedProject?.id ?? null;
 
 		if (!projectId) {
@@ -3443,7 +3440,7 @@
 						// column identity and collapse on reload.
 						messageIdsList: messageIdsList.length > 0 ? messageIdsList : undefined,
 						regenerationPrompt,
-						project_id: projectId,
+						project_id: projectId
 					}
 				);
 			} finally {
@@ -3503,7 +3500,7 @@
 		}: {
 			messageIdsList?: Array<{ model_id: string; message_id: string }>;
 			regenerationPrompt?: string | null;
-			project_id?: string| null;
+			project_id?: string | null;
 			continueResponse?: boolean;
 		} = {}
 	) => {
@@ -3682,7 +3679,10 @@
 				chat_id: _chatId || undefined,
 				folder_id: $selectedFolder?.id ?? undefined,
 
-				project_id: $selectedProject?.value ?? $selectedProject?.id ?? (typeof $selectedProject === 'string' ? $selectedProject : undefined),
+				project_id:
+					$selectedProject?.value ??
+					$selectedProject?.id ??
+					(typeof $selectedProject === 'string' ? $selectedProject : undefined),
 
 				id: responseMessageId,
 				...(messageIdsList ? { message_ids: messageIdsList } : {}),
@@ -3777,8 +3777,8 @@
 		if (shouldAutoScrollResponse()) {
 			scrollToBottom();
 		}
-		console.log("sendMessageSocket done, Selected Project:" + $selectedProject?.value);
-		console.log("sendMessageSocket done, passed_ProjectID:" + project_id);
+		console.log('sendMessageSocket done, Selected Project:' + $selectedProject?.value);
+		console.log('sendMessageSocket done, passed_ProjectID:' + project_id);
 	};
 
 	const handleOpenAIError = async (error, responseMessage) => {
@@ -4021,8 +4021,8 @@
 	const initChatHandler = async (history) => {
 		let _chatId = $chatId;
 		const selectedFolderId = $selectedFolder?.id;
-		console.log("Initializing chat with ID:", _chatId);
-		console.log("Selected project ID:", $selectedProject?.id);
+		console.log('Initializing chat with ID:', _chatId);
+		console.log('Selected project ID:', $selectedProject?.id);
 
 		if (!$temporaryChatEnabled) {
 			chat = await createNewChat(
@@ -4339,10 +4339,7 @@
 		eventCallback(false);
 	}}
 />
-<ProjectSelectorModal
-	bind:show={showProjectModal}
-	onSelect={handleProjectSelected}
-/>
+<ProjectSelectorModal bind:show={showProjectModal} onSelect={handleProjectSelected} />
 <div
 	class="{embedded
 		? 'h-full'
