@@ -61,7 +61,7 @@
 
 	let userBudgets: Record<string, any> = {};
 
-	let isLoading = false; // State für den Ladezustand
+	let isLoading = true; // State für den Ladezustand
 
 	// Hilfsfunktion zum Berechnen und Formatieren
 	function formatUserBudget(userItem: any) {
@@ -143,7 +143,7 @@
 		} finally {
 			isLoading = false;
 		}
-	}	
+	}
 
 	const deleteUserHandler = async (id) => {
 		const res = await deleteUserById(localStorage.token, id).catch((error) => {
@@ -217,6 +217,10 @@
 	$: if (page !== null && orderBy !== null && direction !== null) {
 		getUserList();
 	}
+
+	onMount(() => {
+		loadUserData();
+	});
 
 	onDestroy(() => {
 		clearTimeout(searchDebounceTimer);
@@ -441,7 +445,7 @@
 			</thead>
 			<tbody class="">
 				{#each users as user (user.id)}
-				{@const b = userBudgets[user.id] || userBudgets[user.email]}
+					{@const b = userBudgets[user.id] || userBudgets[user.email]}
 					<tr class="dark:border-gray-850 text-xs">
 						<td class="px-3 py-1 font-normal text-gray-900 dark:text-white max-w-48">
 							<div class="flex items-center gap-2">
@@ -486,11 +490,12 @@
 
 						<td class="px-3 py-1">
 							{#if isLoading}
-								<div class="flex items-center justify-between px-2 py-0.5 text-[11px] bg-gray-100 dark:bg-gray-800/40 border border-gray-200/80 dark:border-gray-700/50 rounded-md min-w-[130px] animate-pulse select-none">
+								<div
+									class="flex items-center justify-between px-2 py-0.5 text-[11px] bg-gray-100 dark:bg-gray-800/40 border border-gray-200/80 dark:border-gray-700/50 rounded-md min-w-[130px] animate-pulse select-none"
+								>
 									<div class="h-3.5 w-16 bg-gray-300 dark:bg-gray-700 rounded my-[1px]"></div>
 									<div class="h-3.5 w-6 bg-gray-300 dark:bg-gray-700 rounded my-[1px]"></div>
 								</div>
-
 							{:else if b}
 								<div
 									class="relative overflow-hidden flex items-center justify-center px-2 py-0.5 text-[11px] font-medium bg-gray-50 dark:bg-gray-800/60 border border-gray-200 dark:border-gray-700/60 rounded-md select-none min-w-[130px]"
@@ -501,7 +506,9 @@
 										style="width: {b.spentPercent}%;"
 									></div>
 
-									<div class="relative z-10 flex items-center justify-between w-full gap-1 text-gray-700 dark:text-gray-200">
+									<div
+										class="relative z-10 flex items-center justify-between w-full gap-1 text-gray-700 dark:text-gray-200"
+									>
 										<span class="truncate">
 											${b.formattedSpend} / ${b.formattedMaxBudget}
 										</span>
@@ -510,7 +517,6 @@
 										</span>
 									</div>
 								</div>
-
 							{:else}
 								<span class="text-gray-400 text-[11px] italic">-</span>
 							{/if}
