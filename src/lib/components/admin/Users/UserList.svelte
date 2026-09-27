@@ -46,8 +46,8 @@
 
 	let query = '';
 	let searchDebounceTimer: ReturnType<typeof setTimeout>;
-	let orderBy = 'created_at'; // default sort key
-	let direction = 'asc'; // default sort order
+	let orderBy = 'created_at';
+	let direction = 'asc';
 
 	let selectedUser = null;
 
@@ -61,9 +61,10 @@
 
 	let userBudgets: Record<string, any> = {};
 
-	let isLoading = true; // State für den Ladezustand
+	let isLoading = true;
+	let isMounted = false;
 
-	// Hilfsfunktion zum Berechnen und Formatieren
+	// Hilfsfunktion inklusive zeitlichem Fortschritt und Ampelfarben
 	function formatUserBudget(userItem: any) {
 		const spend = userItem?.spend ?? 0;
 		const maxBudget = userItem?.max_budget ?? 0;
@@ -73,7 +74,7 @@
 		const resetDate = userItem?.budget_reset_at ? new Date(userItem.budget_reset_at) : new Date();
 		const now = new Date();
 
-		let durationMs = 30 * 24 * 60 * 60 * 1000;
+		let durationMs = 30 * 24 * 60 * 60 * 1000; // Default: 30 Tage
 		if (userItem?.budget_duration) {
 			const match = String(userItem.budget_duration).match(/^(\d+)([dhm])$/);
 			if (match) {
@@ -91,7 +92,10 @@
 		const timePercent = Math.min(Math.round((elapsedMs / totalPeriodMs) * 100), 100);
 
 		const diff = spentPercent - timePercent;
-		const progressBg = diff > 15 ? 'bg-red-500' : diff > 5 ? 'bg-amber-500' : 'bg-emerald-500';
+
+		// Ampelfarbe nach deiner Logik
+		const barColorClass =
+			diff > 15 ? 'bg-red-500' : diff > 5 ? 'bg-amber-500' : 'bg-emerald-500';
 
 		const decimals = maxBudget > 0 && maxBudget < 0.01 ? 4 : 2;
 		const formattedSpend = spend.toLocaleString('de-DE', {
@@ -107,21 +111,22 @@
 			spend,
 			maxBudget,
 			spentPercent,
-			progressBg,
+			barColorClass,
 			formattedSpend,
 			formattedMaxBudget
 		};
 	}
 
 	async function loadUserData() {
-		isLoading = true; // Ladezustand aktivieren
+		isLoading = true;
 		error = null;
 
 		try {
-			const token = localStorage.getItem('token') || '';
+			const token = typeof window !== 'undefined' ? localStorage.getItem('token') || '' : '';
 
 			if (!token) {
-				throw new Error('Kein Authentifizierungs-Token gefunden.');
+				isLoading = false;
+				return;
 			}
 
 			const res = await getAllUsersInfo(token);
@@ -184,7 +189,10 @@
 
 	const getUserList = async () => {
 		try {
-			const res = await getUsers(localStorage.token, query, orderBy, direction, page).catch(
+			const token = typeof window !== 'undefined' ? localStorage.getItem('token') || '' : '';
+			if (!token) return;
+
+			const res = await getUsers(token, query, orderBy, direction, page).catch(
 				(error) => {
 					toast.error(`${error}`);
 					return null;
@@ -195,8 +203,6 @@
 				users = res.users;
 				total = res.total;
 				adminUserCount.set(total);
-
-				loadUserData();
 			}
 		} catch (err) {
 			console.error(err);
@@ -214,11 +220,13 @@
 		}, 300);
 	};
 
-	$: if (page !== null && orderBy !== null && direction !== null) {
+	$: if (isMounted && page !== null && orderBy !== null && direction !== null) {
 		getUserList();
 	}
 
 	onMount(() => {
+		isMounted = true;
+		getUserList();
 		loadUserData();
 	});
 
@@ -226,13 +234,6 @@
 		clearTimeout(searchDebounceTimer);
 	});
 </script>
-
-<ConfirmDialog
-	bind:show={showDeleteConfirmDialog}
-	on:confirm={() => {
-		deleteUserHandler(selectedUser.id);
-	}}
-/>
 
 <AddUserModal
 	bind:show={showAddUserModal}
@@ -490,25 +491,26 @@
 
 						<td class="px-3 py-1">
 							{#if isLoading}
-								<div
-									class="flex items-center justify-between px-2 py-0.5 text-[11px] bg-gray-100 dark:bg-gray-800/40 border border-gray-200/80 dark:border-gray-700/50 rounded-md min-w-[130px] animate-pulse select-none"
-								>
+								<!-- SKELETON (Hat exakt dieselben Maße, damit absolut nichts springt) -->
+								<div class="flex items-center justify-between px-2 py-0.5 text-[11px] bg-gray-100 dark:bg-gray-800/40 border border-gray-200/80 dark:border-gray-700/50 rounded-md min-w-[130px] animate-pulse select-none">
 									<div class="h-3.5 w-16 bg-gray-300 dark:bg-gray-700 rounded my-[1px]"></div>
 									<div class="h-3.5 w-6 bg-gray-300 dark:bg-gray-700 rounded my-[1px]"></div>
 								</div>
+
 							{:else if b}
+								<!-- ECHTER CONTENT MIT AMPELFARBEN -->
 								<div
 									class="relative overflow-hidden flex items-center justify-center px-2 py-0.5 text-[11px] font-medium bg-gray-50 dark:bg-gray-800/60 border border-gray-200 dark:border-gray-700/60 rounded-md select-none min-w-[130px]"
 									title="Budget: ${b.formattedSpend} / ${b.formattedMaxBudget} ({b.spentPercent}%)"
 								>
+									<!-- Dynamischer Ampel-Fortschrittsbalken mit Transparenz für gute Lesbarkeit -->
 									<div
-										class="absolute left-0 top-0 bottom-0 transition-all duration-300 ease-out opacity-25 {b.progressBg}"
+										class="absolute left-0 top-0 bottom-0 transition-all duration-500 ease-out pointer-events-none opacity-25 {b.barColorClass}"
 										style="width: {b.spentPercent}%;"
 									></div>
 
-									<div
-										class="relative z-10 flex items-center justify-between w-full gap-1 text-gray-700 dark:text-gray-200"
-									>
+									<!-- Textinhalt -->
+									<div class="relative z-10 flex items-center justify-between w-full gap-1 text-gray-700 dark:text-gray-200">
 										<span class="truncate">
 											${b.formattedSpend} / ${b.formattedMaxBudget}
 										</span>
@@ -517,6 +519,7 @@
 										</span>
 									</div>
 								</div>
+
 							{:else}
 								<span class="text-gray-400 text-[11px] italic">-</span>
 							{/if}
