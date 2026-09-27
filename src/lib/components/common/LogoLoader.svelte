@@ -124,8 +124,8 @@
 		flex: none;
 	}
 	.mark.big {
-		width: 50px;
-		height: 50px;
+		width: 45px;
+		height: 45px;
 	}
 	.mark svg {
 		width: 100%;
