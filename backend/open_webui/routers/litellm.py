@@ -8,7 +8,7 @@ from typing import List, Dict, Any, Optional
 
 
 from open_webui.models.users import User
-from open_webui.utils.auth import get_verified_user
+from open_webui.utils.auth import get_admin_user, get_verified_user
 from sqlalchemy import null 
 
 router = APIRouter()
@@ -192,6 +192,42 @@ async def get_user_info(user = Depends(get_verified_user)):
                 status_code=503, 
                 detail=f"LiteLLM Server nicht erreichbar: {exc}"
             )
+
+@router.get("/get-all-users-info")
+async def get_all_users_info(user = Depends(get_admin_user)):
+    if not LITELLM_MASTER_KEY:
+        raise HTTPException(
+            status_code=500, 
+            detail="LITELLM_MASTER_KEY ist im Open WebUI Backend nicht konfiguriert."
+        )
+
+    headers = {
+        "Authorization": f"Bearer {LITELLM_MASTER_KEY}",
+        "Content-Type": "application/json"
+    }
+
+    async with httpx.AsyncClient() as client:
+        try:
+            response = await client.get(
+                f"{LITELLM_URL}/user/list", 
+                headers=headers,
+                timeout=10.0
+            )
+            
+            if response.status_code != 200:
+                raise HTTPException(
+                    status_code=response.status_code, 
+                    detail=f"LiteLLM Fehler: {response.text}"
+                )
+
+            return response.json()
+
+        except httpx.RequestError as exc:
+            raise HTTPException(
+                status_code=503, 
+                detail=f"LiteLLM Server nicht erreichbar: {exc}"
+            )
+
 from typing import Optional, Dict, Any
 import httpx
 from fastapi import HTTPException

@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { WEBUI_API_BASE_URL } from '$lib/constants';
 	import { adminUserCount, config, user } from '$lib/stores';
-	import { getContext, onDestroy } from 'svelte';
+	import { getContext, onDestroy, onMount } from 'svelte';
 
 	import dayjs from 'dayjs';
 	import relativeTime from 'dayjs/plugin/relativeTime';
@@ -35,6 +35,8 @@
 	import ProfilePreview from '$lib/components/channel/Messages/Message/ProfilePreview.svelte';
 	import UserPreviewModal from '$lib/components/admin/UserPreviewModal.svelte';
 
+	import { getAllUsersInfo } from '$lib/apis/litellm';
+
 	const i18n: any = getContext('i18n');
 
 	let page = 1;
@@ -55,6 +57,93 @@
 	let showUserChatsModal = false;
 	let showEditUserModal = false;
 	let showUserPreviewModal = false;
+	let error = null;
+
+	let userBudgets: Record<string, any> = {};
+
+	let isLoading = false; // State für den Ladezustand
+
+	// Hilfsfunktion zum Berechnen und Formatieren
+	function formatUserBudget(userItem: any) {
+		const spend = userItem?.spend ?? 0;
+		const maxBudget = userItem?.max_budget ?? 0;
+
+		const spentPercent = maxBudget > 0 ? Math.min(Math.round((spend / maxBudget) * 100), 100) : 0;
+
+		const resetDate = userItem?.budget_reset_at ? new Date(userItem.budget_reset_at) : new Date();
+		const now = new Date();
+
+		let durationMs = 30 * 24 * 60 * 60 * 1000;
+		if (userItem?.budget_duration) {
+			const match = String(userItem.budget_duration).match(/^(\d+)([dhm])$/);
+			if (match) {
+				const value = parseInt(match[1], 10);
+				const unit = match[2];
+				if (unit === 'd') durationMs = value * 24 * 60 * 60 * 1000;
+				else if (unit === 'h') durationMs = value * 60 * 60 * 1000;
+				else if (unit === 'm') durationMs = value * 60 * 1000;
+			}
+		}
+
+		const startDate = new Date(resetDate.getTime() - durationMs);
+		const totalPeriodMs = Math.max(resetDate.getTime() - startDate.getTime(), 1);
+		const elapsedMs = Math.min(Math.max(now.getTime() - startDate.getTime(), 0), totalPeriodMs);
+		const timePercent = Math.min(Math.round((elapsedMs / totalPeriodMs) * 100), 100);
+
+		const diff = spentPercent - timePercent;
+		const progressBg = diff > 15 ? 'bg-red-500' : diff > 5 ? 'bg-amber-500' : 'bg-emerald-500';
+
+		const decimals = maxBudget > 0 && maxBudget < 0.01 ? 4 : 2;
+		const formattedSpend = spend.toLocaleString('de-DE', {
+			minimumFractionDigits: decimals,
+			maximumFractionDigits: decimals
+		});
+		const formattedMaxBudget = maxBudget.toLocaleString('de-DE', {
+			minimumFractionDigits: decimals,
+			maximumFractionDigits: decimals
+		});
+
+		return {
+			spend,
+			maxBudget,
+			spentPercent,
+			progressBg,
+			formattedSpend,
+			formattedMaxBudget
+		};
+	}
+
+	async function loadUserData() {
+		isLoading = true; // Ladezustand aktivieren
+		error = null;
+
+		try {
+			const token = localStorage.getItem('token') || '';
+
+			if (!token) {
+				throw new Error('Kein Authentifizierungs-Token gefunden.');
+			}
+
+			const res = await getAllUsersInfo(token);
+
+			if (res?.users && Array.isArray(res.users)) {
+				const budgetMap: Record<string, any> = {};
+
+				for (const item of res.users) {
+					const formattedData = formatUserBudget(item);
+					if (item.user_id) budgetMap[item.user_id] = formattedData;
+					if (item.user_email) budgetMap[item.user_email] = formattedData;
+				}
+
+				userBudgets = budgetMap;
+			}
+		} catch (err: any) {
+			console.error('Fehler beim Laden der Budgetdaten:', err);
+			error = typeof err === 'string' ? err : err?.message || 'Fehler beim Laden der Daten.';
+		} finally {
+			isLoading = false;
+		}
+	}	
 
 	const deleteUserHandler = async (id) => {
 		const res = await deleteUserById(localStorage.token, id).catch((error) => {
@@ -62,7 +151,6 @@
 			return null;
 		});
 
-		// if the user is deleted and the current page has only one user, go back to the previous page
 		if (users.length === 1 && page > 1) {
 			page -= 1;
 		}
@@ -107,6 +195,8 @@
 				users = res.users;
 				total = res.total;
 				adminUserCount.set(total);
+
+				loadUserData();
 			}
 		} catch (err) {
 			console.error(err);
@@ -295,6 +385,11 @@
 						</button>
 					</th>
 
+					<!-- NEUE SPALTE: BUDGET -->
+					<th scope="col" class="font-normal select-none px-2.5 py-1.5 min-w-[140px]">
+						{$i18n.t('Budget')}
+					</th>
+
 					<th scope="col" class="font-normal select-none" aria-sort={sortState('last_active_at')}>
 						<button
 							type="button"
@@ -302,7 +397,6 @@
 							on:click={() => setSortKey('last_active_at')}
 						>
 							{$i18n.t('Last Active')}
-							<!-- {$i18n.t('Last Modified')} -->
 
 							{#if orderBy === 'last_active_at'}
 								<span class="font-normal"
@@ -347,6 +441,7 @@
 			</thead>
 			<tbody class="">
 				{#each users as user (user.id)}
+				{@const b = userBudgets[user.id] || userBudgets[user.email]}
 					<tr class="dark:border-gray-850 text-xs">
 						<td class="px-3 py-1 font-normal text-gray-900 dark:text-white max-w-48">
 							<div class="flex items-center gap-2">
@@ -356,9 +451,6 @@
 										src={`${WEBUI_API_BASE_URL}/users/${user.id}/profile/image`}
 										alt="user"
 										on:error={(e) => {
-											// LICENSE covers this Open WebUI fallback logo.
-											// Do not alter, remove, obscure, or replace it except as LICENSE permits:
-											// https://docs.openwebui.com/license.
 											e.currentTarget.src = '/favicon.png';
 										}}
 									/>
@@ -391,6 +483,38 @@
 							</button>
 						</td>
 						<td class=" px-3 py-1 max-w-48 truncate"> {user.email} </td>
+
+						<td class="px-3 py-1">
+							{#if isLoading}
+								<div class="flex items-center justify-between px-2 py-0.5 text-[11px] bg-gray-100 dark:bg-gray-800/40 border border-gray-200/80 dark:border-gray-700/50 rounded-md min-w-[130px] animate-pulse select-none">
+									<div class="h-3.5 w-16 bg-gray-300 dark:bg-gray-700 rounded my-[1px]"></div>
+									<div class="h-3.5 w-6 bg-gray-300 dark:bg-gray-700 rounded my-[1px]"></div>
+								</div>
+
+							{:else if b}
+								<div
+									class="relative overflow-hidden flex items-center justify-center px-2 py-0.5 text-[11px] font-medium bg-gray-50 dark:bg-gray-800/60 border border-gray-200 dark:border-gray-700/60 rounded-md select-none min-w-[130px]"
+									title="Budget: ${b.formattedSpend} / ${b.formattedMaxBudget} ({b.spentPercent}%)"
+								>
+									<div
+										class="absolute left-0 top-0 bottom-0 transition-all duration-300 ease-out opacity-25 {b.progressBg}"
+										style="width: {b.spentPercent}%;"
+									></div>
+
+									<div class="relative z-10 flex items-center justify-between w-full gap-1 text-gray-700 dark:text-gray-200">
+										<span class="truncate">
+											${b.formattedSpend} / ${b.formattedMaxBudget}
+										</span>
+										<span class="font-bold text-[10px] ml-1">
+											{b.spentPercent}%
+										</span>
+									</div>
+								</div>
+
+							{:else}
+								<span class="text-gray-400 text-[11px] italic">-</span>
+							{/if}
+						</td>
 
 						<td class=" px-3 py-1">
 							{dayjs(user.last_active_at * 1000).fromNow()}
@@ -478,30 +602,18 @@
 
 {#if !$config?.license_metadata}
 	{#if total > 50}
-		<!-- LICENSE covers the Open WebUI branding narrative here.
-		Do not alter, remove, obscure, or replace it except as LICENSE permits:
-		https://docs.openwebui.com/license. -->
 		<div class="mt-3 mb-3 pb-1 text-gray-700 dark:text-gray-300">
 			<div class="max-w-3xl text-xs leading-5">
 				<div class="text-gray-900 dark:text-gray-100">
-					<!-- LICENSE covers this Open WebUI wordmark.
-					Do not alter, remove, obscure, or replace it except as LICENSE permits:
-					https://docs.openwebui.com/license. -->
 					{$i18n.t('Running Open WebUI for a team?')}
 				</div>
 				<div class="mt-2 space-y-2">
 					<p>
-						<!-- LICENSE covers this Open WebUI branding copy.
-						Do not alter, remove, obscure, or replace it except as LICENSE permits:
-						https://docs.openwebui.com/license. -->
 						{$i18n.t(
 							'You have more than 50 users, which often means this workspace is supporting organizational use. Open WebUI is free to use as-is, with no restrictions or hidden limits, and we want to keep it that way.'
 						)}
 					</p>
 					<p class="text-gray-500 dark:text-gray-400">
-						<!-- LICENSE covers this Open WebUI branding copy.
-						Do not alter, remove, obscure, or replace it except as LICENSE permits:
-						https://docs.openwebui.com/license. -->
 						{$i18n.t(
 							'By supporting the project through sponsorship or an enterprise license, you help us stay independent, ship new features faster, improve stability, and grow Open WebUI for the long haul.'
 						)}
