@@ -2,6 +2,7 @@ from datetime import date
 import os
 import httpx
 from fastapi import APIRouter, HTTPException, Depends, Query
+from open_webui.utils.litellm_session_managment.session_manager import session_manager
 from pydantic import BaseModel
 import json
 from typing import List, Dict, Any, Optional
@@ -156,6 +157,52 @@ async def delete_litellm_key(user = Depends(get_verified_user)):
                 status_code=503, 
                 detail=f"LiteLLM Server nicht erreichbar: {exc}"
             ) 
+
+@router.post("/update-user-budget")
+async def update_user_budget(
+    new_budget: float = Query(..., description="Neues Budget für den Benutzer"),
+    user_to_update: str = Query(..., description="E-Mail des Benutzers, dessen Budget aktualisiert werden soll"),
+    user = Depends(get_admin_user)
+):
+    if not LITELLM_MASTER_KEY:
+        raise HTTPException(
+            status_code=500, 
+            detail="LITELLM_MASTER_KEY ist im Open WebUI Backend nicht konfiguriert."
+        )
+
+    headers = {
+        "Authorization": f"Bearer {LITELLM_MASTER_KEY}",
+        "Content-Type": "application/json"
+    }
+
+    payload = {
+        "user_id": user_to_update,
+        "max_budget": new_budget,
+    }
+
+    async with httpx.AsyncClient() as client:
+        try:
+            response = await client.post(
+                f"{LITELLM_URL}/user/update", 
+                json=payload, 
+                headers=headers,
+                timeout=10.0
+            )
+            
+            if response.status_code != 200:
+                raise HTTPException(
+                    status_code=response.status_code, 
+                    detail=f"LiteLLM Fehler: {response.text}"
+                )
+
+            return response.json()
+
+        except httpx.RequestError as exc:
+            raise HTTPException(
+                status_code=503, 
+                detail=f"LiteLLM Server nicht erreichbar: {exc}"
+            )
+        
         
 @router.get("/get-user-info")
 async def get_user_info(user = Depends(get_verified_user)):
@@ -496,3 +543,83 @@ async def get_model_info_map(user = Depends(get_verified_user)):
                 status_code=503, 
                 detail=f"LiteLLM Server nicht erreichbar: {exc}"
             )
+
+######################################
+# Session Management with Redis
+######################################
+class CreateSessionRequest(BaseModel):
+    max_budget: float
+    user_email: Optional[str] = None  # Optional: Nur Admins geben hier eine abweichende Mail an
+    ttl_seconds: Optional[int] = None  # z.B. 86400 für 24 Stunden
+
+
+
+@router.post("/create-session")
+async def create_session(
+    req: CreateSessionRequest, 
+    user=Depends(get_verified_user)
+):
+    """
+    Erstellt oder überschreibt eine Session.
+    Nimmt standardmäßig die E-Mail des eingewählten Users.
+    """
+    target_email = user.email
+
+    # Wenn eine abweichende E-Mail angegeben wurde, Rechte prüfen (z. B. Admin-Check)
+    if req.user_email and req.user_email != user.email:
+        if getattr(user, "role", None) != "admin":
+            raise HTTPException(
+                status_code=403, 
+                detail="Nur Admins dürfen Sessions für andere Nutzer erstellen."
+            )
+        target_email = req.user_email
+
+    session = session_manager.create_or_update_session(
+        user_email=target_email,
+        max_budget=req.max_budget,
+        ttl_seconds=req.ttl_seconds
+    )
+    return {"status": "success", "session": session}
+
+
+@router.get("/get-session")
+async def get_my_session(user=Depends(get_verified_user)):
+    """Liest den aktuellen Session-Stand (Spend / Budget) des eingewählten Nutzers aus."""
+    session = session_manager.get_session(user.email)
+    if not session:
+        return {
+            "status": "none", 
+            "message": f"Keine aktive Session für {user.email} gefunden.",
+            "session": None
+        }
+    return {"status": "success", "session": session}
+
+
+@router.delete("/delete-session")
+async def delete_my_session(user=Depends(get_verified_user)):
+    """Löscht die Session des eingewählten Nutzers aus Redis."""
+    deleted = session_manager.delete_session(user.email)
+    if not deleted:
+        raise HTTPException(
+            status_code=404, 
+            detail=f"Keine aktive Session für {user.email} vorhanden."
+        )
+    return {"status": "success", "message": f"Session für {user.email} gelöscht."}
+
+
+@router.delete("/user/{target_email}")
+async def delete_user_session(
+    target_email: str, 
+    user=Depends(get_admin_user)
+):
+    """Admin-Endpunkt: Löscht die Session eines beliebigen Nutzers."""
+    if getattr(user, "role", None) != "admin" and target_email != user.email:
+        raise HTTPException(status_code=403, detail="Keine Berechtigung.")
+
+    deleted = session_manager.delete_session(target_email)
+    if not deleted:
+        raise HTTPException(
+            status_code=404, 
+            detail=f"Session für {target_email} existiert nicht."
+        )
+    return {"status": "success", "message": f"Session für {target_email} gelöscht."}

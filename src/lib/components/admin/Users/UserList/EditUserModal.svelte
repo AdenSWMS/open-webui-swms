@@ -7,6 +7,7 @@
 	import { goto } from '$app/navigation';
 
 	import { updateUserById, getUserGroupsById } from '$lib/apis/users';
+	import { updateUserBudget } from '$lib/apis/litellm';
 
 	import Modal from '$lib/components/common/Modal.svelte';
 	import localizedFormat from 'dayjs/plugin/localizedFormat';
@@ -19,16 +20,33 @@
 	dayjs.extend(localizedFormat);
 
 	export let show = false;
-	export let selectedUser;
-	export let sessionUser;
+	export let selectedUser: any;
+	export let sessionUser: any;
+	export let userBudgets: Record<string, any> = {};
 
 	$: if (show) {
 		init();
 	}
 
+	const getInitialBudgetData = () => {
+		if (!selectedUser) return null;
+		return (
+			userBudgets[selectedUser.id] ??
+			userBudgets[selectedUser.email] ??
+			null
+		);
+	};
+
 	const init = () => {
 		if (selectedUser) {
-			_user = { ...selectedUser, password: '' };
+			const existingBudgetData = getInitialBudgetData();
+
+			_user = {
+				...selectedUser,
+				password: '',
+				// Falls bereits ein maxBudget in der Map existiert, nimm dieses, sonst fall auf selectedUser zurück
+				budget: existingBudgetData?.maxBudget ?? selectedUser?.info?.max_budget ?? selectedUser?.max_budget ?? null
+			};
 			loadUserGroups();
 		}
 	};
@@ -38,19 +56,78 @@
 		role: 'pending',
 		name: '',
 		email: '',
-		password: ''
+		password: '',
+		budget: null as number | null
 	};
 
 	let userGroups: any[] | null = null;
 
-	const submitHandler = async () => {
-		const res = await updateUserById(localStorage.token, selectedUser.id, _user).catch((error) => {
-			toast.error(`${error}`);
-		});
+	$: budgetStats = calculateLiveBudget(selectedUser, userBudgets, _user.budget);
 
-		if (res) {
-			dispatch('save');
-			show = false;
+	function calculateLiveBudget(userItem: any, budgetsMap: Record<string, any>, newMaxBudget: number | null) {
+	// 1. Bereits verarbeitete Daten aus der Map holen
+	const existingData = userItem?.id ? (budgetsMap[userItem.id] ?? budgetsMap[userItem.email]) : null;
+	
+	const spend = existingData?.spend ?? userItem?.info?.spend ?? userItem?.spend ?? 0;
+
+	// 2. Max Budget bestimmen (Neuer Input hat Vorrang für Live-Vorschau)
+	const maxBudget = newMaxBudget !== null && !isNaN(Number(newMaxBudget))
+		? Number(newMaxBudget)
+		: (existingData?.maxBudget ?? userItem?.info?.max_budget ?? userItem?.max_budget ?? 0);
+
+	// 3. Verbrauch in %
+	const rawSpentPercent = maxBudget > 0 ? (spend / maxBudget) * 100 : 0;
+	const spentPercent = Math.min(Math.round(rawSpentPercent), 100);
+
+	// 4. Zeitfortschritt (bereits aus formatUserBudget in der Oberkomponente vorhanden)
+	// Falls zeitliche Daten in existingData vorhanden sind, nutzen wir sie, sonst den Prozentwert
+	const timePercent = existingData?.timePercent ?? null;
+
+	let barColorClass = 'bg-emerald-500';
+
+	if (timePercent !== null) {
+		// Dasselbe 'diff' wie in deiner Oberkomponente
+		const diff = spentPercent - timePercent;
+		barColorClass = diff > 15 ? 'bg-red-500' : diff > 5 ? 'bg-amber-500' : 'bg-emerald-500';
+	} else {
+		// Fallback, falls timePercent nicht existiert
+		barColorClass = rawSpentPercent >= 100 ? 'bg-red-500' : rawSpentPercent >= 80 ? 'bg-amber-500' : 'bg-emerald-500';
+	}
+
+	const decimals = maxBudget > 0 && maxBudget < 0.01 ? 4 : 2;
+	const formattedSpend = spend.toLocaleString('de-DE', {
+		minimumFractionDigits: decimals,
+		maximumFractionDigits: decimals
+	});
+	const formattedMaxBudget = maxBudget.toLocaleString('de-DE', {
+		minimumFractionDigits: decimals,
+		maximumFractionDigits: decimals
+	});
+
+	return {
+		spend,
+		maxBudget,
+		spentPercent,
+		barColorClass,
+		formattedSpend,
+		formattedMaxBudget
+	};
+}
+
+	const submitHandler = async () => {
+		try {
+			const res = await updateUserById(localStorage.token, selectedUser.id, _user);
+
+			if (_user.budget !== null && _user.budget !== undefined) {
+				await updateUserBudget(localStorage.token, Number(_user.budget), selectedUser);
+			}
+
+			if (res) {
+				dispatch('save');
+				show = false;
+			}
+		} catch (error) {
+			toast.error(`${error}`);
 		}
 	};
 
@@ -65,7 +142,7 @@
 	};
 </script>
 
-<Modal size="sm" bind:show>
+<Modal size="md" bind:show>
 	<div>
 		<div class=" flex justify-between dark:text-gray-300 px-4 pt-3 pb-1">
 			<div class=" text-sm font-medium self-center">{$i18n.t('Edit User')}</div>
@@ -101,12 +178,12 @@
 							<div class=" flex-1 min-w-0">
 								<div class="overflow-hidden w-ful mb-2">
 									<div class=" self-center capitalize font-normal truncate">
-										{selectedUser.name}
+										{selectedUser?.name}
 									</div>
 
 									<div class="text-xs text-gray-500">
 										{$i18n.t('Created at')}
-										{dayjs(selectedUser.created_at * 1000).format('LL')}
+										{dayjs(selectedUser?.created_at * 1000).format('LL')}
 									</div>
 								</div>
 
@@ -141,7 +218,7 @@
 												class="w-full text-sm bg-transparent disabled:text-gray-500 dark:disabled:text-gray-500 outline-hidden"
 												bind:value={_user.role}
 												aria-label={$i18n.t('Role')}
-												disabled={_user.id == sessionUser.id}
+												disabled={_user.id == sessionUser?.id}
 												required
 											>
 												<option value="admin">{$i18n.t('Admin')}</option>
@@ -213,11 +290,47 @@
 											/>
 										</div>
 									</div>
+
+									<!-- Abgetrennter Budget-Bereich mit Live-Vorschau -->
+									<div class="pt-3 mt-2 border-t border-gray-100 dark:border-gray-800">
+										<div class="p-3 rounded-lg bg-gray-50/50 dark:bg-gray-850/50 border border-gray-100 dark:border-gray-800/60 space-y-2">
+											<div class="flex justify-between items-center text-xs">
+												<span class="font-medium text-gray-500 dark:text-gray-400">
+													{$i18n.t('User Budget')}
+												</span>
+												<span class="font-mono text-gray-600 dark:text-gray-300">
+													${budgetStats.formattedSpend} /${budgetStats.formattedMaxBudget}
+												</span>
+											</div>
+
+											<!-- Fortschrittsbalken mit dynamischer Ampelfarbe -->
+											<div class="w-full h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+												<div
+													class="h-full transition-all duration-300 rounded-full {budgetStats.barColorClass}"
+													style="width: {budgetStats.spentPercent}%"
+												></div>
+											</div>
+
+											<div class="flex items-center justify-between pt-1">
+												<span class="text-xs text-gray-400">{$i18n.t('Max Budget')} ($)</span>
+												<input
+													class="w-32 text-right text-sm bg-transparent font-mono outline-hidden border-b border-gray-200 dark:border-gray-700 focus:border-black dark:focus:border-white transition"
+													type="number"
+													step="0.01"
+													min="0"
+													bind:value={_user.budget}
+													aria-label={$i18n.t('Budget')}
+													placeholder={$i18n.t('Enter budget')}
+												/>
+											</div>
+										</div>
+									</div>
+
 								</div>
 							</div>
 						</div>
 
-						<div class="flex justify-end pt-3 text-sm font-normal">
+						<div class="flex justify-end pt-4 text-sm font-normal">
 							<button
 								class="px-3.5 py-1.5 text-sm font-normal bg-black hover:bg-gray-900 text-white dark:bg-white dark:text-black dark:hover:bg-gray-100 transition rounded-full flex flex-row space-x-1 items-center"
 								type="submit"
@@ -235,21 +348,20 @@
 <style>
 	input::-webkit-outer-spin-button,
 	input::-webkit-inner-spin-button {
-		/* display: none; <- Crashes Chrome on hover */
 		-webkit-appearance: none;
-		margin: 0; /* <-- Apparently some margin are still there even though it's hidden */
+		margin: 0;
 	}
 
 	.tabs::-webkit-scrollbar {
-		display: none; /* for Chrome, Safari and Opera */
+		display: none;
 	}
 
 	.tabs {
-		-ms-overflow-style: none; /* IE and Edge */
-		scrollbar-width: none; /* Firefox */
+		-ms-overflow-style: none;
+		scrollbar-width: none;
 	}
 
 	input[type='number'] {
-		-moz-appearance: textfield; /* Firefox */
+		-moz-appearance: textfield;
 	}
 </style>

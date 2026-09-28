@@ -111,6 +111,7 @@
 			spend,
 			maxBudget,
 			spentPercent,
+			timePercent,
 			barColorClass,
 			formattedSpend,
 			formattedMaxBudget
@@ -244,10 +245,11 @@
 
 <EditUserModal
 	bind:show={showEditUserModal}
-	{selectedUser}
-	sessionUser={$user}
-	on:save={async () => {
-		getUserList();
+	selectedUser={selectedUser}
+	sessionUser={user}
+	userBudgets={userBudgets}
+	on:save={() => {
+		loadUserData();
 	}}
 />
 

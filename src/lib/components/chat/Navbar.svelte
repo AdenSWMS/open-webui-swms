@@ -38,9 +38,16 @@
 	import ChatCheck from '../icons/ChatCheck.svelte';
 	import Knobs from '../icons/Knobs.svelte';
 	import { isTemporaryChatId } from '$lib/utils/chatId';
+
+	// LiteLLM Info
 	import { getUserInfo } from '$lib/apis/litellm';
 	import type { UserInfoResponse } from '$lib/apis/litellm';
 	import NavbarBudgetButton from './NavbarBudgetButton.svelte';
+
+	// Redis Session Guard Integration
+	import { getMySession } from '$lib/apis/litellm/sessions';
+	import type { UserSession } from '$lib/apis/litellm/sessions';
+	import SessionModal from './Sessions/SessionModal.svelte';
 
 	const i18n: any = getContext('i18n');
 
@@ -74,13 +81,19 @@
 	let showShareChatModal = false;
 	let showDownloadChatModal = false;
 
-	import OpenCodeModal from './OpenCodeModal.svelte';
-	let showOpenCodeModal = false;
+	import TutorialModal from './TutorialModal.svelte';
+	let showTutorialModal = false;
 
+	// LiteLLM Budget State
 	import BudgetModal from './BudgetModal.svelte';
 	let showBudgetModal = false;
 	let userData: UserInfoResponse | null = null;
 	let error: string | null = null;
+
+	// Redis Session State
+	let showSessionModal = false;
+	let currentSession: UserSession | null = null;
+
 	async function loadUserData() {
 		error = null;
 
@@ -91,7 +104,21 @@
 				throw new Error('Kein Authentifizierungs-Token gefunden.');
 			}
 
-			userData = await getUserInfo(token);
+			// Parallel LiteLLM Daten und Redis-Session-Daten laden
+			const [userInfoRes, sessionRes] = await Promise.allSettled([
+				getUserInfo(token),
+				getMySession(token)
+			]);
+
+			if (userInfoRes.status === 'fulfilled') {
+				userData = userInfoRes.value;
+			} else {
+				console.error('Fehler beim Abrufen der LiteLLM User-Info:', userInfoRes.reason);
+			}
+
+			if (sessionRes.status === 'fulfilled') {
+				currentSession = sessionRes.value?.session ?? null;
+			}
 		} catch (err: any) {
 			console.error('Fehler beim Laden der Budgetdaten:', err);
 			error = typeof err === 'string' ? err : err?.message || 'Fehler beim Laden der Daten.';
@@ -100,6 +127,11 @@
 
 	async function openBudgetModal() {
 		showBudgetModal = true;
+		await loadUserData();
+	}
+
+	async function openSessionModal() {
+		showSessionModal = true;
 		await loadUserData();
 	}
 
@@ -145,14 +177,14 @@
 			<div class="flex items-center w-full max-w-full gap-2 md:gap-4">
 				{#if $mobile && !$showSidebar}
 					<div class="mr-1 flex flex-none items-center self-center">
-						<Tooltip content={$showSidebar ? $i18n.t('Close Sidebar') : $i18n.t('Open Sidebar')}>
+						<Tooltip content={$showSidebar ? $i18n.t('Close Sidebar') :$i18n.t('Open Sidebar')}>
 							<button
 								id="sidebar-toggle-button"
 								class="flex cursor-pointer rounded-lg text-gray-500 transition hover:bg-gray-50/40 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-gray-800/40 dark:hover:text-gray-200"
 								on:click={() => {
 									showSidebar.set(!$showSidebar);
 								}}
-								aria-label={$showSidebar ? $i18n.t('Close Sidebar') : $i18n.t('Open Sidebar')}
+								aria-label={$showSidebar ? $i18n.t('Close Sidebar') :$i18n.t('Open Sidebar')}
 							>
 								<div class="self-center p-1.5">
 									<Sidebar className="size-4" />
@@ -206,7 +238,7 @@
 								</Menu>
 							{/if}
 
-							{#if !$temporaryChatEnabled && ($user?.role === 'admin' || ($user?.permissions?.chat?.delete ?? true))}
+							{#if !$temporaryChatEnabled && ($user?.role === 'admin')}
 								<button
 									id="delete-chat-button"
 									aria-label={$i18n.t('Delete')}
@@ -230,8 +262,9 @@
 					{/if}
 				</div>
 
+				<!-- Mittlerer Bereich: Budgets (LiteLLM + Redis Session) -->
 				<div class="lg:mr-1 flex-1 flex justify-center items-center gap-2 self-center">
-					<div class="w-full max-w-2xl flex items-center justify-center">
+					<div class="w-full max-w-2xl flex items-center justify-center gap-2">
 						{#if userData}
 							<NavbarBudgetButton {userData} onClick={openBudgetModal} />
 						{:else if error}
@@ -250,7 +283,27 @@
 							</button>
 						{/if}
 
+						<!-- Neuer Button: Redis Session-Budget Guard -->
+						<button
+							type="button"
+							on:click={openSessionModal}
+							class="inline-flex items-center justify-center gap-1.5 px-3 py-1 text-xs font-medium bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/60 rounded-lg text-emerald-700 dark:text-emerald-300 shadow-sm hover:bg-emerald-100 dark:hover:bg-emerald-900/50 transition cursor-pointer shrink-0"
+						>
+							<span>⚡ Session Guard</span>
+							{#if currentSession}
+								<span class="px-1.5 py-0.5 text-[10px] bg-emerald-200 dark:bg-emerald-800 text-emerald-900 dark:text-emerald-100 rounded-full font-bold">
+									${currentSession.spend.toFixed(2)} /${currentSession.max_budget.toFixed(2)}
+								</span>
+							{/if}
+						</button>
+
+						<!-- Modals -->
 						<BudgetModal bind:show={showBudgetModal} {userData} />
+						<SessionModal 
+							bind:show={showSessionModal} 
+							currentUser={$user} 
+							on:update={() => loadUserData()} 
+						/>
 					</div>
 				</div>
 
@@ -258,11 +311,11 @@
 					<div class="flex items-center gap-2">
 						<button
 							class="px-3 py-1 text-xs font-medium bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-gray-700 dark:text-gray-200 shadow-sm hover:bg-gray-50 dark:hover:bg-gray-700 transition cursor-pointer"
-							on:click={() => (showOpenCodeModal = true)}
+							on:click={() => (showTutorialModal = true)}
 						>
-							OpenCode & API-Key
+							API-Key & Tutorials
 						</button>
-						<OpenCodeModal bind:show={showOpenCodeModal} />
+						<TutorialModal bind:show={showTutorialModal} />
 					</div>
 
 					{#if $user?.role === 'user' ? ($user?.permissions?.chat?.temporary ?? true) && !($user?.permissions?.chat?.temporary_enforced ?? false) : true}
@@ -329,7 +382,7 @@
 						</Tooltip>
 					{/if}
 
-					{#if $user?.role === 'admin' || ($user?.permissions.chat?.controls ?? true)}
+					{#if $user?.role === 'admin'}
 						<Tooltip content={$i18n.t('Controls')}>
 							<button
 								class="flex size-6 cursor-pointer items-center justify-center rounded-lg text-gray-500 transition hover:bg-gray-50/40 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-gray-800/40 dark:hover:text-gray-200"

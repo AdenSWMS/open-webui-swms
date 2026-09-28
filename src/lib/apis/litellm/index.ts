@@ -70,6 +70,37 @@ export const deleteLiteLLMApiKey = async (token: string) => {
 	return res;
 };
 
+export const updateUserBudget = async (token: string, max_budget: number, user_to_update: any) => {
+	let error = null;
+
+	const queryParams = new URLSearchParams({
+		new_budget: max_budget.toString(),
+		user_to_update: user_to_update.email.toString()
+	});
+
+	const res = await fetch(`${WEBUI_API_BASE_URL}/litellm/update-user-budget?${queryParams.toString()}`, {
+		method: 'POST',
+		headers: {
+			'Content-Type': 'application/json',
+			Authorization: `Bearer ${token}`
+		}
+	})
+		.then(async (res) => {
+			if (!res.ok) throw await res.json();
+			return res.json();
+		})
+		.catch((err) => {
+			console.error(err);
+			error = err.detail ?? err;
+			return error;
+		});
+
+	if (error) {
+		throw error;
+	}
+
+	return res;
+};
 export const getUserInfo = async (token: string) => {
 	let error = null;
 
