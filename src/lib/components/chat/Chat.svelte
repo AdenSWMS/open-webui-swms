@@ -15,6 +15,13 @@
 	import equal from 'fast-deep-equal';
 
 	import {
+		send,
+		receive,
+		LOGO_LOADER_KEY,
+		responseLoaderVisible
+	} from '$lib/components/chat/transition';
+
+	import {
 		chatId,
 		config,
 		type Model,
@@ -131,6 +138,7 @@
 	import EmbeddedChatHistoryDropdown from './EmbeddedChatHistoryDropdown.svelte';
 	import InputVariablesModal from './MessageInput/InputVariablesModal.svelte';
 	import ProjectSelectorModal from '$lib/components/chat/ProjectSelectorModal.svelte';
+	import LogoLoader from '../common/LogoLoader.svelte';
 
 	export let chatIdProp = '';
 	export let embedded = false;
@@ -446,6 +454,11 @@
 	let history = {
 		messages: {},
 		currentId: null
+	};
+	type ChatMessageState = {
+		id?: string;
+		role?: string;
+		done?: boolean;
 	};
 
 	let taskIds = null;
@@ -3242,8 +3255,10 @@
 
 		// Check if the assistant is still generating the main response
 		// (don't block on background tasks like title gen, follow-ups, tags)
-		const lastMessage = history.currentId ? history.messages[history.currentId] : null;
-		const isGenerating = lastMessage && lastMessage.role === 'assistant' && !lastMessage.done;
+		const lastMessage: ChatMessageState | null = history.currentId
+			? (history.messages[history.currentId] as ChatMessageState)
+			: null;
+		const isGenerating = lastMessage?.role === 'assistant' && !lastMessage.done;
 
 		if (isGenerating) {
 			if ($settings?.enableMessageQueue ?? true) {
@@ -4570,6 +4585,16 @@
 											}
 										}}
 									/>
+									<div class="absolute bottom-3 left-3 z-10 flex items-center pointer-events-none">
+										{#if !$responseLoaderVisible}
+											<div
+												in:receive|global={{ key: LOGO_LOADER_KEY }}
+												out:send|global={{ key: LOGO_LOADER_KEY }}
+											>
+												<LogoLoader state="idle" size="big" />
+											</div>
+										{/if}
+									</div>
 
 									<div
 										class="absolute bottom-1 text-xs text-gray-500 text-center line-clamp-1 right-0 left-0"

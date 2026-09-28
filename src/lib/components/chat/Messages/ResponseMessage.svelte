@@ -17,6 +17,13 @@
 	import { generateTags } from '$lib/apis';
 
 	import {
+		send,
+		receive,
+		LOGO_LOADER_KEY,
+		responseLoaderVisible
+	} from '$lib/components/chat/transition';
+
+	import {
 		audioQueue,
 		config,
 		models,
@@ -488,23 +495,28 @@
 	type LoaderStateType = 'idle' | 'thinking' | 'writing' | 'done';
 
 	let loaderState: LoaderStateType = 'idle';
+	let showLoader = !message?.done;
 	let loaderTimeout: ReturnType<typeof setTimeout>;
 
 	$: {
 		if (message?.error) {
 			loaderState = 'idle';
+			showLoader = false;
 		} else if (!message?.done) {
-			// Während der Generierung
 			loaderState = hasResponseContent ? 'writing' : 'thinking';
-		} else if (message?.done && loaderState !== 'idle' && loaderState !== 'done') {
-			// Sobald fertig: Einmalig 'done' setzen und nach 1.2s auf 'idle' / ausblenden
+			showLoader = true;
+		} else if (loaderState !== 'done' && showLoader) {
 			loaderState = 'done';
-
 			clearTimeout(loaderTimeout);
 			loaderTimeout = setTimeout(() => {
+				showLoader = false;
 				loaderState = 'idle';
 			}, 1200);
 		}
+	}
+
+	$: if (isLastMessage) {
+		responseLoaderVisible.set(showLoader);
 	}
 
 	let feedbackLoading = false;
@@ -703,6 +715,12 @@
 	onDestroy(() => {
 		if (budgetRefreshTimeout) {
 			clearTimeout(budgetRefreshTimeout);
+		}
+		if (loaderTimeout) {
+			clearTimeout(loaderTimeout);
+		}
+		if (isLastMessage) {
+			responseLoaderVisible.set(false);
 		}
 
 		if (buttonsContainerElement) {
@@ -1642,12 +1660,11 @@
 										{/if}
 									{/if}
 									{#if tokenStats}
-									<div 
-										class="{isLastMessage || ($settings?.highContrastMode ?? false)
-											? 'visible'
-											: 'hover-reveal'} inline-flex items-centerrounded-lg transition h-3.5 w-px bg-gray-300 dark:bg-gray-700 mx-1.5 self-center pointer-events-none"
-
-									 />
+										<div
+											class="{isLastMessage || ($settings?.highContrastMode ?? false)
+												? 'visible'
+												: 'hover-reveal'} inline-flex items-centerrounded-lg transition h-3.5 w-px bg-gray-300 dark:bg-gray-700 mx-1.5 self-center pointer-events-none"
+										/>
 										<div
 											class="flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400 select-none"
 										>
@@ -1789,9 +1806,14 @@
 						{/key}
 					{/if}
 
-					{#if isLastMessage}
+					{#if isLastMessage && showLoader}
 						<div class="mt-5 mb-5 flex items-center">
-							<LogoLoader state={loaderState} size="big" />
+							<div
+								in:receive|global={{ key: LOGO_LOADER_KEY }}
+								out:send|global={{ key: LOGO_LOADER_KEY }}
+							>
+								<LogoLoader state={loaderState} size="big" />
+							</div>
 						</div>
 					{/if}
 

@@ -3,8 +3,6 @@ import json
 from typing import Optional, Dict, Any
 import redis
 
-# Werte dynamisch aus den Environment-Variablen laden
-# Syntax: os.getenv("VARIABLEN_NAME", Fallback_Wert)
 REDIS_HOST = os.getenv("SESSION_REDIS_HOST", "10.30.0.90")
 REDIS_PORT = int(os.getenv("SESSION_REDIS_PORT", 6380))
 REDIS_PASSWORD = os.getenv("SESSION_REDIS_PASSWORD", None) 

@@ -263,48 +263,51 @@
 				</div>
 
 				<!-- Mittlerer Bereich: Budgets (LiteLLM + Redis Session) -->
-				<div class="lg:mr-1 flex-1 flex justify-center items-center gap-2 self-center">
-					<div class="w-full max-w-2xl flex items-center justify-center gap-2">
+				<div class="lg:mr-1 flex-1 flex justify-center items-center self-center mt-2">
+					<!-- Rahmen-Container mit fester Mindestbreite (min-w-...) -->
+					<div class="inline-flex items-stretch justify-between gap-2 p-1.5 bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl shadow-xs w-full max-w-4xl">
+						
+						<!-- 1. Budget-Element (3/4 Breite) -->
 						{#if userData}
-							<NavbarBudgetButton {userData} onClick={openBudgetModal} />
+							<div class="w-3/4 flex items-center justify-center">
+								<NavbarBudgetButton {userData} onClick={openBudgetModal} />
+							</div>
 						{:else if error}
-							<div
-								class="w-full text-center px-3 py-1.5 text-xs text-red-500 bg-red-100 dark:bg-red-900/20 rounded-lg border border-red-200 dark:border-red-800/30"
-							>
+							<div class="w-3/4 flex items-center justify-center text-center px-3 py-1.5 text-xs text-red-500 bg-red-100 dark:bg-red-900/20 rounded-lg border border-red-200 dark:border-red-800/30">
 								{error}
 							</div>
 						{:else}
 							<button
 								type="button"
 								on:click={openBudgetModal}
-								class="w-full inline-flex items-center justify-center gap-2 px-3 py-1 text-xs font-medium bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-gray-700 dark:text-gray-200 shadow-sm hover:bg-gray-50 dark:hover:bg-gray-700 transition cursor-pointer"
+								class="w-3/4 inline-flex items-center justify-center px-3 py-1 text-xs font-medium bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-gray-700 dark:text-gray-200 shadow-sm hover:bg-gray-50 dark:hover:bg-gray-700 transition cursor-pointer"
 							>
 								Budget abrufen
 							</button>
 						{/if}
 
-						<!-- Neuer Button: Redis Session-Budget Guard -->
+						<!-- 2. Budget Guard Button (1/4 Breite) -->
 						<button
 							type="button"
 							on:click={openSessionModal}
-							class="inline-flex items-center justify-center gap-1.5 px-3 py-1 text-xs font-medium bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/60 rounded-lg text-emerald-700 dark:text-emerald-300 shadow-sm hover:bg-emerald-100 dark:hover:bg-emerald-900/50 transition cursor-pointer shrink-0"
+							class="w-1/4 inline-flex items-center justify-center gap-1.5 px-3 py-1 text-xs font-medium bg-emerald-50 dark:bg-emerald-950 border border-emerald-200 dark:border-emerald-800 rounded-lg text-emerald-700 dark:text-emerald-300 shadow-sm hover:bg-emerald-100 dark:hover:bg-emerald-900 transition cursor-pointer"
 						>
-							<span>⚡ Session Guard</span>
+							<span>Budget Guard</span>
 							{#if currentSession}
 								<span class="px-1.5 py-0.5 text-[10px] bg-emerald-200 dark:bg-emerald-800 text-emerald-900 dark:text-emerald-100 rounded-full font-bold">
 									${currentSession.spend.toFixed(2)} /${currentSession.max_budget.toFixed(2)}
 								</span>
 							{/if}
 						</button>
-
-						<!-- Modals -->
-						<BudgetModal bind:show={showBudgetModal} {userData} />
-						<SessionModal 
-							bind:show={showSessionModal} 
-							currentUser={$user} 
-							on:update={() => loadUserData()} 
-						/>
 					</div>
+
+					<!-- Modals -->
+					<BudgetModal bind:show={showBudgetModal} {userData} />
+					<SessionModal 
+						bind:show={showSessionModal} 
+						currentUser={$user} 
+						on:update={() => loadUserData()} 
+					/>
 				</div>
 
 				<div class="flex-none flex items-center gap-2 text-gray-600 dark:text-gray-400">

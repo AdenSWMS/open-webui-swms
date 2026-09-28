@@ -31,7 +31,6 @@
 
 	$: isAdmin = currentUser?.role === 'admin';
 
-
 	$: if (show) {
 		loadSessionData();
 		startAutoRefresh();
@@ -190,11 +189,11 @@
 				<div
 					class="p-2.5 rounded-xl bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400 border border-amber-200 dark:border-amber-800/50 text-xl"
 				>
-					⚡
+					⏳
 				</div>
 				<div>
 					<h3 class="text-lg font-bold leading-tight text-gray-900 dark:text-gray-100">
-						Session Budget Guard
+						Budget Guard
 					</h3>
 					<p class="text-xs text-gray-500 dark:text-gray-400">
 						Echtzeit-Kostenkontrolle für LiteLLM
@@ -227,7 +226,7 @@
 				<div
 					class="w-6 h-6 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin"
 				></div>
-				<span>Lade Session-Informationen...</span>
+				<span>Lade Budget-Informationen...</span>
 			</div>
 		{:else}
 			<div class="space-y-6">
@@ -239,7 +238,7 @@
 						<span
 							class="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400"
 						>
-							Eigene Session
+							Eigenes zeitlich begrenztes Budget
 						</span>
 						{#if currentUser?.email}
 							<span
@@ -303,10 +302,10 @@
 					{:else}
 						<div class="py-2 text-center sm:text-left">
 							<p class="text-sm font-medium text-gray-700 dark:text-gray-300">
-								Keine aktive Budget-Session vorhanden.
+								Keine aktives Budget vorhanden.
 							</p>
 							<p class="text-xs text-gray-400 dark:text-gray-500 mt-0.5">
-								Erstelle unten ein neues Limit, um Kosten-Schutz zu aktivieren.
+								Erstelle unten ein neues Limit, um Kosten-Schutz zu aktivieren. Der Kosten Schutz gilt für alle Anfragen, die du in der angegebenen Zeit an LiteLLM stellst. Du kannst jederzeit ein neues Limit setzen oder die Session löschen.
 							</p>
 						</div>
 					{/if}
@@ -315,7 +314,7 @@
 				<!-- Formular zum Erstellen / Ändern des EIGENEN Budgets -->
 				<div class="space-y-4">
 					<h4 class="text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">
-						Eigenes Session-Budget festlegen
+						Eigenes zeitlich begrenztes Budget festlegen
 					</h4>
 					<div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
 						<div>
