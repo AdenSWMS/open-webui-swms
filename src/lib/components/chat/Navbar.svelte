@@ -98,32 +98,37 @@
 		error = null;
 
 		try {
-			const token = localStorage.getItem('token') || '';
+			const token = localStorage.token;
 
 			if (!token) {
 				throw new Error('Kein Authentifizierungs-Token gefunden.');
 			}
 
-			// Parallel LiteLLM Daten und Redis-Session-Daten laden
-			const [userInfoRes, sessionRes] = await Promise.allSettled([
-				getUserInfo(token),
-				getMySession(token)
-			]);
-
-			if (userInfoRes.status === 'fulfilled') {
-				userData = userInfoRes.value;
-			} else {
-				console.error('Fehler beim Abrufen der LiteLLM User-Info:', userInfoRes.reason);
-			}
-
-			if (sessionRes.status === 'fulfilled') {
-				currentSession = sessionRes.value?.session ?? null;
-			}
+			loadSession(token);
+			loadUserInfo(token);
 		} catch (err: any) {
 			console.error('Fehler beim Laden der Budgetdaten:', err);
 			error = typeof err === 'string' ? err : err?.message || 'Fehler beim Laden der Daten.';
 		}
 	}
+
+	const loadUserInfo = async (token: string) => {
+		try {
+			const data = await getUserInfo(token);
+			userData = data;
+		} catch (err) {
+			console.error('Fehler beim Abrufen der LiteLLM User-Info:', err);
+		}
+	};
+
+	const loadSession = async (token: string) => {
+		try {
+			const res = await getMySession(token);
+			currentSession = res?.session ?? null;
+		} catch (err) {
+			console.error('Fehler beim Abrufen der Session:', err);
+		}
+	};
 
 	async function openBudgetModal() {
 		showBudgetModal = true;
@@ -177,14 +182,14 @@
 			<div class="flex items-center w-full max-w-full gap-2 md:gap-4">
 				{#if $mobile && !$showSidebar}
 					<div class="mr-1 flex flex-none items-center self-center">
-						<Tooltip content={$showSidebar ? $i18n.t('Close Sidebar') :$i18n.t('Open Sidebar')}>
+						<Tooltip content={$showSidebar ? $i18n.t('Close Sidebar') : $i18n.t('Open Sidebar')}>
 							<button
 								id="sidebar-toggle-button"
 								class="flex cursor-pointer rounded-lg text-gray-500 transition hover:bg-gray-50/40 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-gray-800/40 dark:hover:text-gray-200"
 								on:click={() => {
 									showSidebar.set(!$showSidebar);
 								}}
-								aria-label={$showSidebar ? $i18n.t('Close Sidebar') :$i18n.t('Open Sidebar')}
+								aria-label={$showSidebar ? $i18n.t('Close Sidebar') : $i18n.t('Open Sidebar')}
 							>
 								<div class="self-center p-1.5">
 									<Sidebar className="size-4" />
@@ -238,7 +243,7 @@
 								</Menu>
 							{/if}
 
-							{#if !$temporaryChatEnabled && ($user?.role === 'admin')}
+							{#if !$temporaryChatEnabled && $user?.role === 'admin'}
 								<button
 									id="delete-chat-button"
 									aria-label={$i18n.t('Delete')}
@@ -265,15 +270,18 @@
 				<!-- Mittlerer Bereich: Budgets (LiteLLM + Redis Session) -->
 				<div class="lg:mr-1 flex-1 flex justify-center items-center self-center mt-2">
 					<!-- Rahmen-Container mit fester Mindestbreite (min-w-...) -->
-					<div class="inline-flex items-stretch justify-between gap-2 p-1.5 bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl shadow-xs w-full max-w-4xl">
-						
+					<div
+						class="inline-flex items-stretch justify-between gap-2 p-1.5 bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl shadow-xs w-full max-w-4xl"
+					>
 						<!-- 1. Budget-Element (3/4 Breite) -->
 						{#if userData}
 							<div class="w-3/4 flex items-center justify-center">
 								<NavbarBudgetButton {userData} onClick={openBudgetModal} />
 							</div>
 						{:else if error}
-							<div class="w-3/4 flex items-center justify-center text-center px-3 py-1.5 text-xs text-red-500 bg-red-100 dark:bg-red-900/20 rounded-lg border border-red-200 dark:border-red-800/30">
+							<div
+								class="w-3/4 flex items-center justify-center text-center px-3 py-1.5 text-xs text-red-500 bg-red-100 dark:bg-red-900/20 rounded-lg border border-red-200 dark:border-red-800/30"
+							>
 								{error}
 							</div>
 						{:else}
@@ -294,7 +302,9 @@
 						>
 							<span>Budget Guard</span>
 							{#if currentSession}
-								<span class="px-1.5 py-0.5 text-[10px] bg-emerald-200 dark:bg-emerald-800 text-emerald-900 dark:text-emerald-100 rounded-full font-bold">
+								<span
+									class="px-1.5 py-0.5 text-[10px] bg-emerald-200 dark:bg-emerald-800 text-emerald-900 dark:text-emerald-100 rounded-full font-bold"
+								>
 									${currentSession.spend.toFixed(2)} /${currentSession.max_budget.toFixed(2)}
 								</span>
 							{/if}
@@ -303,10 +313,10 @@
 
 					<!-- Modals -->
 					<BudgetModal bind:show={showBudgetModal} {userData} />
-					<SessionModal 
-						bind:show={showSessionModal} 
-						currentUser={$user} 
-						on:update={() => loadUserData()} 
+					<SessionModal
+						bind:show={showSessionModal}
+						currentUser={$user}
+						on:update={() => loadUserData()}
 					/>
 				</div>
 
