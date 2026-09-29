@@ -123,9 +123,10 @@ async def get_project_by_id(id: str, user=Depends(get_admin_user), db: AsyncSess
 async def get_project_info_by_id(id: str, user=Depends(get_verified_user), db: AsyncSession = Depends(get_async_session)):
     project = await Projects.get_project_by_id(id, db=db)
     if project:
+        users = await Users.get_users_by_project_id(project.id, db=db)
         return ProjectInfoResponse(
             **project.model_dump(),
-            member_count=await Projects.get_project_member_count_by_id(project.id, db=db),
+            users=[{'name': user.name, 'email': user.email} for user in users],
         )
     else:
         raise HTTPException(

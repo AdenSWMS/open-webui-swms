@@ -12,7 +12,7 @@ from open_webui.env import DEFAULT_PROJECT_SHARE_PERMISSION
 
 from open_webui.models.files import FileMetadataResponse
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 from sqlalchemy import (
     BigInteger,
     Column,
@@ -104,7 +104,7 @@ class ProjectInfoResponse(BaseModel):
     user_id: str
     name: str
     description: str
-    member_count: Optional[int] = None
+    users: list[dict] = Field(default_factory=list)
     created_at: int
     updated_at: int
 
