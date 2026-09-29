@@ -1187,16 +1187,45 @@
 							alt=""
 						/>
 					</a>
-
 					<a href="/" class="flex flex-1 px-0.5" on:click={newChatHandler}>
 						<!-- LICENSE covers this Open WebUI sidebar name.
-					Do not alter, remove, obscure, or replace it except as LICENSE permits:
-					https://docs.openwebui.com/license. -->
+						Do not alter, remove, obscure, or replace it except as LICENSE permits:
+						https://docs.openwebui.com/license. -->
 						<div
 							id="sidebar-webui-name"
-							class=" self-center font-normal text-gray-700 dark:text-gray-200"
+							class="self-center font-normal text-gray-700 dark:text-gray-200 flex flex-col justify-center"
 						>
-							{$WEBUI_NAME}
+							<!-- Hauptname -->
+							<div class="font-medium text-base leading-tight tracking-wide text-sm mt-1.5">
+								{$WEBUI_NAME}
+							</div>
+
+							<div class="flex items-center gap-0.5 text-xs scale-90 text-gray-500 dark:text-gray-400 font-medium leading-none mt-0.5 ml-4">
+								<span>by SWMS</span>
+								
+								<!-- Inline SVG Logo 
+								<svg 
+									class="h-4 w-auto inline-block select-none" 
+									viewBox="0 0 500 500" 
+									fill="none" 
+									xmlns="http://www.w3.org/2000/svg"
+								>
+									<g id="Layer_1">
+										<g id="svg_9">
+											<g transform="matrix(1, 0, 0, 1, -2.739416, -171.215304)">
+												<g transform="matrix(1, 0, 0, 1, 26.02472, 206.828098)">
+													<path d="m94.67434,158.15779c-4.46524,5.92437 -5.50802,15.22097 -1.20003,22.41047c4.30799,7.1895 30.86038,36.38897 35.19651,41.59065c46.06485,-73.32024 75.44803,-107.53623 84.51568,-129.5877c9.06764,-22.05146 -2.11075,-29.11213 -6.09571,-32.0368c-3.98496,-2.92466 -22.5769,-6.93675 -33.81339,7.10871l-78.60306,90.51467z" id="svg_4" style="stroke: rgb(43, 183, 236); fill: rgb(43, 183, 236);"/>
+													<path id="svg_2" d="m128.56881,221.67816c0,0 44.86486,54.32432 50,58.64865c5.13514,4.32432 16.75676,12.97297 29.72973,1.89189c12.97297,-11.08108 6.48649,-22.97297 6.48649,-22.97297c0,0 -52.10811,-86.7027 -52.81081,-87.13513c-0.7027,-0.43243 -33.40541,49.56757 -33.40541,49.56757l0,-0.00001z" style="fill: rgb(7, 171, 234); stroke: rgb(7, 171, 234);"/>
+												</g>
+												<g transform="matrix(-1, 0, 0, -1, 151.354311, 319.830235)" style="transform-origin: 153.688px 172.654px;">
+													<path d="m94.67434,158.15779c-4.46524,5.92437 -5.50802,15.22097 -1.20003,22.41047c4.30799,7.1895 30.86038,36.38897 35.19651,41.59065c46.06485,-73.32024 75.44803,-107.53623 84.51568,-129.5877c9.06764,-22.05146 -2.11075,-29.11213 -6.09571,-32.0368c-3.98496,-2.92466 -22.5769,-6.93675 -33.81339,7.10871l-78.60306,90.51467z" id="path-1" style="fill: rgb(43, 183, 234); stroke: rgb(43, 183, 234);"/>
+													<path id="path-2" d="m128.56881,221.67816c0,0 44.86486,54.32432 50,58.64865c5.13514,4.32432 16.75676,12.97297 29.72973,1.89189c12.97297,-11.08108 6.48649,-22.97297 6.48649,-22.97297c0,0 -52.10811,-86.7027 -52.81081,-87.13513c-0.7027,-0.43243 -33.40541,49.56757 -33.40541,49.56757l0,-0.00001z" style="stroke: rgb(7, 171, 234); fill: rgb(7, 171, 234);"/>
+												</g>
+											</g>
+										</g>
+									</g>
+								</svg>-->
+							</div>
 						</div>
 					</a>
 					<Tooltip
