@@ -17,6 +17,7 @@
 			chats?: number;
 		};
 		shared_chat_count?: number;
+		member_count?: number;
 	};
 
 	// Daten aus +page.server.js (nur getteten Projekten)
@@ -64,8 +65,8 @@
 					<input
 						type="text"
 						bind:value={query}
-						aria-label={$i18n.t('Search projects')}
-						placeholder={$i18n.t('Search projects')}
+						aria-label={$i18n.t('Projekt suchen')}
+						placeholder={$i18n.t('Projekt suchen')}
 						maxlength="500"
 						class="w-full rounded-r-xl bg-transparent py-1 text-sm outline-hidden"
 					/>
@@ -90,7 +91,7 @@
 				<!-- Empty State genau wie auf dem Screenshot -->
 				<div class="flex flex-col items-center justify-center h-64 text-center my-12">
 					<div class="text-sm font-semibold text-gray-800 dark:text-gray-200 mb-1">
-						{$i18n.t('No projects found')}
+						{$i18n.t('Keine Projekte gefunden')}
 					</div>
 					<div class="text-xs text-gray-500 max-w-sm">
 						{$i18n.t(
@@ -103,28 +104,26 @@
 				<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 my-2">
 					{#each projects as project (project.id)}
 						<button
-							class="flex flex-col text-left p-3.5 rounded-xl border border-gray-100 dark:border-gray-850 bg-gray-50/50 dark:bg-gray-900/50 hover:bg-gray-100 dark:hover:bg-gray-900 transition cursor-pointer group"
+							class="flex flex-col text-left p-3.5 rounded-xl border border-gray-200/60 dark:border-gray-700/60 bg-gray-50/50 dark:bg-gray-900/50 hover:bg-white dark:hover:bg-gray-900 transition-all duration-300 ease-out cursor-pointer group hover:-translate-y-1 hover:shadow-lg hover:shadow-gray-200/50 dark:hover:shadow-none hover:border-grey-500/30 dark:hover:border-white-500/30"
 							on:click={() => goto(`/projects/${project.id}`)}
 						>
 							<div class="flex items-center justify-between w-full mb-1">
 								<div
-									class="font-medium text-sm text-gray-900 dark:text-gray-100 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition"
+									class="font-medium text-sm text-gray-900 dark:text-gray-100 transition-colors"
 								>
 									{project.name}
 								</div>
 							</div>
 
 							<div class="text-xs text-gray-500 dark:text-gray-400 line-clamp-2 mb-3">
-								{project.description || $i18n.t('No description available')}
+								{project.description || $i18n.t('Keine Beschreibung verfügbar')}
 							</div>
 
 							<!-- Schlanke Zähler für Ressourcen -->
 							<div
-								class="mt-auto pt-2 flex items-center gap-3 text-[11px] text-gray-400 border-t border-gray-200/40 dark:border-gray-800/40 w-full"
+								class="mt-auto pt-2 flex items-center gap-3 text-[11px] text-gray-400 border-t border-gray-200/40 dark:border-gray-800/40 w-full group-hover:border-gray-200 dark:group-hover:border-gray-700/60 transition-colors"
 							>
-								<!--<span>📝 {project.counts?.notes ?? 0}</span>
-								<span>⚡ {project.counts?.prompts ?? 0}</span>-->
-								<span class="flex items-center gap-1.5">
+								<span class="flex items-center gap-1.5 group-hover:text-gray-600 dark:group-hover:text-gray-300 transition-colors">
 									<svg
 										xmlns="http://www.w3.org/2000/svg"
 										viewBox="0 0 24 24"
@@ -133,7 +132,25 @@
 										stroke-width="2"
 										stroke-linecap="round"
 										stroke-linejoin="round"
-										class="w-3.5 h-3.5 text-gray-400"
+										class="w-3.5 h-3.5 text-gray-400 transition-colors"
+									>
+										<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+										<circle cx="9" cy="7" r="4" />
+										<path d="M22 21v-2a4 4 0 0 0-3-3.87" />
+										<path d="M16 3.13a4 4 0 0 1 0 7.75" />
+									</svg>
+									{project.member_count ?? 0}
+								</span>
+								<span class="flex items-center gap-1.5 group-hover:text-gray-600 dark:group-hover:text-gray-300 transition-colors">
+									<svg
+										xmlns="http://www.w3.org/2000/svg"
+										viewBox="0 0 24 24"
+										fill="none"
+										stroke="currentColor"
+										stroke-width="2"
+										stroke-linecap="round"
+										stroke-linejoin="round"
+										class="w-3.5 h-3.5 text-gray-400 transition-colors"
 									>
 										<path d="M7.9 20A9 9 0 1 0 4 16.1L2 22z" />
 									</svg>

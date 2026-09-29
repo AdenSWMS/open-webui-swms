@@ -161,7 +161,7 @@
 					on:click={() => (activeSection = 'overview')}
 				>
 					<Users className="size-4" />
-					{$i18n.t('Project overview')}
+					{$i18n.t('Projektübersicht')}
 				</button>
 				<button
 					class="flex min-w-fit items-center gap-2 border-b-2 px-3 py-3 text-sm transition {activeSection === 'chats' ? 'border-gray-900 font-medium text-gray-900 dark:border-white dark:text-white' : 'border-transparent text-gray-500 hover:text-gray-900 dark:hover:text-white'}"
@@ -171,7 +171,7 @@
 					on:click={() => (activeSection = 'chats')}
 				>
 					<ChatBubbles className="size-4" />
-					{$i18n.t('Shared chats')}
+					{$i18n.t('Geteilte Chats')}
 					<span class="opacity-60">{project.shared_chat_count ?? sharedChats.length}</span>
 				</button>
 			</div>
@@ -180,11 +180,12 @@
 				<div class="grid gap-5 lg:grid-cols-2">
 					<section class="rounded-2xl border border-gray-200/70 bg-white p-5 dark:border-gray-800 dark:bg-gray-900">
 						<div class="mb-4 flex items-center justify-between">
-							<h2 class="flex items-center gap-2 font-medium text-gray-900 dark:text-white"><Users className="size-4" />{$i18n.t('Project members')}</h2>
+							<h2 class="flex items-center gap-2 font-medium text-gray-900 dark:text-white"><Users className="size-4" />{$i18n.t('Projektmitglieder')}</h2>
 							<span class="text-xs text-gray-400">{memberCount}</span>
 						</div>
 						{#if projectUsers.length > 0}
-							<div class="space-y-2">
+							<!-- Hier wurden max-h-80, overflow-y-auto und pr-1 hinzugefügt -->
+							<div class="max-h-80 overflow-y-auto pr-1 space-y-2">
 								{#each projectUsers as user}
 									<div class="flex items-center gap-3 rounded-xl px-2 py-2 hover:bg-gray-50 dark:hover:bg-gray-800">
 										<div class="flex size-9 shrink-0 items-center justify-center rounded-full bg-blue-100 text-xs font-medium text-blue-700 dark:bg-blue-900/40 dark:text-blue-200">{initials(user)}</div>
@@ -192,21 +193,21 @@
 									</div>
 								{/each}
 							</div>
-						{:else}<p class="text-sm text-gray-500">{$i18n.t('No members in this project')}</p>{/if}
+						{:else}<p class="text-sm text-gray-500">{$i18n.t('Keine Nutzer im Projekt gefunden')}</p>{/if}
 					</section>
 
 					<section class="rounded-2xl border border-gray-200/70 bg-white p-5 dark:border-gray-800 dark:bg-gray-900">
-						<div class="mb-4 flex items-center justify-between"><h2 class="flex items-center gap-2 font-medium text-gray-900 dark:text-white"><Cube className="size-4" />{$i18n.t('Allowed models')}</h2><span class="text-xs text-gray-400">{modelCount}</span></div>
+						<div class="mb-4 flex items-center justify-between"><h2 class="flex items-center gap-2 font-medium text-gray-900 dark:text-white"><Cube className="size-4" />{$i18n.t('Erlaubte Modelle')}</h2><span class="text-xs text-gray-400">{modelCount}</span></div>
 						{#if allowedModels.length > 0}
 							<div class="flex flex-wrap gap-2">{#each allowedModels as model}<span class="rounded-lg bg-gray-100 px-3 py-2 text-sm text-gray-700 dark:bg-gray-800 dark:text-gray-200">{model.name || model.id}</span>{/each}</div>
-						{:else}<p class="text-sm text-gray-500">{$i18n.t('No specific models are allowed')}</p>{/if}
+						{:else}<p class="text-sm text-gray-500">{$i18n.t('Keine erlaubten Modelle gefunden')}</p>{/if}
 					</section>
 				</div>
 			{:else if sharedChats.length === 0}
-				<div class="flex h-64 flex-col items-center justify-center text-center"><div class="mb-1 text-sm font-semibold text-gray-800 dark:text-gray-200">{$i18n.t('No shared chats in this project')}</div><div class="text-xs text-gray-500 dark:text-gray-400">{$i18n.t('Chats shared with this project will appear here.')}</div></div>
+				<div class="flex h-64 flex-col items-center justify-center text-center"><div class="mb-1 text-sm font-semibold text-gray-800 dark:text-gray-200">{$i18n.t('Keine geteilten Chats in diesem Projekt')}</div><div class="text-xs text-gray-500 dark:text-gray-400">{$i18n.t('Chats shared with this project will appear here.')}</div></div>
 			{:else}
 				<div class="space-y-2">{#each sharedChats as chat (chat.chat_id)}<button class="group flex w-full items-center justify-between rounded-xl border border-gray-200/70 bg-white px-4 py-3 text-left transition hover:border-gray-300 hover:bg-gray-50 dark:border-gray-800 dark:bg-gray-900 dark:hover:border-gray-700" type="button" disabled={!chat.share_id} on:click={() => chat.share_id && goto(`/s/${chat.share_id}`)}><div class="min-w-0"><div class="truncate text-sm font-medium text-gray-900 group-hover:text-blue-600 dark:text-gray-100 dark:group-hover:text-blue-400">{chat.title || $i18n.t('Untitled chat')}</div><div class="mt-1 text-xs text-gray-500 dark:text-gray-400">{$i18n.t('Shared by')} {chat.user_name ?? $i18n.t('Unknown user')} · {$i18n.t('Updated')} {chat.time_range ?? ''}</div></div><span class="text-xs text-gray-400">{$i18n.t('Open')}</span></button>{/each}</div>
-				{#if hasMore}<div class="mt-5 flex justify-center"><button class="rounded-lg px-4 py-2 text-sm text-gray-600 transition hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800" type="button" on:click={loadMore}>{$i18n.t('Load more')}</button></div>{/if}
+				{#if hasMore}<div class="mt-5 flex justify-center"><button class="rounded-lg px-4 py-2 text-sm text-gray-600 transition hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800" type="button" on:click={loadMore}>{$i18n.t('Mehr laden')}</button></div>{/if}
 			{/if}
 		{:else}<div class="py-16 text-center text-sm text-gray-500">{$i18n.t('Project not found')}</div>{/if}
 	</div>

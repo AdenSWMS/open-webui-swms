@@ -8,7 +8,7 @@ export type RoadmapItem = {
 };
 
 export const roadmap: RoadmapItem[] = [
-	{ title: 'User Budget Einstellunge für Admins', date: 'Q4 2026', status: 'in-progress' },
+	{ title: 'User Budget Einstellungen für Admins', date: 'Q4 2026', status: 'in-progress' },
 	{ title: 'OpenCode Sandbox', date: 'Q4 2026', status: 'in-progress' },
 	{ title: 'Mehr Project-Features für Nutzer', date: 'Q4 2026', status: 'planned' }
 ];

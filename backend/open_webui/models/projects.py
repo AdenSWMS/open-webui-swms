@@ -354,7 +354,7 @@ class ProjectTable:
                 'total': total,
             }
 
-    async def get_projects_by_member_id(self, user_id: str, db: Optional[AsyncSession] = None) -> list[ProjectModel]:
+    async def get_projects_by_member_id(self, user_id: str, db: Optional[AsyncSession] = None) -> list[ProjectResponse]:
         async with get_async_db_context(db) as db:
             from open_webui.models.chats import Chat
 
@@ -369,20 +369,30 @@ class ProjectTable:
                 .label('shared_chat_count')
             )
 
+            member_count = (
+                select(func.count(ProjectMember.user_id))
+                .where(ProjectMember.project_id == Project.id)
+                .correlate(Project)
+                .scalar_subquery()
+                .label('member_count')
+            )
+
             result = await db.execute(
-                select(Project, shared_chat_count)
+                select(Project, shared_chat_count, member_count)
                 .join(ProjectMember, ProjectMember.project_id == Project.id)
                 .filter(ProjectMember.user_id == user_id)
                 .order_by(Project.updated_at.desc())
             )
+
             return [
                 ProjectResponse.model_validate(
                     {
                         **ProjectModel.model_validate(project).model_dump(),
-                        'shared_chat_count': count or 0,
+                        'shared_chat_count': chat_count or 0,
+                        'member_count': mem_count or 0,
                     }
                 )
-                for project, count in result.all()
+                for project, chat_count, mem_count in result.all()
             ]
 
     async def get_projects_by_member_ids(
