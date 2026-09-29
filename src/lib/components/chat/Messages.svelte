@@ -29,6 +29,13 @@
 
 	let messages = [];
 
+	let chatKey = chatId;
+	let prevChatId = chatId;
+	$: if (chatId !== prevChatId) {
+		if (prevChatId) chatKey = chatId;
+		prevChatId = chatId;
+	}
+
 	export let setInputText: Function = () => {};
 
 	export let sendMessage: Function;
@@ -476,7 +483,7 @@
 		<ChatPlaceholder modelIds={selectedModels} {atSelectedModel} {onSelect} />
 	{:else}
 		<div class="w-full pt-2">
-			{#key chatId}
+			{#key chatKey}
 				<section class="w-full" aria-labelledby="chat-conversation">
 					<h2 class="sr-only" id="chat-conversation">{$i18n.t('Chat Conversation')}</h2>
 					{#if messages.at(0)?.parentId !== null}

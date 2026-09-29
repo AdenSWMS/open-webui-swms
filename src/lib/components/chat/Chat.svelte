@@ -139,6 +139,8 @@
 	import InputVariablesModal from './MessageInput/InputVariablesModal.svelte';
 	import ProjectSelectorModal from '$lib/components/chat/ProjectSelectorModal.svelte';
 	import LogoLoader from '../common/LogoLoader.svelte';
+	import RoadmapModal from './Roadmap/RoadmapModal.svelte';
+	import MapIcon from '../icons/Map.svelte';
 
 	export let chatIdProp = '';
 	export let embedded = false;
@@ -187,6 +189,7 @@
 	let askUserTimeoutMs: number | null = null;
 
 	let showProjectModal = false;
+	let showRoadmap = false;
 	let resolveProjectSelection: ((project: any) => void) | null = null;
 
 	let selectedModels = [''];
@@ -3311,6 +3314,8 @@
 			return;
 		}
 
+		responseLoaderVisible.set(true);
+
 		if (autoScroll) {
 			scrollToBottom();
 		}
@@ -4355,6 +4360,16 @@
 	}}
 />
 <ProjectSelectorModal bind:show={showProjectModal} onSelect={handleProjectSelected} />
+{#if !embedded}
+	<RoadmapModal bind:show={showRoadmap} />
+	<button
+		class="fixed bottom-4 right-4 z-40 size-9 rounded-full flex items-center justify-center bg-white dark:bg-gray-850 border border-gray-100 dark:border-gray-800 shadow-md text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition"
+		aria-label="Roadmap"
+		on:click={() => (showRoadmap = true)}
+	>
+		<MapIcon className="size-5" />
+	</button>
+{/if}
 <div
 	class="{embedded
 		? 'h-full'
@@ -4525,75 +4540,83 @@
 							{:else}
 								<div
 									id={embedded ? messageInputDropzoneId : undefined}
-									class=" pb-5 {dragged ? 'z-0' : 'z-10'}"
+									class="relative pb-5 {dragged ? 'z-0' : 'z-10'}"
 								>
-									<MessageInput
-										bind:this={messageInput}
-										{history}
-										{taskIds}
-										bind:selectedModels
-										bind:files
-										bind:prompt
-										bind:autoScroll
-										bind:selectedToolIds
-										bind:selectedSkillIds
-										bind:selectedFilterIds
-										bind:imageGenerationEnabled
-										bind:codeInterpreterEnabled
-										{pendingOAuthTools}
-										{oauthRedirectHandler}
-										bind:webSearchEnabled
-										bind:atSelectedModel
-										bind:showCommands
-										bind:dragged
-										dropzoneId={messageInputDropzoneId}
-										chatId={$chatId}
-										{contextUsage}
-										{contextCompactionEnabled}
-										{embedded}
-										compactHandler={handleManualCompact}
-										statusHandler={handleStatusCommand}
-										forkHandler={handleForkChat}
-										{toolApprovalMode}
-										onToolApprovalModeChange={handleToolApprovalModeChange}
-										{generating}
-										{stopResponse}
-										{createMessagePair}
-										{onUpload}
-										{onUpdate}
-										messageQueue={$chatRequestQueues[$chatId] ?? []}
-										{chatTasks}
-										askUser={savedAskUserPrompt ?? socketAskUserPrompt}
-										onQueueSendNow={sendQueuedMessageNow}
-										onQueueEdit={editQueuedMessage}
-										onQueueDelete={deleteQueuedMessage}
-										onChange={(data: any) => {
-											if (!$temporaryChatEnabled) {
-												saveDraft(data, getDraftChatId());
-											}
-										}}
-										onWebSearchToggle={handleWebSearchToggle}
-										on:chatVariables={() => {
-											showChatVariablesModal = true;
-										}}
-										on:submit={async (e) => {
-											clearDraft(getDraftChatId());
-											if (e.detail || files.length > 0) {
-												await tick();
+					<div
+						class="relative mx-auto block w-full {($settings?.widescreenMode ?? null)
+							? 'max-w-full'
+							: 'max-w-[58rem]'}"
+					>
+						{#if !$responseLoaderVisible}
+							<div
+								class="pointer-events-none absolute -left-12 top-1/2 -translate-y-1/2"
+								in:receive|global={{ key: LOGO_LOADER_KEY }}
+								out:send|global={{ key: LOGO_LOADER_KEY }}
+							>
+								<LogoLoader state="idle" size="big" />
+							</div>
+						{/if}
 
-												submitHandler(withSelectedText(e.detail));
-											}
-										}}
-									/>
-									<div class="absolute bottom-3 left-3 z-10 flex items-center pointer-events-none">
-										{#if !$responseLoaderVisible}
-											<div
-												in:receive|global={{ key: LOGO_LOADER_KEY }}
-												out:send|global={{ key: LOGO_LOADER_KEY }}
-											>
-												<LogoLoader state="idle" size="big" />
-											</div>
-										{/if}
+						<div class="w-full">
+											<MessageInput
+												bind:this={messageInput}
+												{history}
+												{taskIds}
+												bind:selectedModels
+												bind:files
+												bind:prompt
+												bind:autoScroll
+												bind:selectedToolIds
+												bind:selectedSkillIds
+												bind:selectedFilterIds
+												bind:imageGenerationEnabled
+												bind:codeInterpreterEnabled
+												{pendingOAuthTools}
+												{oauthRedirectHandler}
+												bind:webSearchEnabled
+												bind:atSelectedModel
+												bind:showCommands
+												bind:dragged
+												dropzoneId={messageInputDropzoneId}
+												chatId={$chatId}
+												{contextUsage}
+												{contextCompactionEnabled}
+												{embedded}
+												compactHandler={handleManualCompact}
+												statusHandler={handleStatusCommand}
+												forkHandler={handleForkChat}
+												{toolApprovalMode}
+												onToolApprovalModeChange={handleToolApprovalModeChange}
+												{generating}
+												{stopResponse}
+												{createMessagePair}
+												{onUpload}
+												{onUpdate}
+												messageQueue={$chatRequestQueues[$chatId] ?? []}
+												{chatTasks}
+												askUser={savedAskUserPrompt ?? socketAskUserPrompt}
+												onQueueSendNow={sendQueuedMessageNow}
+												onQueueEdit={editQueuedMessage}
+												onQueueDelete={deleteQueuedMessage}
+												onChange={(data: any) => {
+													if (!$temporaryChatEnabled) {
+														saveDraft(data, getDraftChatId());
+													}
+												}}
+												onWebSearchToggle={handleWebSearchToggle}
+												on:chatVariables={() => {
+													showChatVariablesModal = true;
+												}}
+												on:submit={async (e) => {
+													clearDraft(getDraftChatId());
+													if (e.detail || files.length > 0) {
+														await tick();
+
+														submitHandler(withSelectedText(e.detail));
+													}
+												}}
+											/>
+										</div>
 									</div>
 
 									<div
