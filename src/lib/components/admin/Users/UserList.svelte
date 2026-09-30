@@ -36,6 +36,7 @@
 	import UserPreviewModal from '$lib/components/admin/UserPreviewModal.svelte';
 
 	import { getAllUsersInfo } from '$lib/apis/litellm';
+	import { getConfigNamespace, importConfig } from '$lib/apis/configs';
 
 	const i18n: any = getContext('i18n');
 
@@ -60,6 +61,9 @@
 	let error = null;
 
 	let userBudgets: Record<string, any> = {};
+	let defaultBudget = 0;
+	let defaultBudgetInput = 0;
+	let isSavingDefaultBudget = false;
 
 	let isLoading = true;
 	let isMounted = false;
@@ -94,8 +98,7 @@
 		const diff = spentPercent - timePercent;
 
 		// Ampelfarbe nach deiner Logik
-		const barColorClass =
-			diff > 15 ? 'bg-red-500' : diff > 5 ? 'bg-amber-500' : 'bg-emerald-500';
+		const barColorClass = diff > 15 ? 'bg-red-500' : diff > 5 ? 'bg-amber-500' : 'bg-emerald-500';
 
 		const decimals = maxBudget > 0 && maxBudget < 0.01 ? 4 : 2;
 		const formattedSpend = spend.toLocaleString('de-DE', {
@@ -116,6 +119,35 @@
 			formattedSpend,
 			formattedMaxBudget
 		};
+	}
+
+	async function loadDefaultBudget() {
+		try {
+			const config = await getConfigNamespace(localStorage.token, 'litellm');
+			defaultBudget = Number(config?.['litellm.default_max_budget']) || 0;
+			defaultBudgetInput = defaultBudget;
+		} catch (err) {
+			toast.error(`${err}`);
+		}
+	}
+
+	async function saveDefaultBudget() {
+		const budget = Number(defaultBudgetInput);
+		if (!Number.isFinite(budget) || budget < 0) {
+			toast.error($i18n.t('Enter a valid budget'));
+			return;
+		}
+
+		isSavingDefaultBudget = true;
+		try {
+			await importConfig(localStorage.token, { 'litellm.default_max_budget': budget });
+			defaultBudget = budget;
+			toast.success($i18n.t('Settings saved successfully!'));
+		} catch (err) {
+			toast.error(`${err}`);
+		} finally {
+			isSavingDefaultBudget = false;
+		}
 	}
 
 	async function loadUserData() {
@@ -193,12 +225,10 @@
 			const token = typeof window !== 'undefined' ? localStorage.getItem('token') || '' : '';
 			if (!token) return;
 
-			const res = await getUsers(token, query, orderBy, direction, page).catch(
-				(error) => {
-					toast.error(`${error}`);
-					return null;
-				}
-			);
+			const res = await getUsers(token, query, orderBy, direction, page).catch((error) => {
+				toast.error(`${error}`);
+				return null;
+			});
 
 			if (res) {
 				users = res.users;
@@ -229,6 +259,7 @@
 		isMounted = true;
 		getUserList();
 		loadUserData();
+		loadDefaultBudget();
 	});
 
 	onDestroy(() => {
@@ -245,9 +276,10 @@
 
 <EditUserModal
 	bind:show={showEditUserModal}
-	selectedUser={selectedUser}
+	{selectedUser}
 	sessionUser={user}
-	userBudgets={userBudgets}
+	{userBudgets}
+	{defaultBudget}
 	on:save={() => {
 		loadUserData();
 	}}
@@ -316,6 +348,32 @@
 				{$i18n.t('Add User')}
 			</button>
 		</div>
+	</div>
+
+	<div
+		class="mb-2 mt-2 flex items-end justify-between gap-3 rounded-lg border border-gray-100 px-3 py-2 dark:border-gray-800"
+	>
+		<div class="flex flex-col">
+			<label class="mb-1 text-xs text-gray-500" for="default-user-budget">
+				{$i18n.t('Standard Budget')} ($)
+			</label>
+			<input
+				id="default-user-budget"
+				class="w-36 text-sm bg-transparent outline-hidden"
+				type="number"
+				step="0.01"
+				min="0"
+				bind:value={defaultBudgetInput}
+			/>
+		</div>
+		<button
+			class="rounded-lg bg-gray-50 px-2.5 py-1 text-xs text-gray-900 transition ring-1 ring-gray-200 hover:bg-gray-100 disabled:opacity-50 dark:bg-gray-850 dark:text-gray-100 dark:ring-gray-800 dark:hover:bg-gray-800"
+			type="button"
+			disabled={isSavingDefaultBudget}
+			on:click={saveDefaultBudget}
+		>
+			{$i18n.t('Save')}
+		</button>
 	</div>
 
 	<div class="scrollbar-hidden relative whitespace-nowrap overflow-x-auto max-w-full">
@@ -494,11 +552,12 @@
 						<td class="px-3 py-1">
 							{#if isLoading}
 								<!-- SKELETON (Hat exakt dieselben Maße, damit absolut nichts springt) -->
-								<div class="flex items-center justify-between px-2 py-0.5 text-[11px] bg-gray-100 dark:bg-gray-800/40 border border-gray-200/80 dark:border-gray-700/50 rounded-md min-w-[130px] animate-pulse select-none">
+								<div
+									class="flex items-center justify-between px-2 py-0.5 text-[11px] bg-gray-100 dark:bg-gray-800/40 border border-gray-200/80 dark:border-gray-700/50 rounded-md min-w-[130px] animate-pulse select-none"
+								>
 									<div class="h-3.5 w-16 bg-gray-300 dark:bg-gray-700 rounded my-[1px]"></div>
 									<div class="h-3.5 w-6 bg-gray-300 dark:bg-gray-700 rounded my-[1px]"></div>
 								</div>
-
 							{:else if b}
 								<!-- ECHTER CONTENT MIT AMPELFARBEN -->
 								<div
@@ -512,7 +571,9 @@
 									></div>
 
 									<!-- Textinhalt -->
-									<div class="relative z-10 flex items-center justify-between w-full gap-1 text-gray-700 dark:text-gray-200">
+									<div
+										class="relative z-10 flex items-center justify-between w-full gap-1 text-gray-700 dark:text-gray-200"
+									>
 										<span class="truncate">
 											${b.formattedSpend} / ${b.formattedMaxBudget}
 										</span>
@@ -521,7 +582,6 @@
 										</span>
 									</div>
 								</div>
-
 							{:else}
 								<span class="text-gray-400 text-[11px] italic">-</span>
 							{/if}

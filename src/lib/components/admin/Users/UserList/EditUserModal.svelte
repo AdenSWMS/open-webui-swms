@@ -23,6 +23,7 @@
 	export let selectedUser: any;
 	export let sessionUser: any;
 	export let userBudgets: Record<string, any> = {};
+	export let defaultBudget = 0;
 
 	$: if (show) {
 		init();
@@ -30,22 +31,30 @@
 
 	const getInitialBudgetData = () => {
 		if (!selectedUser) return null;
-		return (
-			userBudgets[selectedUser.id] ??
-			userBudgets[selectedUser.email] ??
-			null
-		);
+		return userBudgets[selectedUser.id] ?? userBudgets[selectedUser.email] ?? null;
 	};
+
+	let budgetMode: 'default' | 'custom' = 'default';
+	let customBudget: number | null = null;
 
 	const init = () => {
 		if (selectedUser) {
 			const existingBudgetData = getInitialBudgetData();
+			const currentBudget =
+				existingBudgetData?.maxBudget ??
+				selectedUser?.info?.max_budget ??
+				selectedUser?.max_budget ??
+				null;
+			customBudget = currentBudget;
+			budgetMode =
+				currentBudget === null || Number(currentBudget) === Number(defaultBudget)
+					? 'default'
+					: 'custom';
 
 			_user = {
 				...selectedUser,
 				password: '',
-				// Falls bereits ein maxBudget in der Map existiert, nimm dieses, sonst fall auf selectedUser zurück
-				budget: existingBudgetData?.maxBudget ?? selectedUser?.info?.max_budget ?? selectedUser?.max_budget ?? null
+				budget: currentBudget ?? defaultBudget
 			};
 			loadUserGroups();
 		}
@@ -62,57 +71,70 @@
 
 	let userGroups: any[] | null = null;
 
+	$: _user.budget = budgetMode === 'default' ? defaultBudget : customBudget;
 	$: budgetStats = calculateLiveBudget(selectedUser, userBudgets, _user.budget);
 
-	function calculateLiveBudget(userItem: any, budgetsMap: Record<string, any>, newMaxBudget: number | null) {
-	// 1. Bereits verarbeitete Daten aus der Map holen
-	const existingData = userItem?.id ? (budgetsMap[userItem.id] ?? budgetsMap[userItem.email]) : null;
-	
-	const spend = existingData?.spend ?? userItem?.info?.spend ?? userItem?.spend ?? 0;
+	function calculateLiveBudget(
+		userItem: any,
+		budgetsMap: Record<string, any>,
+		newMaxBudget: number | null
+	) {
+		// 1. Bereits verarbeitete Daten aus der Map holen
+		const existingData = userItem?.id
+			? (budgetsMap[userItem.id] ?? budgetsMap[userItem.email])
+			: null;
 
-	// 2. Max Budget bestimmen (Neuer Input hat Vorrang für Live-Vorschau)
-	const maxBudget = newMaxBudget !== null && !isNaN(Number(newMaxBudget))
-		? Number(newMaxBudget)
-		: (existingData?.maxBudget ?? userItem?.info?.max_budget ?? userItem?.max_budget ?? 0);
+		const spend = existingData?.spend ?? userItem?.info?.spend ?? userItem?.spend ?? 0;
 
-	// 3. Verbrauch in %
-	const rawSpentPercent = maxBudget > 0 ? (spend / maxBudget) * 100 : 0;
-	const spentPercent = Math.min(Math.round(rawSpentPercent), 100);
+		// 2. Max Budget bestimmen (Neuer Input hat Vorrang für Live-Vorschau)
+		const maxBudget =
+			newMaxBudget !== null && !isNaN(Number(newMaxBudget))
+				? Number(newMaxBudget)
+				: (existingData?.maxBudget ?? userItem?.info?.max_budget ?? userItem?.max_budget ?? 0);
 
-	// 4. Zeitfortschritt (bereits aus formatUserBudget in der Oberkomponente vorhanden)
-	// Falls zeitliche Daten in existingData vorhanden sind, nutzen wir sie, sonst den Prozentwert
-	const timePercent = existingData?.timePercent ?? null;
+		// 3. Verbrauch in %
+		const rawSpentPercent = maxBudget > 0 ? (spend / maxBudget) * 100 : 0;
+		const spentPercent = Math.min(Math.round(rawSpentPercent), 100);
 
-	let barColorClass = 'bg-emerald-500';
+		// 4. Zeitfortschritt (bereits aus formatUserBudget in der Oberkomponente vorhanden)
+		// Falls zeitliche Daten in existingData vorhanden sind, nutzen wir sie, sonst den Prozentwert
+		const timePercent = existingData?.timePercent ?? null;
 
-	if (timePercent !== null) {
-		// Dasselbe 'diff' wie in deiner Oberkomponente
-		const diff = spentPercent - timePercent;
-		barColorClass = diff > 15 ? 'bg-red-500' : diff > 5 ? 'bg-amber-500' : 'bg-emerald-500';
-	} else {
-		// Fallback, falls timePercent nicht existiert
-		barColorClass = rawSpentPercent >= 100 ? 'bg-red-500' : rawSpentPercent >= 80 ? 'bg-amber-500' : 'bg-emerald-500';
+		let barColorClass = 'bg-emerald-500';
+
+		if (timePercent !== null) {
+			// Dasselbe 'diff' wie in deiner Oberkomponente
+			const diff = spentPercent - timePercent;
+			barColorClass = diff > 15 ? 'bg-red-500' : diff > 5 ? 'bg-amber-500' : 'bg-emerald-500';
+		} else {
+			// Fallback, falls timePercent nicht existiert
+			barColorClass =
+				rawSpentPercent >= 100
+					? 'bg-red-500'
+					: rawSpentPercent >= 80
+						? 'bg-amber-500'
+						: 'bg-emerald-500';
+		}
+
+		const decimals = maxBudget > 0 && maxBudget < 0.01 ? 4 : 2;
+		const formattedSpend = spend.toLocaleString('de-DE', {
+			minimumFractionDigits: decimals,
+			maximumFractionDigits: decimals
+		});
+		const formattedMaxBudget = maxBudget.toLocaleString('de-DE', {
+			minimumFractionDigits: decimals,
+			maximumFractionDigits: decimals
+		});
+
+		return {
+			spend,
+			maxBudget,
+			spentPercent,
+			barColorClass,
+			formattedSpend,
+			formattedMaxBudget
+		};
 	}
-
-	const decimals = maxBudget > 0 && maxBudget < 0.01 ? 4 : 2;
-	const formattedSpend = spend.toLocaleString('de-DE', {
-		minimumFractionDigits: decimals,
-		maximumFractionDigits: decimals
-	});
-	const formattedMaxBudget = maxBudget.toLocaleString('de-DE', {
-		minimumFractionDigits: decimals,
-		maximumFractionDigits: decimals
-	});
-
-	return {
-		spend,
-		maxBudget,
-		spentPercent,
-		barColorClass,
-		formattedSpend,
-		formattedMaxBudget
-	};
-}
 
 	const submitHandler = async () => {
 		try {
@@ -293,7 +315,9 @@
 
 									<!-- Abgetrennter Budget-Bereich mit Live-Vorschau -->
 									<div class="pt-3 mt-2 border-t border-gray-100 dark:border-gray-800">
-										<div class="p-3 rounded-lg bg-gray-50/50 dark:bg-gray-850/50 border border-gray-100 dark:border-gray-800/60 space-y-2">
+										<div
+											class="p-3 rounded-lg bg-gray-50/50 dark:bg-gray-850/50 border border-gray-100 dark:border-gray-800/60 space-y-2"
+										>
 											<div class="flex justify-between items-center text-xs">
 												<span class="font-medium text-gray-500 dark:text-gray-400">
 													{$i18n.t('User Budget')}
@@ -304,28 +328,52 @@
 											</div>
 
 											<!-- Fortschrittsbalken mit dynamischer Ampelfarbe -->
-											<div class="w-full h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+											<div
+												class="w-full h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden"
+											>
 												<div
 													class="h-full transition-all duration-300 rounded-full {budgetStats.barColorClass}"
 													style="width: {budgetStats.spentPercent}%"
 												></div>
 											</div>
 
-											<div class="flex items-center justify-between pt-1">
-												<span class="text-xs text-gray-400">{$i18n.t('Max Budget')} ($)</span>
-												<input
-													class="w-32 text-right text-sm bg-transparent font-mono outline-hidden border-b border-gray-200 dark:border-gray-700 focus:border-black dark:focus:border-white transition"
-													type="number"
-													step="0.01"
-													min="0"
-													bind:value={_user.budget}
-													aria-label={$i18n.t('Budget')}
-													placeholder={$i18n.t('Enter budget')}
-												/>
+											<div class="flex items-center justify-between gap-3 pt-1">
+												<label class="text-xs text-gray-400" for="user-budget-mode">
+													{$i18n.t('Budget type')}
+												</label>
+												<select
+													id="user-budget-mode"
+													class="max-w-40 text-right text-sm bg-transparent outline-hidden"
+													bind:value={budgetMode}
+												>
+													<option value="default">{$i18n.t('Default')} (${defaultBudget})</option>
+													<option value="custom">{$i18n.t('Custom')}</option>
+												</select>
 											</div>
+											{#if budgetMode === 'custom'}
+												<div class="flex items-center justify-between pt-1">
+													<label class="text-xs text-gray-400" for="user-custom-budget">
+														{$i18n.t('Max Budget')} ($)
+													</label>
+													<input
+														id="user-custom-budget"
+														class="w-32 text-right text-sm bg-transparent font-mono outline-hidden border-b border-gray-200 dark:border-gray-700 focus:border-black dark:focus:border-white transition"
+														type="number"
+														step="0.01"
+														min="0"
+														bind:value={customBudget}
+														aria-label={$i18n.t('Budget')}
+														placeholder={$i18n.t('Enter budget')}
+													/>
+												</div>
+											{:else}
+												<div class="flex items-center justify-between pt-1 text-xs text-gray-400">
+													<span>{$i18n.t('Max Budget')} ($)</span>
+													<span class="font-mono">{defaultBudget.toLocaleString('de-DE')}</span>
+												</div>
+											{/if}
 										</div>
 									</div>
-
 								</div>
 							</div>
 						</div>
