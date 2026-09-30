@@ -11,7 +11,7 @@
 
 	import { toast } from 'svelte-sonner';
 
-	import { getUsers, deleteUserById } from '$lib/apis/users';
+	import { getUsers, getAllUsers, deleteUserById } from '$lib/apis/users';
 
 	import Pagination from '$lib/components/common/Pagination.svelte';
 	import ChatBubbles from '$lib/components/icons/ChatBubbles.svelte';
@@ -174,6 +174,7 @@
 				}
 
 				userBudgets = budgetMap;
+				if (isMounted && orderBy === 'budget') getUserList();
 			}
 		} catch (err: any) {
 			console.error('Fehler beim Laden der Budgetdaten:', err);
@@ -225,14 +226,36 @@
 			const token = typeof window !== 'undefined' ? localStorage.getItem('token') || '' : '';
 			if (!token) return;
 
-			const res = await getUsers(token, query, orderBy, direction, page).catch((error) => {
+			const res = await (orderBy === 'budget'
+				? getAllUsers(token)
+				: getUsers(token, query, orderBy, direction, page)
+			).catch((error) => {
 				toast.error(`${error}`);
 				return null;
 			});
 
 			if (res) {
-				users = res.users;
-				total = res.total;
+				if (orderBy === 'budget') {
+					const search = query.toLowerCase();
+					const sortedUsers = res.users
+						.filter(
+							(user) =>
+							!search ||
+							user.name?.toLowerCase().includes(search) ||
+							user.email?.toLowerCase().includes(search)
+						)
+						.sort((a, b) => {
+							const aPercent = (userBudgets[a.id] || userBudgets[a.email])?.spentPercent ?? 0;
+							const bPercent = (userBudgets[b.id] || userBudgets[b.email])?.spentPercent ?? 0;
+							return (aPercent - bPercent) * (direction === 'asc' ? 1 : -1);
+						});
+
+					total = sortedUsers.length;
+					users = sortedUsers.slice((page - 1) * 30, page * 30);
+				} else {
+					users = res.users;
+					total = res.total;
+				}
 				adminUserCount.set(total);
 			}
 		} catch (err) {
@@ -451,8 +474,28 @@
 					</th>
 
 					<!-- NEUE SPALTE: BUDGET -->
-					<th scope="col" class="font-normal select-none px-2.5 py-1.5 min-w-[140px]">
-						{$i18n.t('Budget')}
+					<th scope="col" class="font-normal select-none" aria-sort={sortState('budget')}>
+						<button
+							type="button"
+							class="flex w-full gap-1.5 items-center px-2.5 py-1.5"
+							on:click={() => setSortKey('budget')}
+						>
+							{$i18n.t('Budget')}
+
+							{#if orderBy === 'budget'}
+								<span class="font-normal"
+									>{#if direction === 'asc'}
+										<ChevronUp className="size-2" />
+									{:else}
+										<ChevronDown className="size-2" />
+									{/if}
+								</span>
+							{:else}
+								<span class="invisible">
+									<ChevronUp className="size-2" />
+								</span>
+							{/if}
+						</button>
 					</th>
 
 					<th scope="col" class="font-normal select-none" aria-sort={sortState('last_active_at')}>
