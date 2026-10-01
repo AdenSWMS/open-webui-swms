@@ -35,7 +35,7 @@
 	import ProfilePreview from '$lib/components/channel/Messages/Message/ProfilePreview.svelte';
 	import UserPreviewModal from '$lib/components/admin/UserPreviewModal.svelte';
 
-	import { getAllUsersInfo } from '$lib/apis/litellm';
+	import { getAllUsersInfo, updateUserBudget } from '$lib/apis/litellm';
 	import { getConfigNamespace, importConfig } from '$lib/apis/configs';
 
 	const i18n: any = getContext('i18n');
@@ -121,6 +121,11 @@
 		};
 	}
 
+	async function getDefaultBudgetUsers(token: string) {
+		const response = await getAllUsers(token);
+		return (response?.users ?? []).filter((item) => item.has_default_budget === true);
+	}
+
 	async function loadDefaultBudget() {
 		try {
 			const config = await getConfigNamespace(localStorage.token, 'litellm');
@@ -140,8 +145,15 @@
 
 		isSavingDefaultBudget = true;
 		try {
-			await importConfig(localStorage.token, { 'litellm.default_max_budget': budget });
+			const token = localStorage.getItem('token') || '';
+			const usersToUpdate = await getDefaultBudgetUsers(token);
+			for (const defaultUser of usersToUpdate) {
+				await updateUserBudget(token, budget, defaultUser);
+			}
+
+			await importConfig(token, { 'litellm.default_max_budget': budget });
 			defaultBudget = budget;
+			await Promise.all([loadUserData(), getUserList()]);
 			toast.success($i18n.t('Settings saved successfully!'));
 		} catch (err) {
 			toast.error(`${err}`);
@@ -174,7 +186,6 @@
 				}
 
 				userBudgets = budgetMap;
-				if (isMounted && orderBy === 'budget') getUserList();
 			}
 		} catch (err: any) {
 			console.error('Fehler beim Laden der Budgetdaten:', err);
@@ -226,36 +237,14 @@
 			const token = typeof window !== 'undefined' ? localStorage.getItem('token') || '' : '';
 			if (!token) return;
 
-			const res = await (orderBy === 'budget'
-				? getAllUsers(token)
-				: getUsers(token, query, orderBy, direction, page)
-			).catch((error) => {
+			const res = await getUsers(token, query, orderBy, direction, page).catch((error) => {
 				toast.error(`${error}`);
 				return null;
 			});
 
 			if (res) {
-				if (orderBy === 'budget') {
-					const search = query.toLowerCase();
-					const sortedUsers = res.users
-						.filter(
-							(user) =>
-							!search ||
-							user.name?.toLowerCase().includes(search) ||
-							user.email?.toLowerCase().includes(search)
-						)
-						.sort((a, b) => {
-							const aPercent = (userBudgets[a.id] || userBudgets[a.email])?.spentPercent ?? 0;
-							const bPercent = (userBudgets[b.id] || userBudgets[b.email])?.spentPercent ?? 0;
-							return (aPercent - bPercent) * (direction === 'asc' ? 1 : -1);
-						});
-
-					total = sortedUsers.length;
-					users = sortedUsers.slice((page - 1) * 30, page * 30);
-				} else {
-					users = res.users;
-					total = res.total;
-				}
+				users = res.users;
+				total = res.total;
 				adminUserCount.set(total);
 			}
 		} catch (err) {
@@ -305,6 +294,7 @@
 	{defaultBudget}
 	on:save={() => {
 		loadUserData();
+		getUserList();
 	}}
 />
 
@@ -473,30 +463,7 @@
 						</button>
 					</th>
 
-					<!-- NEUE SPALTE: BUDGET -->
-					<th scope="col" class="font-normal select-none" aria-sort={sortState('budget')}>
-						<button
-							type="button"
-							class="flex w-full gap-1.5 items-center px-2.5 py-1.5"
-							on:click={() => setSortKey('budget')}
-						>
-							{$i18n.t('Budget')}
-
-							{#if orderBy === 'budget'}
-								<span class="font-normal"
-									>{#if direction === 'asc'}
-										<ChevronUp className="size-2" />
-									{:else}
-										<ChevronDown className="size-2" />
-									{/if}
-								</span>
-							{:else}
-								<span class="invisible">
-									<ChevronUp className="size-2" />
-								</span>
-							{/if}
-						</button>
-					</th>
+					<th scope="col" class="px-2.5 py-1.5 font-bold capitalize">{$i18n.t('Budget')}</th>
 
 					<th scope="col" class="font-normal select-none" aria-sort={sortState('last_active_at')}>
 						<button

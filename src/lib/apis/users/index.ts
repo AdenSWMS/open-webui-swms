@@ -574,6 +574,7 @@ type UserUpdateForm = {
 	email: string;
 	name: string;
 	password: string;
+	has_default_budget: boolean;
 };
 
 export const updateUserById = async (token: string, userId: string, user: UserUpdateForm) => {
@@ -590,7 +591,8 @@ export const updateUserById = async (token: string, userId: string, user: UserUp
 			role: user.role,
 			email: user.email,
 			name: user.name,
-			password: user.password !== '' ? user.password : undefined
+			password: user.password !== '' ? user.password : undefined,
+			has_default_budget: user.has_default_budget
 		})
 	})
 		.then(async (res) => {

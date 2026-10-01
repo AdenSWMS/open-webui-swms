@@ -103,9 +103,9 @@
 			if (!token) {
 				throw new Error('Kein Authentifizierungs-Token gefunden.');
 			}
+			loadUserInfo(token);
 
 			loadSession(token);
-			loadUserInfo(token);
 		} catch (err: any) {
 			console.error('Fehler beim Laden der Budgetdaten:', err);
 			error = typeof err === 'string' ? err : err?.message || 'Fehler beim Laden der Daten.';

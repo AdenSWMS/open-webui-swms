@@ -30,6 +30,7 @@ from sqlalchemy import (
     cast,
     delete,
     exists,
+    false,
     func,
     or_,
     select,
@@ -150,6 +151,7 @@ class User(Base):  # identity & profile
     username = Column(String(50), nullable=True)  # custom handle
     role = Column(String, default='pending')  # permissions role
     name = Column(String, nullable=False)  # display name
+    has_default_budget = Column(Boolean, default=False, server_default=false(), nullable=False)
 
     # Profile
     profile_image_url = Column(Text)  # data-uri, path, or external URL
@@ -187,6 +189,7 @@ class UserModel(BaseModel):
     email: str
     username: str | None = None
     role: str = 'pending'
+    has_default_budget: bool = False
 
     name: str
 
@@ -311,6 +314,7 @@ class UserInfoResponse(UserStatus):
     name: str
     email: str
     role: str
+    has_default_budget: bool = False
     bio: str | None = None
     groups: list | None = []
     projects: list | None = []
@@ -364,6 +368,7 @@ class UserUpdateForm(BaseModel):
     email: str | None = None
     profile_image_url: str | None = None
     password: str | None = None
+    has_default_budget: bool | None = None
 
     @field_validator('profile_image_url', mode='before')
     @classmethod

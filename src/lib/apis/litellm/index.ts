@@ -101,6 +101,7 @@ export const updateUserBudget = async (token: string, max_budget: number, user_t
 
 	return res;
 };
+
 export const getUserInfo = async (token: string) => {
 	let error = null;
 

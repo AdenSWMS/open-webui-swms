@@ -46,10 +46,7 @@
 				selectedUser?.max_budget ??
 				null;
 			customBudget = currentBudget;
-			budgetMode =
-				currentBudget === null || Number(currentBudget) === Number(defaultBudget)
-					? 'default'
-					: 'custom';
+			budgetMode = selectedUser.has_default_budget ? 'default' : 'custom';
 
 			_user = {
 				...selectedUser,
@@ -66,12 +63,14 @@
 		name: '',
 		email: '',
 		password: '',
-		budget: null as number | null
+		budget: null as number | null,
+		has_default_budget: false
 	};
 
 	let userGroups: any[] | null = null;
 
 	$: _user.budget = budgetMode === 'default' ? defaultBudget : customBudget;
+	$: _user.has_default_budget = budgetMode === 'default';
 	$: budgetStats = calculateLiveBudget(selectedUser, userBudgets, _user.budget);
 
 	function calculateLiveBudget(
@@ -361,6 +360,7 @@
 														type="number"
 														step="0.01"
 														min="0"
+														required
 														bind:value={customBudget}
 														aria-label={$i18n.t('Budget')}
 														placeholder={$i18n.t('Enter budget')}
