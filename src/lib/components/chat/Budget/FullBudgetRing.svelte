@@ -1,13 +1,44 @@
 <script lang="ts">
+	import { increaseUserBudget } from '$lib/apis/litellm';
+
 	export let userData: {
 		spend: number;
 		max_budget: number;
 		budget_duration?: string;
 		budget_reset_at: string;
+		budget_increase_count: number;
 	} | null = null;
+
+	let budgetIncreaseLoading = false;
+	let budgetIncreaseError: string | null = null;
+	const budgetIncreaseTierColors = ['bg-emerald-500', 'bg-amber-500', 'bg-red-500'];
+
+	$: budgetIncreaseCount = Math.min(3, Math.max(0, Number(userData?.budget_increase_count) || 0));
+	$: budgetIncreaseCountLoaded = userData !== null;
+
+	async function increaseBudget() {
+		if (!userData || !canIncreaseBudget || budgetIncreaseLoading) return;
+
+		budgetIncreaseLoading = true;
+		budgetIncreaseError = null;
+		try {
+			const result = await increaseUserBudget(localStorage.token);
+			userData = {
+				...userData,
+				max_budget: result.max_budget,
+				budget_increase_count: result.budget_increase_count
+			};
+		} catch (error) {
+			budgetIncreaseError = typeof error === 'string' ? error : 'Das Budget konnte nicht erhöht werden.';
+		} finally {
+			budgetIncreaseLoading = false;
+		}
+	}
 
 	$: spend = userData?.spend ?? 0;
 	$: maxBudget = userData?.max_budget ?? 0;
+	$: canIncreaseBudget =
+		budgetIncreaseCountLoaded && maxBudget > 0 && spend >= maxBudget && budgetIncreaseCount < 3;
 
 	$: spentPercent = maxBudget > 0 
 		? Math.min(Math.round((spend / maxBudget) * 100), 100) 
@@ -122,5 +153,52 @@
 	<div class="mt-6 p-4 rounded-xl border text-sm {statusInfo().bg} transition-colors duration-300">
 		<div class="font-bold mb-1">{statusInfo().title}</div>
 		<div class="opacity-90">{statusInfo().text}</div>
+	</div>
+
+	<div class="mt-6 flex w-full flex-col items-center gap-3">
+		<button
+			type="button"
+			class="w-full rounded-xl px-5 py-2.5 text-sm font-semibold text-white transition disabled:cursor-not-allowed disabled:opacity-50 {canIncreaseBudget
+				? 'bg-sky-600 hover:bg-sky-700'
+				: 'bg-gray-500'}"
+			disabled={!canIncreaseBudget || budgetIncreaseLoading}
+			on:click={increaseBudget}
+		>
+			{budgetIncreaseLoading
+				? 'Wird erhöht …'
+				: !budgetIncreaseCountLoaded
+					? 'Lade Erhöhungsstatus …'
+					: budgetIncreaseCount >= 3
+						? 'Alle Erhöhungen verbraucht'
+						: canIncreaseBudget
+							? 'Budget um $5 erhöhen'
+							: 'Bei 100 % verfügbar'}
+		</button>
+
+		<div class="grid w-full grid-cols-3 gap-1" aria-label="{budgetIncreaseCount} von 3 Budgeterhöhungen verwendet">
+			<div
+				class="h-2 rounded-full transition-all duration-300 {budgetIncreaseCount >= 1
+					? (budgetIncreaseCount === 1 ? 'bg-emerald-500' : budgetIncreaseCount === 2 ? 'bg-amber-500' : 'bg-red-500')
+					: 'bg-gray-200 dark:bg-gray-700'}"
+			></div>
+
+			<div
+				class="h-2 rounded-full transition-all duration-300 {budgetIncreaseCount >= 2
+					? (budgetIncreaseCount === 2 ? 'bg-amber-500' : 'bg-red-500')
+					: 'bg-gray-200 dark:bg-gray-700'}"
+			></div>
+
+			<div
+				class="h-2 rounded-full transition-all duration-300 {budgetIncreaseCount >= 3
+					? 'bg-red-500'
+					: 'bg-gray-200 dark:bg-gray-700'}"
+			></div>
+		</div>
+
+		<div class="text-xs text-gray-500">{budgetIncreaseCount} von 3 Erhöhungen verwendet</div>
+
+		{#if budgetIncreaseError}
+			<div class="text-sm text-red-500" role="alert">{budgetIncreaseError}</div>
+		{/if}
 	</div>
 </div>

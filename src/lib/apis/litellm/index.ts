@@ -7,6 +7,7 @@ export interface UserInfoResponse {
 	user_role: string;
 	spend: number;
 	max_budget: number;
+	budget_increase_count: number;
 	models: string[];
 	budget_duration?: string;
 	budget_reset_at: string;
@@ -100,6 +101,22 @@ export const updateUserBudget = async (token: string, max_budget: number, user_t
 	}
 
 	return res;
+};
+
+export const increaseUserBudget = async (token: string) => {
+	const res = await fetch(`${WEBUI_API_BASE_URL}/litellm/increase-user-budget`, {
+		method: 'POST',
+		headers: {
+			Authorization: `Bearer ${token}`
+		}
+	});
+
+	const data = await res.json();
+	if (!res.ok) {
+		throw data.detail ?? data;
+	}
+
+	return data as { max_budget: number; budget_increase_count: number };
 };
 
 export const getUserInfo = async (token: string) => {

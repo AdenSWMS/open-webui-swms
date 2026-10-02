@@ -9,6 +9,7 @@ from datetime import datetime, timedelta
 from typing import Optional
 from open_webui.models.projects import Projects
 from open_webui.models.projects import Projects
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
@@ -24,6 +25,7 @@ from open_webui.models.chats import Chats
 from open_webui.models.groups import Groups
 from open_webui.models.oauth_sessions import OAuthSessions
 from open_webui.models.users import (
+    User,
     UserModel,
     UserGroupAndProjectIdsModel,
     UserGroupAndProjectIdsListResponse,
@@ -631,9 +633,20 @@ async def update_user_status_by_session_user(
 
 
 @router.get('/user/info', response_model=dict | None)
-async def get_user_info_by_session_user(user=Depends(get_verified_user)):
-    # user already fetched by get_verified_user — no need to refetch
-    return user.info
+async def get_user_info_by_session_user(
+    user=Depends(get_verified_user),
+    db: AsyncSession = Depends(get_async_session),
+):
+    budget_state = await db.execute(
+        select(User.budget_base, User.budget_period_reset_at).where(User.id == user.id)
+    )
+    budget_base, budget_period_reset_at = budget_state.one_or_none() or (None, None)
+    return {
+        **(user.info or {}),
+        'budget_increase_count': user.budget_increase_count,
+        'budget_base': budget_base,
+        'budget_period_reset_at': budget_period_reset_at,
+    }
 
 
 class UserVariablesForm(BaseModel):
