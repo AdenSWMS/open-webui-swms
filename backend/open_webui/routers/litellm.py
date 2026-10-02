@@ -256,7 +256,7 @@ async def get_all_users_info(user = Depends(get_admin_user)):
 
     all_users = []
     page = 1
-    page_size = 100  # Höhere Seitengröße für weniger HTTP-Requests
+    page_size = 100
 
     async with httpx.AsyncClient() as client:
         try:
@@ -284,7 +284,6 @@ async def get_all_users_info(user = Depends(get_admin_user)):
                 
                 page += 1
 
-            # Rückgabe-Struktur wie von LiteLLM, aber mit vollständiger Liste
             return {
                 "users": all_users,
                 "total": len(all_users),
