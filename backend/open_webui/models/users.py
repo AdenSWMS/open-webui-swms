@@ -24,6 +24,8 @@ from sqlalchemy import (
     Boolean,
     Column,
     Date,
+    Float,
+    Integer,
     String,
     Text,
     case,
@@ -152,6 +154,9 @@ class User(Base):  # identity & profile
     role = Column(String, default='pending')  # permissions role
     name = Column(String, nullable=False)  # display name
     has_default_budget = Column(Boolean, default=False, server_default=false(), nullable=False)
+    budget_increase_count = Column(Integer, default=0, server_default='0', nullable=False)
+    budget_base = Column(Float, nullable=True)
+    budget_period_reset_at = Column(String, nullable=True)
 
     # Profile
     profile_image_url = Column(Text)  # data-uri, path, or external URL
@@ -190,6 +195,7 @@ class UserModel(BaseModel):
     username: str | None = None
     role: str = 'pending'
     has_default_budget: bool = False
+    budget_increase_count: int = 0
 
     name: str
 
