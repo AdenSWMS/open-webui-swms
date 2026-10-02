@@ -1,5 +1,4 @@
 from datetime import date
-import math
 import os
 import httpx
 from fastapi import APIRouter, HTTPException, Depends, Query
@@ -10,11 +9,9 @@ from typing import List, Dict, Any, Optional
 import re
 
 
-from open_webui.internal.db import get_async_db_context, get_async_session
 from open_webui.models.users import User
 from open_webui.utils.auth import get_admin_user, get_verified_user
-from sqlalchemy import or_, select, update
-from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import null 
 
 router = APIRouter()
 
@@ -25,8 +22,6 @@ LITELLM_KEY_DURATION = os.getenv("LITELLM_KEY_DURATION", "30m")
 LITELLM_BUDGET_DURATION = os.getenv("LITELLM_BUDGET_DURATION", "30d")  
 
 openCodeName = "OpenCode"
-BUDGET_INCREASE_AMOUNT = float(os.getenv("LITELLM_BUDGET_INCREASE_AMOUNT", "5.0"))
-MAX_BUDGET_INCREASE_COUNT = int(os.getenv("LITELLM_MAX_BUDGET_INCREASE_COUNT", "3"))
 
 
 async def ensure_litellm_user(user):
@@ -168,232 +163,83 @@ async def delete_litellm_key(user = Depends(get_verified_user)):
 async def update_user_budget(
     new_budget: float = Query(..., description="Neues Budget für den Benutzer"),
     user_to_update: str = Query(..., description="E-Mail des Benutzers, dessen Budget aktualisiert werden soll"),
-    user = Depends(get_admin_user),
-    db: AsyncSession = Depends(get_async_session),
+    user = Depends(get_admin_user)
 ):
     if not LITELLM_MASTER_KEY:
-        raise HTTPException(status_code=500, detail="LITELLM_MASTER_KEY ist im Open WebUI Backend nicht konfiguriert.")
-    if not math.isfinite(new_budget) or new_budget < 0:
-        raise HTTPException(status_code=422, detail='Das Budget muss eine endliche, nicht negative Zahl sein.')
+        raise HTTPException(
+            status_code=500, 
+            detail="LITELLM_MASTER_KEY ist im Open WebUI Backend nicht konfiguriert."
+        )
 
     headers = {
         "Authorization": f"Bearer {LITELLM_MASTER_KEY}",
         "Content-Type": "application/json"
     }
 
-    try:
-        async with db.begin():
-            await db.execute(
-                update(User)
-                .where(User.email == user_to_update.lower())
-                .values(budget_base=new_budget, budget_increase_count=0)
-            )
-            async with httpx.AsyncClient() as client:
-                response = await client.post(
-                    f"{LITELLM_URL}/user/update",
-                    json={"user_id": user_to_update, "max_budget": new_budget},
-                    headers=headers,
-                    timeout=10.0,
-                )
-
-                if response.status_code != 200:
-                    raise HTTPException(
-                        status_code=response.status_code,
-                        detail=f"LiteLLM Fehler: {response.text}",
-                    )
-                return response.json()
-    except httpx.RequestError as exc:
-        raise HTTPException(status_code=503, detail=f"LiteLLM Server nicht erreichbar: {exc}") from exc
-
-
-@router.post('/increase-user-budget')
-async def increase_own_user_budget(
-    user=Depends(get_verified_user),
-    db: AsyncSession = Depends(get_async_session),
-):
-    if not LITELLM_MASTER_KEY:
-        raise HTTPException(status_code=500, detail='LITELLM_MASTER_KEY ist nicht konfiguriert.')
-
-    headers = {
-        'Authorization': f'Bearer {LITELLM_MASTER_KEY}',
-        'Content-Type': 'application/json',
+    payload = {
+        "user_id": user_to_update,
+        "max_budget": new_budget,
     }
 
-    try:
-        async with db.begin():
-            claimed = await db.execute(
-                update(User)
-                .where(User.id == user.id, User.budget_increase_count < MAX_BUDGET_INCREASE_COUNT)
-                .values(budget_increase_count=User.budget_increase_count + 1)
-            )
-            if claimed.rowcount != 1:
-                raise HTTPException(status_code=409, detail='Alle drei Budgeterhöhungen wurden bereits verwendet.')
-
-            async with httpx.AsyncClient() as client:
-                info_response = await client.get(
-                    f'{LITELLM_URL}/v2/user/info',
-                    params={'user_id': user.email},
-                    headers=headers,
-                    timeout=10.0,
-                )
-                if info_response.status_code != 200:
-                    raise HTTPException(status_code=502, detail='Das Budget konnte nicht geprüft werden.')
-
-                info = info_response.json()
-                try:
-                    spend = float(info['spend'])
-                    max_budget = float(info['max_budget'])
-                except (KeyError, TypeError, ValueError) as exc:
-                    raise HTTPException(status_code=502, detail='Das Budget konnte nicht geprüft werden.') from exc
-
-                if not math.isfinite(spend) or not math.isfinite(max_budget) or max_budget <= 0 or spend < max_budget:
-                    raise HTTPException(status_code=409, detail='Das Budget muss vollständig verbraucht sein.')
-
-                new_budget = max_budget + BUDGET_INCREASE_AMOUNT
-                update_response = await client.post(
-                    f'{LITELLM_URL}/user/update',
-                    json={'user_id': user.email, 'max_budget': new_budget},
-                    headers=headers,
-                    timeout=10.0,
-                )
-                if update_response.status_code != 200:
-                    raise HTTPException(status_code=502, detail='Das Budget konnte nicht erhöht werden.')
-
-            count = await db.scalar(select(User.budget_increase_count).where(User.id == user.id))
-            return {'max_budget': new_budget, 'budget_increase_count': count}
-    except httpx.RequestError as exc:
-        raise HTTPException(status_code=503, detail='LiteLLM Server nicht erreichbar.') from exc
-
-
-async def _fetch_litellm_user_info(user_email: str) -> dict:
-    if not LITELLM_MASTER_KEY:
-        raise HTTPException(status_code=500, detail='LITELLM_MASTER_KEY ist nicht konfiguriert.')
-
-    headers = {
-        'Authorization': f'Bearer {LITELLM_MASTER_KEY}',
-        'Content-Type': 'application/json',
-    }
-    try:
-        async with httpx.AsyncClient() as client:
-            response = await client.get(
-                f'{LITELLM_URL}/v2/user/info',
-                params={'user_id': user_email},
+    async with httpx.AsyncClient() as client:
+        try:
+            response = await client.post(
+                f"{LITELLM_URL}/user/update", 
+                json=payload, 
                 headers=headers,
-                timeout=10.0,
+                timeout=10.0
             )
+            
             if response.status_code != 200:
-                raise HTTPException(status_code=502, detail='LiteLLM Nutzerbudget konnte nicht geladen werden.')
+                raise HTTPException(
+                    status_code=response.status_code, 
+                    detail=f"LiteLLM Fehler: {response.text}"
+                )
+
             return response.json()
-    except httpx.RequestError as exc:
-        raise HTTPException(status_code=503, detail='LiteLLM Server nicht erreichbar.') from exc
 
-
-async def _reconcile_user_budget_period(user, user_info: dict) -> dict:
-    info = dict(user_info)
-    reset_at = info.get('budget_reset_at')
-    refresh_info = False
-
-    try:
-        current_budget = float(info['max_budget'])
-        if not math.isfinite(current_budget):
-            current_budget = None
-    except (KeyError, TypeError, ValueError):
-        current_budget = None
-
-    async with get_async_db_context() as session:
-        async with session.begin():
-            row = (
-                await session.execute(
-                    select(User.budget_base, User.budget_increase_count, User.budget_period_reset_at).where(
-                        User.id == user.id
-                    )
-                )
-            ).first()
-            if row is None:
-                info.update(budget_base=None, budget_period_reset_at=None, budget_increase_count=0)
-                return info
-
-            base_budget, increase_count, last_reset_at = row
-            increase_count = int(increase_count or 0)
-
-            if not isinstance(reset_at, str) or not reset_at or current_budget is None:
-                pass
-            elif last_reset_at == reset_at:
-                if base_budget is None:
-                    base_budget = max(0.0, current_budget - BUDGET_INCREASE_AMOUNT * increase_count)
-                    await session.execute(
-                        update(User).where(User.id == user.id).values(budget_base=base_budget)
-                    )
-            elif last_reset_at is None:
-                if base_budget is None:
-                    base_budget = max(0.0, current_budget - BUDGET_INCREASE_AMOUNT * increase_count)
-                await session.execute(
-                    update(User)
-                    .where(User.id == user.id, User.budget_period_reset_at.is_(None))
-                    .values(budget_base=base_budget, budget_period_reset_at=reset_at)
-                )
-            else:
-                claimed = await session.execute(
-                    update(User)
-                    .where(User.id == user.id, User.budget_period_reset_at == last_reset_at)
-                    .values(budget_period_reset_at=reset_at)
-                )
-                if claimed.rowcount == 1:
-                    if base_budget is None:
-                        base_budget = max(0.0, current_budget - BUDGET_INCREASE_AMOUNT * increase_count)
-
-                        headers = {
-                            'Authorization': f'Bearer {LITELLM_MASTER_KEY}',
-                            'Content-Type': 'application/json',
-                        }
-                        try:
-                            async with httpx.AsyncClient() as client:
-                                response = await client.post(
-                                    f'{LITELLM_URL}/user/update',
-                                    json={'user_id': user.email, 'max_budget': base_budget},
-                                    headers=headers,
-                                    timeout=10.0,
-                                )
-                                if response.status_code != 200:
-                                    raise HTTPException(status_code=502, detail='LiteLLM Budget konnte nicht zurückgesetzt werden.')
-                        except httpx.RequestError as exc:
-                            raise HTTPException(status_code=503, detail='LiteLLM Server nicht erreichbar.') from exc
-
-                        await session.execute(
-                            update(User)
-                            .where(User.id == user.id)
-                            .values(budget_base=base_budget, budget_increase_count=0)
-                        )
-                    refresh_info = True
-                else:
-                    refresh_info = True
-
-    if refresh_info:
-        info = await _fetch_litellm_user_info(user.email)
-
-    async with get_async_db_context() as session:
-        budget_state = await session.execute(
-            select(User.budget_base, User.budget_period_reset_at, User.budget_increase_count).where(
-                User.id == user.id
+        except httpx.RequestError as exc:
+            raise HTTPException(
+                status_code=503, 
+                detail=f"LiteLLM Server nicht erreichbar: {exc}"
             )
-        )
-        row = budget_state.one_or_none()
-
-    if row is None:
-        info.update(budget_base=None, budget_period_reset_at=None, budget_increase_count=0)
-    else:
-        info.update(
-            budget_base=row.budget_base,
-            budget_period_reset_at=row.budget_period_reset_at,
-            budget_increase_count=row.budget_increase_count,
-        )
-    return info
-
-
-
+        
+        
 @router.get("/get-user-info")
 async def get_user_info(user = Depends(get_verified_user)):
-    return await _reconcile_user_budget_period(user, await _fetch_litellm_user_info(user.email))
+    if not LITELLM_MASTER_KEY:
+        raise HTTPException(
+            status_code=500, 
+            detail="LITELLM_MASTER_KEY ist im Open WebUI Backend nicht konfiguriert."
+        )
+
+    headers = {
+        "Authorization": f"Bearer {LITELLM_MASTER_KEY}",
+        "Content-Type": "application/json"
+    }
+
+    async with httpx.AsyncClient() as client:
+        try:
+            response = await client.get(
+                f"{LITELLM_URL}/v2/user/info", 
+                params={"user_id": user.email}, 
+                headers=headers,
+                timeout=10.0
+            )
+            
+            if response.status_code != 200:
+                raise HTTPException(
+                    status_code=response.status_code, 
+                    detail=f"LiteLLM Fehler: {response.text}"
+                )
+
+            return response.json()
+
+        except httpx.RequestError as exc:
+            raise HTTPException(
+                status_code=503, 
+                detail=f"LiteLLM Server nicht erreichbar: {exc}"
+            )
 
 @router.get("/get-all-users-info")
 async def get_all_users_info(user = Depends(get_admin_user)):
