@@ -15,7 +15,6 @@
 	import equal from 'fast-deep-equal';
 
 	import {
-		send,
 		receive,
 		LOGO_LOADER_KEY,
 		responseLoaderVisible
@@ -4549,9 +4548,9 @@
 					>
 						{#if !$responseLoaderVisible}
 							<div
-								class="pointer-events-none absolute -left-12 top-1/2 -translate-y-1/2"
+							class="pointer-events-none absolute -left-12 top-1/2 -translate-y-1/2"
 								in:receive|global={{ key: LOGO_LOADER_KEY }}
-								out:send|global={{ key: LOGO_LOADER_KEY }}
+								out:fade={{ duration: 100 }}
 							>
 								<LogoLoader state="idle" size="big" />
 							</div>

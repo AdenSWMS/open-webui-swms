@@ -16,12 +16,7 @@
 	import { getChatById } from '$lib/apis/chats';
 	import { generateTags } from '$lib/apis';
 
-	import {
-		send,
-		receive,
-		LOGO_LOADER_KEY,
-		responseLoaderVisible
-	} from '$lib/components/chat/transition';
+	import { send, LOGO_LOADER_KEY, responseLoaderVisible } from '$lib/components/chat/transition';
 
 	import {
 		audioQueue,
@@ -1809,7 +1804,7 @@
 					{#if isLastMessage && showLoader}
 						<div class="mt-5 mb-5 flex items-center">
 							<div
-								in:receive|global={{ key: LOGO_LOADER_KEY }}
+								in:fade={{ duration: 100 }}
 								out:send|global={{ key: LOGO_LOADER_KEY }}
 							>
 								<LogoLoader state={loaderState} size="big" />
