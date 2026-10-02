@@ -18,9 +18,9 @@
 
 	import {
 		send,
+		receive,
 		LOGO_LOADER_KEY,
-		responseLoaderVisible,
-		responseLoaderHandoffReady
+		responseLoaderVisible
 	} from '$lib/components/chat/transition';
 
 	import {
@@ -1806,9 +1806,12 @@
 						{/key}
 					{/if}
 
-					{#if isLastMessage && showLoader && $responseLoaderHandoffReady}
+					{#if isLastMessage && showLoader}
 						<div class="mt-5 mb-5 flex items-center">
-							<div out:send|global={{ key: LOGO_LOADER_KEY }}>
+							<div
+								in:receive|global={{ key: LOGO_LOADER_KEY }}
+								out:send|global={{ key: LOGO_LOADER_KEY }}
+							>
 								<LogoLoader state={loaderState} size="big" />
 							</div>
 						</div>
