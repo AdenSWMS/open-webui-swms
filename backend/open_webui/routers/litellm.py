@@ -6,6 +6,7 @@ from open_webui.utils.litellm_session_managment.session_manager import session_m
 from pydantic import BaseModel
 import json
 from typing import List, Dict, Any, Optional
+import re
 
 
 from open_webui.models.users import User
@@ -253,21 +254,44 @@ async def get_all_users_info(user = Depends(get_admin_user)):
         "Content-Type": "application/json"
     }
 
+    all_users = []
+    page = 1
+    page_size = 100  # Höhere Seitengröße für weniger HTTP-Requests
+
     async with httpx.AsyncClient() as client:
         try:
-            response = await client.get(
-                f"{LITELLM_URL}/user/list", 
-                headers=headers,
-                timeout=10.0
-            )
-            
-            if response.status_code != 200:
-                raise HTTPException(
-                    status_code=response.status_code, 
-                    detail=f"LiteLLM Fehler: {response.text}"
+            while True:
+                response = await client.get(
+                    f"{LITELLM_URL}/user/list", 
+                    headers=headers,
+                    params={"page": page, "page_size": page_size},
+                    timeout=10.0
                 )
+                
+                if response.status_code != 200:
+                    raise HTTPException(
+                        status_code=response.status_code, 
+                        detail=f"LiteLLM Fehler: {response.text}"
+                    )
 
-            return response.json()
+                data = response.json()
+                users_page = data.get("users", [])
+                all_users.extend(users_page)
+
+                total_pages = data.get("total_pages", 1)
+                if page >= total_pages or not users_page:
+                    break
+                
+                page += 1
+
+            # Rückgabe-Struktur wie von LiteLLM, aber mit vollständiger Liste
+            return {
+                "users": all_users,
+                "total": len(all_users),
+                "page": 1,
+                "page_size": len(all_users),
+                "total_pages": 1
+            }
 
         except httpx.RequestError as exc:
             raise HTTPException(
@@ -361,47 +385,57 @@ class AnalyticsResponse(BaseModel):
     model_token_details: List[ModelTokenDetail]
     daily_model_data: List[DailyModelDataItem]
 
+
+UUID_PATTERN = re.compile(
+    r"^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
+)
+
+
 @router.get("/user/analytics", response_model=AnalyticsResponse)
 async def get_user_analytics(
     start_date: str = Query(..., description="Startdatum im Format YYYY-MM-DD"),
     end_date: str = Query(..., description="Enddatum im Format YYYY-MM-DD"),
-    user = Depends(get_verified_user)
+    user=Depends(get_verified_user),
 ):
     if not LITELLM_MASTER_KEY:
         raise HTTPException(
-            status_code=500, 
-            detail="LITELLM_MASTER_KEY ist im Open WebUI Backend nicht konfiguriert."
+            status_code=500,
+            detail="LITELLM_MASTER_KEY ist im Open WebUI Backend nicht konfiguriert.",
         )
 
     headers = {
         "Authorization": f"Bearer {LITELLM_MASTER_KEY}",
-        "Content-Type": "application/json"
+        "Content-Type": "application/json",
     }
 
     params = {
         "user_id": user.email,
         "start_date": start_date,
-        "end_date": end_date
+        "end_date": end_date,
     }
 
     async with httpx.AsyncClient() as client:
         try:
             response = await client.get(
-                f"{LITELLM_URL}/user/daily/activity", 
-                params=params, 
+                f"{LITELLM_URL}/user/daily/activity",
+                params=params,
                 headers=headers,
-                timeout=10.0
+                timeout=10.0,
             )
-            
+
             if response.status_code != 200:
                 raise HTTPException(
-                    status_code=response.status_code, 
-                    detail=f"LiteLLM Fehler: {response.text}"
+                    status_code=response.status_code,
+                    detail=f"LiteLLM Fehler: {response.text}",
                 )
 
             raw_data = response.json()
 
-            results = raw_data.get("results", []) if isinstance(raw_data, dict) else raw_data
+            results = (
+                raw_data.get("results", [])
+                if isinstance(raw_data, dict)
+                else raw_data
+            )
 
             daily_map = {}
             model_map = {}
@@ -414,51 +448,88 @@ async def get_user_analytics(
 
                 entry_date = day.get("date", "")
                 day_metrics = day.get("metrics", {})
-                
+
                 if entry_date:
                     if entry_date not in daily_map:
                         daily_map[entry_date] = {"spend": 0.0, "tokens": 0}
-                        
-                    daily_map[entry_date]["spend"] += float(day_metrics.get("spend", 0.0) or 0.0)
-                    daily_map[entry_date]["tokens"] += int(day_metrics.get("total_tokens", 0) or 0)
 
-                models_breakdown = day.get("breakdown", {}).get("models", {})
-                
+                    daily_map[entry_date]["spend"] += float(
+                        day_metrics.get("spend", 0.0) or 0.0
+                    )
+                    daily_map[entry_date]["tokens"] += int(
+                        day_metrics.get("total_tokens", 0) or 0
+                    )
+
+                models_breakdown = (
+                    day.get("breakdown", {}).get("models", {})
+                )
+
                 for model_name, model_info in models_breakdown.items():
                     if not isinstance(model_info, dict):
                         continue
-                        
+
+                    # Filter: UUIDs überspringen
+                    if UUID_PATTERN.match(model_name):
+                        continue
+
                     m_metrics = model_info.get("metrics", {})
-                    
+
                     spend = float(m_metrics.get("spend", 0.0) or 0.0)
-                    prompt_tokens = int(m_metrics.get("prompt_tokens", 0) or 0)
-                    completion_tokens = int(m_metrics.get("completion_tokens", 0) or 0)
-                    total_tokens = int(m_metrics.get("total_tokens", 0) or 0)
+                    prompt_tokens = int(
+                        m_metrics.get("prompt_tokens", 0) or 0
+                    )
+                    completion_tokens = int(
+                        m_metrics.get("completion_tokens", 0) or 0
+                    )
+                    total_tokens = int(
+                        m_metrics.get("total_tokens", 0) or 0
+                    )
                     calls = int(m_metrics.get("api_requests", 0) or 0)
 
                     if model_name not in model_map:
-                        model_map[model_name] = {"spend": 0.0, "tokens": 0, "calls": 0}
+                        model_map[model_name] = {
+                            "spend": 0.0,
+                            "tokens": 0,
+                            "calls": 0,
+                        }
                     model_map[model_name]["spend"] += spend
                     model_map[model_name]["tokens"] += total_tokens
                     model_map[model_name]["calls"] += calls
 
                     if model_name not in token_map:
-                        token_map[model_name] = {"prompt": 0, "completion": 0, "total": 0}
+                        token_map[model_name] = {
+                            "prompt": 0,
+                            "completion": 0,
+                            "total": 0,
+                        }
                     token_map[model_name]["prompt"] += prompt_tokens
                     token_map[model_name]["completion"] += completion_tokens
                     token_map[model_name]["total"] += total_tokens
 
                     daily_model_data.append(
-                        DailyModelDataItem(date=entry_date, model=model_name, spend=round(spend, 6))
+                        DailyModelDataItem(
+                            date=entry_date,
+                            model=model_name,
+                            spend=round(spend, 6),
+                        )
                     )
-                    
+
             return AnalyticsResponse(
                 daily_usage=[
-                    DailyUsageItem(date=d, spend=round(v["spend"], 4), tokens=int(v["tokens"]))
+                    DailyUsageItem(
+                        date=d,
+                        spend=round(v["spend"], 4),
+                        tokens=int(v["tokens"]),
+                    )
                     for d, v in daily_map.items()
                 ],
                 model_usage=[
-                    ModelUsageItem(model=m, spend=round(v["spend"], 4), tokens=int(v["tokens"]), calls=int(v["calls"]))
+                    ModelUsageItem(
+                        model=m,
+                        spend=round(v["spend"], 4),
+                        tokens=int(v["tokens"]),
+                        calls=int(v["calls"]),
+                    )
                     for m, v in model_map.items()
                 ],
                 model_token_details=[
@@ -466,17 +537,17 @@ async def get_user_analytics(
                         model=m,
                         prompt_tokens=v["prompt"],
                         completion_tokens=v["completion"],
-                        total_tokens=v["total"]
+                        total_tokens=v["total"],
                     )
                     for m, v in token_map.items()
                 ],
-                daily_model_data=daily_model_data
+                daily_model_data=daily_model_data,
             )
 
         except httpx.RequestError as exc:
             raise HTTPException(
-                status_code=503, 
-                detail=f"LiteLLM Server nicht erreichbar: {exc}"
+                status_code=503,
+                detail=f"LiteLLM Server nicht erreichbar: {exc}",
             )
 
 @router.get("/model_info")
